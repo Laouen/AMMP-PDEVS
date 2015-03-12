@@ -27,7 +27,7 @@ A cell have basicly three components that matter for us, a membrane (where trans
 There is a lot of other components but I am not considering them.
 all this components have enzymes and therefore reaction happens there. the membrane is who take care of the communication between the outside and the cytoplasm, this communication is leaded by enzymes by making transportation reactions. The cytoplasm can do reactions and give molecules to the organelles and membrane, and the same happens with the organelle how can do reactions and give back products to the cytoplasm.
 
-my Idea now is to model the next components: the enzymes, the organelles, the cytoplasm and the space like a discrete tridimensional space in $\mathbb{Z}^3$. 
+my Idea now is to model the next components: the enzymes, the organelles, the cytoplasm and the space like a discrete tridimensional space in $\mathbb{Z}^3$. Then join all these models in a coupled model of a cell.
 
 The molecules now can be the input and output, and they are only in the messages and states.
 
@@ -56,9 +56,11 @@ The coupled model for an enzyme is the next:
 \newpage
 
 The reaction model, is who is in charge to bind the reactants/substrates and when all necessaries substrates are in the enzyme, the reaction start.
-In every discrete interval of time (constant intervals), the reaction can lose one or more substrates that was bound to the enzyme, a random function with the appropriate distribution can decide in every interval of time which substrate will stay longer and which not.If a reaction is reversible and there is both substrates and products bound to the enzyme, the reaction cannot start until one of them (substrates or products) is gone.
+In every discrete interval of time (constant intervals), the reaction can lose one or more substrates that was bound to the enzyme, a random function with the appropriate distribution can decide in every interval of time which substrate will stay longer and which not. If a reaction is reversible and there is both substrates and products bound to the enzyme, the reaction cannot start until one of them (substrates or products) is gone.
 
-moreover an enzyme represent a single unit who can catalyze only one unit of reactants producing only one unit of products, two enzyme cannot be in the same space, but probably, two enzyme of a same kind are attracted to stay close each other.
+moreover an enzyme represent a single unit who can catalyze only one unit of reactants, producing only one unit of products. 
+
+Also, Two enzyme cannot be in the same space, but probably, two enzyme of a same kind are attracted to stay close each other.
 The next FSM represent the behavior of a reaction atomic model.
 
 \begin{figure}[h!]
@@ -77,7 +79,7 @@ The coupled model for an organelle is the next:
  \caption{organelle coupled model. blue color mean atomic models, green color mean coupled model}
 \end{figure}
 
-the coupled models Membrane, Compartment and Inner will be explained in the 3 next subsections. but just to understand the organelle model, here is a short explanation.
+the coupled models Membrane, Compartment and Inner will be explained in the next subsections. but just to understand the organelle model, here is a short explanation.
 
 \subsubsection*{the Membrane}
 this model has a list of enzyme and when a molecule arrive to the membrane if is bound to the correct enzyme, this enzyme start the transportation reaction and put the molecule in the output of the model to communicate the outside with the compartment model.
@@ -89,7 +91,7 @@ This model is basically a three dimensional space where the enzymes and molecule
 This mode is the same model that the Membrane model, the difference is that the enzyme located in the inner aren't transportation enzymes.
 
 \subsubsection*{the organelle coupled model}
-the molecules arrive to the membrane and after the transportation reaction happens it goes to the compartment where it will be moving until it found an enzyme and then, the compartment model send the molecule to the correct enzyme in the inner model, after the reaction occur, the inner model give back the output products to the compartment. Some times, moving molecule in the compartment can collapse with the edge of the tridimensional space and collapse with one enzyme in the membrane, in this case, the compartment send the molecule to the correct enzyme in the membrane and after the transportation reaction, the membrane will put the molecule in the output of the model.
+the molecules arrive to the membrane and after the transportation reaction happens it goes to the compartment where it will be moving until it found an enzyme and then, the compartment model send the molecule to this enzyme in the inner model, after the reaction occur, the inner model give back the output products to the compartment. Some times, moving molecule in the compartment can collapse with the edge of the tridimensional space and collapse with one enzyme in the membrane, in this case, the compartment send the molecule to the enzyme in the membrane and after the transportation reaction, the membrane will put the molecule in the output of the model.
 
 \subsection*{the cytoplasm}
 The coupled model for the cytoplasm is the next:
@@ -102,13 +104,14 @@ The coupled model for the cytoplasm is the next:
 
 Is equal to an organelle model, with the main difference that the cytoplasm does not have membrane, the membrane who communicate the input molecule with the compartment of the cytoplasm is the cell membrane. So the compartment send the molecule to an external enzyme in the cell membrane or to an enzyme in an organelle membrane.
 
+\newpage
 \subsection*{the compartment (space model)}
 
 the coupled model for a compartment is the next:
 
 \begin{figure}[h!]
  \centering
-  \includegraphics[width=1\textwidth]{coupled-compartment.jpg}
+  \includegraphics[width=300px]{coupled-compartment.jpg}
  \caption{compartment coupled model. blue color mean atomic models}
 \end{figure}
 
@@ -121,6 +124,39 @@ The next FSM represent the behavior is a Space atomic model.
  \centering
   \includegraphics[width=320px]{atomic-space.jpg}
 \end{figure}
+
+\newpage
+\subsection*{The enzyme set}
+Like I said before, the model for a membrane and an inner is the same, the only difference y that in the membrane the enzymes are transportation enzyme while in the inner there are enzyme who change the substrates in differents products.
+
+The coupled model for a membrane or an inner is the next:
+
+\begin{figure}[h!]
+ \centering
+  \includegraphics[width=300px]{coupled-enzyme-set.jpg}
+ \caption{ensyme set coupled model. blue color mean atomic models, green color mean coupled models}
+\end{figure}
+
+Is a set of enzymes, when an input arrive, it will goes to the correct enzyme. The molecules come with the information about the receptor enzyme to know which one must to take care of this input, this information it will be give it by the compartment model when it send the molecule to the enzyme in the membrane or in the inner.
+
+\subsection*{the cell model}
+Finally once we have all these model, we are able to present the cell model which is a coupled model really simple, but if expand all the submodels until have only atomic models, is bigger. The good thing here, is that there is only 3 atomic models, and as we can see in the FSM they are not to much hard to implement.
+
+\newpage
+The coupled model for the cell is the next:
+
+\begin{figure}[h!]
+ \centering
+  \includegraphics[width=300px]{coupled-cell.jpg}
+ \caption{cell coupled model. Green color mean coupled models}
+\end{figure}
+
+We can see that a cell is basically what we know about cells in real life, The input is connected to a membrane (the cell membrane) and this membrane give the coming up molecules to the cytoplasm where reaction can happens and some times the cytoplasm give this molecules to the organelles (this happen when a molecule is in the same place that one enzyme of the organelle membrane) and after be in the organelles and pass through reactions in there the products of the organelle can go to the Cytoplasm and some times to the membrane and go outside (this happens when the molecules are in the same place that one enzyme of the cell membrane).
+
+\subsection*{conclusions}
+
+The Idea then is to take the information about all the enzyme dynamically from the SBML file and create al the atomic models of enzymes, filters and spaces and then also dynamically through c++ loops create the coupled model with all the connections and the model will be ready to start the simulations.
+The most difficult part of this model I think is the space in $\mathbb{Z}^3$ because I think is not specified in the SMBL, but maybe in can be well approximated by some known shape like a ball. I don't know. This is one of the problems that I want to talk in the next meeting. Also I need to talk about the random functions and how the enzymes and substrate are swimming, if they go only in one direction or a random function in the neighbor said the next position in each interval time, I don't know.
 
 
 \end{document}
