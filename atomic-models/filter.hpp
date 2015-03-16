@@ -4,65 +4,50 @@
 #include <string>
 #include <utility>
 #include <map>
+#include "../data-structures/message.hpp"
 
 
 using namespace boost::simulation::pdevs;
 using namespace std;
-
-/*************************************
-*********type definations*************
-*************************************/
-
-/******** Basic types ************/
-typedef pair<string, double> molecule;
-
-/******** vector types ************/
-typedef vector<molecule> vectorOfMolecules;
-
-typedef pair<string, molecule> tp;
 
 template<class TIME, class MSG>
 class filter : public atomic<TIME, MSG>
 {
 private:
 
-  string      _aceptedInput;
-  vector<MSG> _filteredInput;
-  bool        _hasToSend;
+  string      _model_type;
+  string      _acepted_input;
+  vector<MSG> _filtered_input;
 
 public:
 
-  explicit filter(string other_aceptedInput) noexcept :
-  _aceptedInput(other_aceptedInput),
-  _hasToSend(false) {
-    _filteredInput.clear();
+  explicit filter(string other_model_type, string other_acepted_input) noexcept :
+  _model_type(other_model_type),
+  _acepted_input(other_acepted_input) {
+
+    _filtered_input.clear();
   }
 
   void internal() noexcept { 
-    _hasToSend = false;
-    _filteredInput.clear();
+    _filtered_input.clear();
   }
 
   TIME advance() const noexcept {
-    return _hasToSend?TIME(0):atomic<TIME, MSG>::infinity;
+    return (_filtered_input.size() > 0) ? TIME(0) : atomic<TIME, MSG>::infinity;
   }
 
   vector<MSG> out() const noexcept {
 
-    return _filteredInput; 
+    return _filtered_input; 
   }
 
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
       
-      tp input = boost::any_cast<tp>(*it); 
-      if ( input.first == _aceptedInput){
-        _filteredInput.push_back(boost::any(input.second));
-      }
+      Message msg = boost::any_cast<Message>(*it); 
+      if ( msg.to.at(_model_type) == _acepted_input) _filtered_input.push_back(*it);
     }
-
-    _hasToSend = (_filteredInput.size() > 0);
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {

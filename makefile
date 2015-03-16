@@ -2,13 +2,14 @@ CC=g++-4.9
 CFLAGS=-std=c++11
 INCLUDEBOOST=-I /home/lao/boost_1_57_0
 INCLUDEBCDPP=-I /home/lao/Documents/cdboost/include
-HEADERS=atomic-models/reaction.hpp data-structures/reaction_input.hpp atomic-models/filter.hpp atomic-models/controler.hpp
+MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/controler.hpp
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
+STRUCTUREHEADERS=data-structures/message.hpp data-structures/reaction_input.hpp
 
-all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o
-	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o
+all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o
+	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o
 
-main-ammp.o: main-ammp.cpp $(HEADERS) $(TINYHEADERS)
+main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS)
 	$(CC) -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
@@ -23,6 +24,10 @@ tinyXML/tinyxmlparser.o: tinyXML/tinyxmlparser.cpp $(TINYHEADERS)
 tinyXML/tinystr.o: tinyXML/tinystr.cpp tinyXML/tinystr.h $(TINYHEADERS)
 	$(CC) -c tinyXML/tinystr.cpp -o tinyXML/tinystr.o
 
+data-structures/unit_definition.o: data-structures/unit_definition.cpp data-structures/unit_definition.hpp
+	$(CC) -c data-structures/unit_definition.cpp -o data-structures/unit_definition.o
+
 clean:
 	rm -f ammp *.o *~
 	-for d in tinyXML; do (cd $$d; rm -f *.o *~ ); done
+	-for d in data-structures; do (cd $$d; rm -f *.o *~ ); done
