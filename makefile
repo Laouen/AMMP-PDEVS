@@ -31,3 +31,4 @@ clean:
 	rm -f ammp *.o *~
 	-for d in tinyXML; do (cd $$d; rm -f *.o *~ ); done
 	-for d in data-structures; do (cd $$d; rm -f *.o *~ ); done
+	-for d in atomic-models; do (cd $$d; rm -f *.o *~ ); done

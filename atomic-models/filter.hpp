@@ -10,14 +10,14 @@
 using namespace boost::simulation::pdevs;
 using namespace std;
 
-template<class TIME, class MSG>
-class filter : public atomic<TIME, MSG>
+template<class TIME>
+class filter : public atomic<TIME, Message>
 {
 private:
 
   string      _model_type;
   string      _acepted_input;
-  vector<MSG> _filtered_input;
+  vector<Message> _filtered_input;
 
 public:
 
@@ -33,24 +33,25 @@ public:
   }
 
   TIME advance() const noexcept {
-    return (_filtered_input.size() > 0) ? TIME(0) : atomic<TIME, MSG>::infinity;
+    return (_filtered_input.size() > 0) ? TIME(0) : atomic<TIME, Message>::infinity;
   }
 
-  vector<MSG> out() const noexcept {
+  vector<Message> out() const noexcept {
 
     return _filtered_input; 
   }
 
-  void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
+  void external(const std::vector<Message>& mb, const TIME& t) noexcept {
 
-    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
+    for (typename vector<Message>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
       
-      Message msg = boost::any_cast<Message>(*it); 
-      if ( msg.to.at(_model_type) == _acepted_input) _filtered_input.push_back(*it);
+      if ( (_acepted_input != "") && (it->to.at(_model_type) == _acepted_input) ) {
+        _filtered_input.push_back(*it);
+      }
     }
   }
 
-  virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
+  virtual void confluence(const std::vector<Message>& mb, const TIME& t) noexcept {
 
     external(mb, t);
     internal();
