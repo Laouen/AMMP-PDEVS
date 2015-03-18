@@ -134,8 +134,10 @@ int main () {
   /**************************************** Testing filters *****************************************************/
   /**************************************************************************************************************/
 
+  /*********************************************** TEST 1 *******************************************************/
+  /*
   cout << "Creating the atomic models for the filters:" << endl;
-  cout << "enzyme set: Membrane -> cytoplasm: Cytoplasm ->compartment: Cytoplasm space" << endl;
+  cout << "enzyme set: Membrane -> cytoplasm: Cytoplasm -> compartment: Cytoplasm space" << endl;
   auto membrane_filter = make_atomic_ptr< filter<double>, string, string >("enzyme set", "Membrane");
   auto cytoplasm_filter = make_atomic_ptr< filter<double>, string, string >("cytoplasm", "Cytoplasm");
   auto cytoplasm_space_filter = make_atomic_ptr< filter<double>, string, string >("compartment", "Cytoplasm space");
@@ -163,8 +165,25 @@ int main () {
   auto o3 = make_atomic_ptr< filter<double>, string, string >("organelle", "Cytoplasm space");
   auto o4 = make_atomic_ptr< filter<double>, string, string >("organelle", "organ");
 
+  /*********************************************** TEST 2 *******************************************************/
+
+  cout << "Creating the atomic models for the filters:" << endl;
+  cout << "enzyme set: Membrane -> cytoplasm: Cytoplasm -> compartment: Cytoplasm space" << endl;
+  auto organelle_filter = make_atomic_ptr< filter<double>, string, string >("organelle", "org1");
+  auto cytoplasm_filter = make_atomic_ptr< filter<double>, string, string >("enzyme set", "inner");
+  
+  vector< shared_ptr< model<double> > > enzyme_filters;
+  for (int i = 0; i < 1000; ++i){
+    string enzyme_name = "Cytoplasm space " + to_string(i);
+    cout << enzyme_name << endl;
+    auto new_enzyme_filter = make_atomic_ptr< filter<double>, string, string >("enzyme", "Cytoplasm space" + to_string(i));
+    enzyme_filters.push_back(new_enzyme_filter);
+  }
+
+  /************************************ COUPLED MODEL FOR BOTH TESTS **********************************************/
+
   cout << "Coupling the models into the filter_test_model" << endl;
-  modelsList models   = {membrane_filter, cytoplasm_filter, cytoplasm_space_filter, mf1, mf2, mf3, mf4, cf1, cf2, cf3, cf4, csf1, csf2, csf3, csf4, e1, e2, e3, e4, o1, o2, o3, o4};
+  modelsList models   = {organelle_filter, cytoplasm_filter};
   modelsList eic      = {membrane_filter, e1, mf2, cf3, csf4, o1, e2, mf3, cf4, csf1, csf2, csf3};
   pairOfModelsList ic = {{membrane_filter, cytoplasm_filter}, {cytoplasm_filter, cytoplasm_space_filter} , {membrane_filter, e1}, {membrane_filter, e2}, {membrane_filter, e3}, {membrane_filter, e4}, {membrane_filter, o1}, {membrane_filter, o2}, {membrane_filter, o3}, {membrane_filter, o4}, {cytoplasm_space_filter, mf1}, {cytoplasm_space_filter, mf2}, {cytoplasm_space_filter, mf3}, {cytoplasm_space_filter, mf4}, {cytoplasm_filter, cf1}, {cytoplasm_filter, cf2}, {cytoplasm_filter, cf3}, {cytoplasm_filter, cf4}};
   modelsList eoc      = {membrane_filter, cytoplasm_filter, cytoplasm_space_filter, mf1, mf2, mf3, mf4, cf1, cf2, cf3, cf4, csf1, csf2, csf3, csf4, e1, e2, e3, e4, o1, o2, o3, o4};
