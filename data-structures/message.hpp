@@ -20,7 +20,15 @@ struct Adress {
 	Adress()
 	: _organelle(""), _cytoplasm(""), _ensyme_set(""), _compartment(""), _enzyme("") {}
 
-	string at(string model_type) const{
+	Adress(const Adress& other)
+	: _organelle(other._organelle), _cytoplasm(other._cytoplasm), _ensyme_set(other._ensyme_set), _compartment(other._compartment), _enzyme(other._enzyme) {}
+	
+	Adress(Adress* other)
+	: _organelle(other->_organelle), _cytoplasm(other->_cytoplasm), _ensyme_set(other->_ensyme_set), _compartment(other->_compartment), _enzyme(other->_enzyme) {}
+
+
+
+	string atModel(string model_type) const{
 		
 		string result = "";
 		if(model_type == "organelle") {
@@ -43,7 +51,7 @@ struct Adress {
 		return result;
 	}
 
-	void set(string model_type, string new_value) {
+	void setModel(string model_type, string new_value) {
 
 		if(model_type == "organelle") {
 			
@@ -86,10 +94,16 @@ struct Message {
 	Message()
 	:to(), specie(""), amount(0) {}
 
-	bool sendTo(string model_type, string new_value) {
-		to.set(model_type, new_value);
+	Message(const Message& other)
+	: to(other.to), specie(other.specie), amount(other.amount) {}
 
-		return (to.at(model_type) == new_value);
+	Message(Message* other)
+	: to(other->to), specie(other->specie), amount(other->amount) {}
+
+	bool sendTo(string model_type, string new_value) {
+		to.setModel(model_type, new_value);
+
+		return (to.atModel(model_type) == new_value);
 	}
 };
 
