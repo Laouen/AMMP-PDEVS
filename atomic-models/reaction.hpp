@@ -72,7 +72,7 @@ public:
   }
 
   vector<MSG> out() const noexcept {
-
+ 
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
