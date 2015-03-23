@@ -3,8 +3,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
+
+// boost simalator include
 #include <boost/simulation/pdevs/atomic.hpp>
-#include "../data-structures/reaction_input.hpp"
 
 using namespace boost::simulation::pdevs;
 using namespace std;
@@ -13,11 +15,10 @@ using namespace std;
 *********type definations*************
 *************************************/
 
-/******** Basic types ************/
-typedef pair<string, double> molecule;
 
 /******** vector types ************/
-typedef vector<molecule> vectorOfMolecules;
+typedef map<string, int> setOfMolecules;
+typedef map<string, pair<string, int> > stoichiometryDef;
 
 
 template<class TIME, class MSG>
@@ -25,130 +26,99 @@ class reaction : public atomic<TIME, MSG>
 {
 
 private:
-  string _name;
-  TIME _next;
-  TIME _rate;
-  vectorOfMolecules _reactants;
-  vectorOfMolecules _products;
-  vectorOfMolecules _enzymes;
-  double _counter;
+  string            _name;
+  bool              _reversible;
+  TIME              _rate;
+  setOfMolecules    _reactants;
+  setOfMolecules    _products;
+  stoichiometryDef  _stoichiometry;
+  bool              (*_randomFunction)();
+  bool              _is_reacting;
+  TIME              _next_internal;
+  TIME              _interval_time;
+
 
 public:
 
-  explicit reaction(reaction_input data) noexcept :
-  _name(data.name),
-  _next(atomic<TIME, MSG>::infinity),
-  _rate(data.rate),
-  _reactants(data.reactants),
-  _products(data.products),
-  _enzymes(data.enzymes),
-  _counter(0) {}
+  explicit reaction(string other_name, bool other_reversible, TIME other_rate, TIME other_interval_time stoichiometryDef other_stoichiometry, decltype(_stoichiometry) other_randomFunction) noexcept :
+  _name(other_name),
+  _reversible(other_reversible),
+  _rate(other_rate),
+  _reactants(),
+  _products(),
+  _stoichiometry(other_stoichiometry),
+  _randomFunction(other_randomFunction),
+  _isReacting(false),
+  _next_internal(other_interval_time),
+  _interval_time(other_interval_time) {
+
+    for (stoichiometryDef::const_iterator it = _stoichiometry.cbegin(); it != _stoichiometry.cend(); ++it) {
+      if (it->second.first == "reactant") 
+        _reactants[it->first] = 0;
+      else if (it->second.first == "product") 
+        _products[it->first]  = 0;
+    }
+  }
 
   void internal() noexcept { 
 
-    _counter  = 0;
-    _next     = atomic<TIME, MSG>::infinity;
   }
 
   TIME advance() const noexcept {
-
-    return _next;
+    if (_isReacting)
+      return _rate;
+    else
+      return _next_internal;
   }
 
   vector<MSG> out() const noexcept {
 
-    vector<MSG> result;
-
-    for (vectorOfMolecules::const_iterator i = _products.cbegin(); i != _products.cend(); ++i){
-      result.push_back( boost::any(make_pair(i->first, _counter)) );
-    }
-    return result; 
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
+    if (!_isReacting){
 
-    molecule current_molecule;
+      deleteLeavingSpecies(_reactants);
+      deleteLeavingSpecies(_products);
 
-    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-      current_molecule = boost::any_cast<molecule>(*it);
+      for (vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-      for (vectorOfMolecules::iterator i = _reactants.begin(); i != _reactants.end(); ++i){
-        if (current_molecule.first == i->first ) {
-          i->second += current_molecule.second;
+        if(_reactants[it->specie] != _reactants.end()) {
+          
+          _reactants[it->specie] = max(_stoichiometry[it->specie].second, (_reactants[it->specie] + it->amount));
+        
+        } else if(_products[it->specie] != _products.end()) {
+
+          _products[it->specie] = max(_stoichiometry[it->specie].second, (_products[it->specie] + it->amount));
+
         }
       }
 
-      for (vectorOfMolecules::iterator i = _enzymes.begin(); i != _enzymes.end(); ++i){
-        if (current_molecule.first == i->first ) {
-          i->second = 1;
-        }
-      }
+      _is_reacting = readyForReact(_stoichiometry, _reactants, _products);
     }
 
-    // if there is molecule enough a reaction start taking 0 time to finish.
-    bool enough_molecule  = enoughMolecule(_reactants);
-    bool reactant_present = allEnzymesPresent(_enzymes);
-
-    if (enough_molecule && reactant_present) {
-
-      _counter = minoritySpecies(_reactants);
-
-      for (vectorOfMolecules::iterator i = _reactants.begin(); i != _reactants.end(); ++i){
-        i->second -= _counter;
-      }
-
-      _next = _rate;
-    } else {
-
-      _next = atomic<TIME, MSG>::infinity;
-    }
+    _next_internal = _interval_time - t;
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
 
-      external(mb, t);
-      internal();
+    external(mb, t);
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
 
-  bool enoughMolecule(vectorOfMolecules sp) {
-
-    bool result = true;
-    for (vectorOfMolecules::iterator i = sp.begin(); i != sp.end(); ++i){
-      if (i->second <= 0) {
-
-        result = false;
-        break;
-      }
-    }
-    return result;
+  void deleteLeavingSpecies(setOfMolecules) {
+    cout << "function deleteLeavingSpecies not implemented" << endl;
   }
 
-  bool allEnzymesPresent(vectorOfMolecules rt) {
-
-    bool result = true;
-    for (vectorOfMolecules::iterator i = rt.begin(); i != rt.end(); ++i){
-      if (i->second == 0) {
-        
-        result = false;
-        break;
-      }
-    }
-    return result;
+  bool readyForReact(stoichiometryDef stcmtry, setOfMolecules rectnts, setOfMolecules prdts) {
+    
+    cout << "function readyForReact not implemented" << endl;
+    return true;
   }
 
-  double minoritySpecies(vectorOfMolecules sp) {
-
-    int result = sp.front().second;
-    for (vectorOfMolecules::iterator i = sp.begin(); i != sp.end(); ++i){
-      if (i->second < result)
-        result = i->second;
-    }
-    return result;
-  }
 };
 
 #endif // BOOST_SIMULATION_PDEVS_REACTION_H

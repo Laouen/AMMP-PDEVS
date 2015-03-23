@@ -1,4 +1,3 @@
-// STD includes
 #include <iostream>
 #include <string>
 #include <map>
@@ -7,20 +6,14 @@
 #include <utility>
 #include <vector>
 #include <cmath>
-
-// boost simalator include
 #include <boost/simulation.hpp>
-
-// XML parser include
-#include "tinyXML/tinyxml.h"
-
-// model includes
-#include "atomic-models/filter.hpp"
 #include "atomic-models/reaction.hpp"
-
-// data structure includes
+#include "atomic-models/controler.hpp"
+#include "data-structures/reaction_input.hpp"
 #include "data-structures/unit_definition.hpp"
 #include "data-structures/message.hpp"
+#include "atomic-models/filter.hpp"
+#include "tinyXML/tinyxml.h"
 
 #define TIXML_USE_STL
 
@@ -139,14 +132,81 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 
 int main () {
 
-  map<string, int> stoichiometry;
+  /**************************************************************************************************************/
+  /**************************************** Testing filters *****************************************************/
+  /**************************************************************************************************************/
 
-  reaction<Time, Message> new_reaction("new reaction", false, 1, stoichiometry);
-
+  /*********************************************** TEST 1 *******************************************************/
   /*
+  cout << "Creating the atomic models for the filters:" << endl;
+  cout << "enzyme set: Membrane -> cytoplasm: Cytoplasm -> compartment: Cytoplasm space" << endl;
+  auto membrane_filter = make_atomic_ptr< filter<Time>, string, string >("enzyme set", "Membrane");
+  auto cytoplasm_filter = make_atomic_ptr< filter<Time>, string, string >("cytoplasm", "Cytoplasm");
+  auto cytoplasm_space_filter = make_atomic_ptr< filter<Time>, string, string >("compartment", "Cytoplasm space");
+
+  cout << "Creating the atomic models for the filters that should not let the message pass:" << endl;
+  cout << "4 enzyme set type, 4 cytoplasm type, 4 compartment type, 4 enzyme types, 4 organelle types" << endl;
+  auto mf1 = make_atomic_ptr< filter<Time>, string, string >("enzyme set", "Inner");
+  auto mf2 = make_atomic_ptr< filter<Time>, string, string >("enzyme set", "membrane");
+  auto mf3 = make_atomic_ptr< filter<Time>, string, string >("enzyme set", "Cytoplasm space");
+  auto mf4 = make_atomic_ptr< filter<Time>, string, string >("enzyme set", "");
+  auto cf1 = make_atomic_ptr< filter<Time>, string, string >("cytoplasm", "cyto");
+  auto cf2 = make_atomic_ptr< filter<Time>, string, string >("cytoplasm", "cytoplasm");
+  auto cf3 = make_atomic_ptr< filter<Time>, string, string >("cytoplasm", "Membrane");
+  auto cf4 = make_atomic_ptr< filter<Time>, string, string >("cytoplasm", "");
+  auto csf1 = make_atomic_ptr< filter<Time>, string, string >("compartment", "Cytoplasm-space");
+  auto csf2 = make_atomic_ptr< filter<Time>, string, string >("compartment", "cytoplasm space");
+  auto csf3 = make_atomic_ptr< filter<Time>, string, string >("compartment", "Cytoplasm");
+  auto csf4 = make_atomic_ptr< filter<Time>, string, string >("compartment", "");
+  auto e1 = make_atomic_ptr< filter<Time>, string, string >("enzyme", "Membrane");
+  auto e2 = make_atomic_ptr< filter<Time>, string, string >("enzyme", "Cytoplasm");
+  auto e3 = make_atomic_ptr< filter<Time>, string, string >("enzyme", "Cytoplasm space");
+  auto e4 = make_atomic_ptr< filter<Time>, string, string >("enzyme", "enzym");
+  auto o1 = make_atomic_ptr< filter<Time>, string, string >("organelle", "Membrane");
+  auto o2 = make_atomic_ptr< filter<Time>, string, string >("organelle", "Cytoplasm");
+  auto o3 = make_atomic_ptr< filter<Time>, string, string >("organelle", "Cytoplasm space");
+  auto o4 = make_atomic_ptr< filter<Time>, string, string >("organelle", "organ");
+
+  /*********************************************** TEST 2 *******************************************************/
+
+  cout << "Creating the atomic models for the filters:" << endl;
+  cout << "enzyme set: Membrane -> cytoplasm: Cytoplasm -> compartment: Cytoplasm space" << endl;
+  auto organelle_filter = make_atomic_ptr< filter<Time, Message>, string, string >("organelle", "org");
+  auto inner_filter = make_atomic_ptr< filter<Time, Message>, string, string >("enzyme set", "inner");
+
+  
+  vectorOfModels models = {organelle_filter, inner_filter};
+
+  for (int i = 0; i < 100; ++i){
+    auto new_enzyme_filter = make_atomic_ptr< filter<Time, Message>, string, string >("enzyme", "enzyme " + to_string(i));
+    models.push_back(new_enzyme_filter);
+  }
+
+  /************************************ COUPLED MODEL FOR BOTH TESTS **********************************************/
+
+  cout << "Coupling the models into the filter_test_model" << endl;
+  vectorOfModels      eic = {organelle_filter};
+  vectorOfModels      eoc = models;
+  vectorOfModelPairs  ic;
+
+  for (int i = 1; i < models.size(); ++i) {
+    ic.push_back(make_pair(organelle_filter, models[i]));
+  }
+
+  for (int i = 2; i < models.size(); ++i) {
+    ic.push_back(make_pair(inner_filter, models[i]));
+    for (int j = 2; j < models.size(); ++j) {
+      if (i != j) {
+        ic.push_back(make_pair(models[i], models[j]));
+      }
+    }
+  }
+
+  shared_ptr< flattened_coupled<Time, Message> > filter_test_model( new flattened_coupled<Time, Message>{models, eic, ic, eoc});
+
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
-  piss->str("1 {organelle,org} {enzyme set,inner} {enzyme,enzyme 10} | ADP 2");
+  piss->str("1 {organelle,org} {enzyme set,inner} {enzyme,enzyme 10} | for-enzyme-10 2");
   
   auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
     [](const string& s, Time& t_next, Message& m_next)->void{ 
@@ -194,7 +254,7 @@ int main () {
 
 
   cout << "Coupling the input to the model" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cell}, {}, {{pf, cell}}, {cell}});
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, filter_test_model}, {}, {{pf, filter_test_model}}, {filter_test_model}});
 
   cout << "Preparing runner" << endl;
   Time initial_time{0};
@@ -211,7 +271,7 @@ int main () {
   cout << "Simulation took:" << elapsed << "sec" << endl;
 
   /**************************************************************************************************************/
-  /********************************************* End Models *****************************************************/
+  /************************************** End testing filters ***************************************************/
   /**************************************************************************************************************/
 
   return 0;
