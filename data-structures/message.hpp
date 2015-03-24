@@ -71,6 +71,14 @@ struct Adress {
 		}
 	}
 
+	void clear() {
+		_organelle 		= "";
+		_cytoplasm 		= "";
+		_ensyme_set 	= "";
+		_compartment 	= "";
+		_enzyme 		= "";
+	}
+
 };
 
 ostream& operator<<(ostream& os, Adress to) {
@@ -104,6 +112,12 @@ struct Message {
 		to.setModel(model_type, new_value);
 
 		return (to.atModel(model_type) == new_value);
+	}
+
+	void clear() {
+		this.Adress.clear();
+		this.specie = "";
+		this.amount = 0;
 	}
 };
 
