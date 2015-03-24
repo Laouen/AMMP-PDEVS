@@ -115,9 +115,9 @@ struct Message {
 	}
 
 	void clear() {
-		this.Adress.clear();
-		this.specie = "";
-		this.amount = 0;
+		to.clear();
+		specie = "";
+		amount = 0;
 	}
 };
 

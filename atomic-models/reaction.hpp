@@ -39,7 +39,7 @@ private:
   // function to control which elements stay and which leave
   bool              (*_randomFunction)();
   // to know what it must to do next
-  int               _is_reacting;
+  int               _current_reaction;
   bool              _rejecting_species;
   // time information
   TIME              _next_internal;
@@ -52,23 +52,22 @@ public:
     const string& other_name,
     const bool& other_reversible,
     const TIME& other_rate,
-    const TIME& other_interval_time,
     const stoichiometryDef& other_stoichiometry,
-    decltype(_stoichiometry) other_randomFunction
+    decltype(_stoichiometry) other_randomFunction,
+    const TIME& other_interval_time
   ) noexcept :
   _name(other_name),
   _reversible(other_reversible),
   _rate(other_rate),
+  _stoichiometry(other_stoichiometry),
   _reactants(),
   _products(),
-  _stoichiometry(other_stoichiometry),
+  _species_rejected(),
   _randomFunction(other_randomFunction),
-  _is_reacting(-1),
+  _current_reaction(-1),
   _rejecting_species(false),
   _next_internal(other_interval_time),
   _interval_time(other_interval_time) {
-
-    _species_rejected.clear();
 
     for (stoichiometryDef::const_iterator it = _stoichiometry.cbegin(); it != _stoichiometry.cend(); ++it) {
       if (it->second.first == "reactant") 
@@ -78,23 +77,30 @@ public:
     }
   }
 
-  void internal() noexcept { 
-    if (_is_reacting != -1) {
+  void internal() noexcept {
+
+    if (_rejecting_species){
+
+      _species_rejected.clear();
+      _rejecting_species = false;
+    } else if (_current_reaction != -1) {
 
       resetToZero(_reactants);
       resetToZero(_products);
-      _is_reacting    = -1;
-      _next_internal  = _interval_time;
-    } else if (_rejecting_species){
+      _current_reaction = -1;
+      _next_internal    = _interval_time;
+    } else {
 
-      _species_rejected.clear();
+      removeLeavingSpecies(_reactants, _species_rejected);
+      removeLeavingSpecies(_products, _species_rejected);
+      _rejecting_species  = (_species_rejected.size() > 0);
+      _next_internal      = _interval_time;
     }
   }
 
   TIME advance() const noexcept {
-    if (_is_reacting != -1)
-      return _rate;
-    else if (_rejecting_species)
+
+    if (_rejecting_species)
       return TIME(0);
     else
       return _next_internal;
@@ -102,64 +108,81 @@ public:
 
   vector<MSG> out() const noexcept {
     
-    if (_is_reacting == 0) {
-      return gather(_products);
-    } else if (_is_reacting == 1) {
-      return gather(_reactants);
-    } else if (_rejecting_species) {
+    if (_rejecting_species) {
       return gather(_species_rejected);
+    } else if (_current_reaction == 0) {
+      return gather(_products);
+    } else if (_current_reaction == 1) {
+      return gather(_reactants);
     }
   }
 
- // falta manejar las moleculas que se son rechazadas
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     int rejected_amount;
-    MSG rejected_specie;
-    if (_is_reacting == -1) {
+    bool start_reaction = false;
 
-      deleteLeavingSpecies(_reactants);
-      deleteLeavingSpecies(_products);
+    if (_current_reaction == -1) {
 
-      for (vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+      removeLeavingSpecies(_reactants, _species_rejected);
+      removeLeavingSpecies(_products, _species_rejected);
 
-        rejected_amount = min(bindNeededPart(_reactants, _stoichiometry, it), bindNeededPart(_products, _stoichiometry, it));
-        
+      for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+
+        rejected_amount = min(bindNeededPart(_reactants, _stoichiometry, it), bindNeededPart(_products, _stoichiometry, it));       
         if (rejected_amount > 0) {
-          _species_rejected.push_back(make_pair(it->specie, rejected_amount));
+          if (_species_rejected.find(it->specie)) _species_rejected.at(it->specie) += rejected_amount;
+        else _species_rejected[it->specie] = rejected_amount;
         }
       }
+
+      _current_reaction = readyToReact(_stoichiometry, _reactants, _products);
+      start_reaction    = (_current_reaction != -1);
+
     } else {
 
-      for (vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+      for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-        _species_rejected.push_back(make_pair(it->specie, it->amount));
+        if (_species_rejected.find(it->specie)) _species_rejected.at(it->specie) += it->amount;
+        else _species_rejected[it->specie] = it->amount;
       }
     }
 
-    _is_reacting        = readyToReact(_stoichiometry, _reactants, _products);
     _rejecting_species  = (_species_rejected.size() > 0);
-    _next_internal      = _interval_time - t;
+
+    if (start_reaction) _next_internal = _rate;
+    else if (_current_reaction != -1) _next_internal = (_rate - t);
+    else _next_internal = (_interval_time - t);
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
 
-    internal();
-    external(mb, t);
+    if (_current_reaction == -1) {
+
+      external(mb, t);
+    } else {
+
+      internal();
+      external(mb, t);
+    }
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
 
-  void deleteLeavingSpecies(setOfMolecules& molecules) {
-    int totalAmount;   
+  void removeLeavingSpecies(setOfMolecules& molecules, setOfMolecules& residues) {
+    int totalAmount, totalToDrop;   
 
     for (setOfMolecules::iterator it = molecules.begin(); it != molecules.end(); ++it) {
-      
+      totalToDrop = 0;
       totalAmount = it->second;
       for (int i = 0; i < totalAmount; ++i) {       
-        if (_randomFunction()) --(it->second);
+        if (_randomFunction()) ++totalToDrop;
       }
+      it->second -= totalToDrop;
+
+      if (residues.find(it->first)) residues.at(it->first) += totalToDrop;
+      else residues[it->first] = totalToDrop;
     }
   }
 
@@ -170,16 +193,16 @@ public:
     if (_reversible){
 
       reactantsFull   = isFull(rectnts, stcmtry);
-      reactantsEmpty  = isEmpty(rectnts, stcmtry);
+      reactantsEmpty  = isEmpty(rectnts);
       productsFull    = isFull(prdts, stcmtry);
-      productsEmpty   = isEmpty(prdts, stcmtry);
+      productsEmpty   = isEmpty(prdts);
       
       if (productsEmpty && reactantsFull) {
         result = 0;
       } else if (reactantsEmpty && productsFull) {
-        result = 1
+        result = 1;
       } else {
-        result = -1
+        result = -1;
       }
     } else if (isFull(rectnts, stcmtry)) {
       result = 0;
@@ -194,7 +217,19 @@ public:
     bool result = true;
 
     for (setOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
-      if(stcmtry.at(it->first).second.second > it->second) {
+      if((stcmtry.at(it->first)).second > it->second) {
+        result = false;
+        break;
+      }
+    }
+    return result;
+  }
+
+  bool isEmpty(const setOfMolecules& molecules) {
+    bool result = true;
+
+    for (setOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
+      if(it->second > 0) {
         result = false;
         break;
       }
@@ -215,7 +250,7 @@ public:
 
     if(molecules.find(element->specie) != molecules.end()) {
           
-      free_space = stcmtry.at(element->specie).second.second - molecules.at(element->specie);
+      free_space = stcmtry.at(element->specie).second - molecules.at(element->specie);
       if (element->amount <= free_space){
         molecules.at(element->specie) += element->amount;
         result = 0; 

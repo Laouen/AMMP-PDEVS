@@ -141,7 +141,7 @@ int main () {
 
   map<string, int> stoichiometry;
 
-  reaction<Time, Message> new_reaction("new reaction", false, 1, stoichiometry);
+  reaction<Time, Message> new_reaction("new reaction", false, 1, stoichiometry, [](){return true;}, 2);
 
   /*
   cout << "Creating the model to insert the input from stream" << endl;
