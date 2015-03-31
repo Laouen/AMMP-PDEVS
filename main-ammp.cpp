@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <stdlib.h>
 
 // boost simalator include
 #include <boost/simulation.hpp>
@@ -139,13 +140,19 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 
 typedef map<string, pair<string, int> > stoichiometryDef;
 
+bool randomDesition() {
+  return ((rand() % 100) <= 50);
+}
+
 int main () {
 
+  srand(time(NULL));
   stoichiometryDef stoichiometry;
+  stoichiometry["ADP"] = make_pair("reactant", 4);
 
-  reaction<Time, Message> new_reaction(string("new reaction"), false, double(1), stoichiometry, [](){ return true;}, 2);
+  reaction<Time, Message> new_reaction(string("new reaction"), false, Time(2), stoichiometry, randomDesition, Time(15));
 
-  /*
+ /*
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   piss->str("1 {organelle,org} {enzyme set,inner} {enzyme,enzyme 10} | ADP 2");
