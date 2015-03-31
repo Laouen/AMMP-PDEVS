@@ -2,7 +2,9 @@
 #define BOOST_SIMULATION_PDEVS_REACTION_H
 #include <string>
 #include <utility>
-#include <queue>
+#include <vector>
+#include <algorithm>
+#include <memory>
 #include <map>
 #include <random>
 
@@ -16,21 +18,22 @@ using namespace std;
 /********** Type definations **************/
 /******************************************/
 
-enum reactionStates { REJECTING, REACTING, SELECTING, IDLE };
+enum RState { REJECTING, REACTING, SELECTING, IDLE };
+enum Way { RTP, PTR };
+
+using SetOfMolecules  = map<string, int>;
+using Stctry          = map<string, pair<string, int> >;
 
 template<class TIME>
-struct ReactionData {
-  TIME  time_left;
-  int   direction;
-  int   enzyme_amount;   
+struct Task {
+  TIME            time_left;
+  RState          task_kind;
+  SetOfMolecules  rejected;  
+  pair<Way, int>  reaction;
 };
 
 template<class TIME>
-using VectorOfReactionData  = queue< ReactionData<TIME> >;
-using SetOfMolecules        = map<string, int>;
-using StoichiometryDef      = map<string, pair<string, int> >;
-
-
+using Heap = vector< Task<TIME> >;
 
 /******************************************/
 /******** End type definations ************/
@@ -42,22 +45,17 @@ class reaction : public atomic<TIME, MSG>
 
 private:
   // enzyme information
-  string                      _name;
-  bool                        _reversible;
-  TIME                        _rate;
-  stoichiometryDef            _stoichiometry;
-  int                         _free_amount;
+  string          _name;
+  bool            _reversible;
+  TIME            _rate;
+  Stctry          _stoichiometry;
+  int             _amount;
   // elements bound
-  setOfMolecules              _reactants_not_ready;
-  setOfMolecules              _products_not_ready;
-  setOfMolecules              _rejected_species;
-  // function to control which elements stay and which leave
-  bool                        (*_randomFunction)();
-  // to know what it must to do next
-  ReactionState               _state;
+  SetOfMolecules  _reactants;
+  SetOfMolecules  _products;
+  Heap<TIME>      _tasks;
   // time information
-  VectorOfReactionData<TIME>  _reactions_in_queue;
-  pair<TIME, TIME>            _interval_time;
+  TIME            _interval_time;
 
 
 public:
@@ -67,26 +65,21 @@ public:
     const bool&               other_reversible,
     const TIME&               other_rate,
     const stoichiometryDef&   other_stoichiometry,
-    const int                 other_free_amount;
-    decltype(_randomFunction) other_randomFunction,
+    const int                 other_amount,
     const TIME&               other_interval_time
   ) noexcept :
   _name(other_name),
   _reversible(other_reversible),
   _rate(other_rate),
   _stoichiometry(other_stoichiometry),
-  _free_amount(other_free_amount),
-  _randomFunction(other_randomFunction) {
-    
-    _state          = IDLE;
-    _interval_time  = make_pair(atomic<TIME, MSG>::infinity, other_interval_time);
-
+  _amount(other_amount),
+  _interval_time(other_interval_time) {
 
     for (stoichiometryDef::const_iterator it = _stoichiometry.cbegin(); it != _stoichiometry.cend(); ++it) {
       if (it->second.first == "reactant") 
-        _reactants_not_ready[it->first] = 0;
+        _reactants[it->first] = 0;
       else if (it->second.first == "product") 
-        _products_not_ready[it->first]  = 0;
+        _products[it->first]  = 0;
     }
   }
 
@@ -112,24 +105,7 @@ public:
   }
 
   TIME advance() const noexcept {
-    TIME result;
-
-    switch(_state) { 
-      case IDLE:
-        result = atomic<TIME, MSG>::infinity;
-        break;
-      case REJECTING:
-        result = TIME(0);
-        break;
-      case REACTING:
-        result = _reactions_in_queue.front().time_left;
-        break;
-      case SELECTING:
-        result = _interval_time.first;
-        break;
-    }
-
-    return result;
+    return _tasks.front().time_left;
   }
 
   vector<MSG> out() const noexcept {
@@ -159,37 +135,49 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    int rejected_amount;
-    bool start_reaction = false;
+    int free_space, metabolite_taken, reactant_ready, product_ready, free_of_reactants, free_of_products;
+    Task<TIME> to_reject, rtp, ptr;
 
-    if (_s.reacting) {
-
-      for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-
-        if (_species_rejected.find(it->specie) != _species_rejected.end()) _species_rejected.at(it->specie) += it->amount;
-        else _species_rejected[it->specie] = it->amount;
-      }
-
-    } else {
-
-      for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-
-        rejected_amount = min(bindNeededPart(_reactants, _stoichiometry, *it), bindNeededPart(_products, _stoichiometry, *it)); 
+    // inserting new metaboolits and rejecting the surplus
+    for (vector<MSG>::cont_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+        
+      // binding the allowed amount of metabolits
+      free_space       = (_amount * _stoichiometry.at(it->specie).second) - _reactants.at(it->specie);
+      metabolite_taken = min(it->amount, free_space);
+      this->insertMetabolit(it->specie, metabolites_taken);
       
-        if (rejected_amount > 0) {
-          if (_species_rejected.find(it->specie) != _species_rejected.end()) _species_rejected.at(it->specie) += rejected_amount;
-          else _species_rejected[it->specie] = rejected_amount;
-        }
-      }
-      _s.reaction_in_process  = readyToReact(_stoichiometry, _reactants, _products);
-      start_reaction          = (_s.reaction_in_process != -1);
+      // placing the surplus metabolites in the rejected list
+      addRejected(to_reject.rejected, it->specie, it->amount - metabolite_taken);
     }
 
-    _s.rejecting_species  = (_species_rejected.size() > 0);
+    // looking for new reactions
+    free_of_products    = this->freeOf(_products);
+    free_of_reactants   = this->freeOf(_reactants);
+    reactant_ready      = this->totalReadyFor(_reactants, free_of_products);
+    product_ready       = this->totalReadyFor(_products, free_of_reactants);
+    intersection        = rand() % min(reactant_ready, product_ready); // tengo que mejorar este random
+    reactant_ready      -= intersection;
+    product_ready       -= intersection;
 
-    if (start_reaction)                    _next_internal = _rate;
-    else if (_s.reaction_in_process != -1) _next_internal = (_rate - t);
-    else                                   _next_internal = (_interval_time - t);
+    to_reject.time_left = TIME(0);
+    to_reject.task_kind = REJECTING;
+    this->innsertTask(to_reject);
+
+    if (reactant_ready > 0) {
+      rtp.time_left = _rate;
+      rtp.task_kind = REACTING;
+      rtp.reaction  = make_pair(RTP, reactant_ready);
+      this->innsertTask(ptr);
+    }
+
+    if (product_ready > 0) {
+      prt.time_left = _rate;
+      prt.task_kind = REACTING;
+      prt.reaction  = make_pair(PTR, reactant_ready);
+      this->innsertTask(ptr);
+    }
+
+    this->deleteUsedMetabolics(reactant_ready, product_ready);
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
@@ -206,10 +194,62 @@ public:
   ********* helper functions *************
   ***************************************/
 
-  void removeLeavingSpecies(setOfMolecules& molecules, setOfMolecules& residues) {
+  bool randomBool() {
+    return ((rand() % 100) <= 50);
+  }
+
+  void addRejected(SetOfMolecules& t, string n, int a){
+
+    if (a > 0) {
+      if (t.find(n) != t.end()) {
+        t.at(n) += a;
+      } else {
+        t[n] = a;
+      }
+    }
+  }
+
+  // usando la stoichiometria restar a los reactantes y productos la cantidades utilizadas
+  // _stoichiometry, _reactants, _products
+  void deleteUsedMetabolics(int r, int p) {
+
+  }
+
+  // inserta la tarea t a la cola de tareas de manera de mantener el orden de menor a mayor time_left.
+  void innsertTask(const Task& t) {
+
+  }
+
+  // usando la stoichiometria y el espacio libre (segundo parametro) devuelve la cantidad total de elemento
+  // listo a reaccionar.
+  int totalReadyFor(const SetOfMolecules& elements, int free_space) const {
+
+    return;
+  }
+
+  //usando la stoichiometry y el _amount calcula cuanto es la cantidad de enzymas que estan libres de
+  // ese set de elementos. mira la maximo elemento que aparece y cuantas enzymas este ocupa.
+  int freeOf(const SetOfMolecules& element) const {
+
+  }
+
+  // mirando si la especia y el amount agrega esa cantidad de elementos a los reactantes o productos segun corresponda
+  // o sea, donde pertenesca la especie.
+  void insertMetabolit(string specie, int amount) {
+
+  }
+
+
+
+
+
+
+
+
+  void removeLeavingSpecies(SetOfMolecules& molecules, SetOfMolecules& residues) {
     int totalAmount, totalToDrop;   
 
-    for (setOfMolecules::iterator it = molecules.begin(); it != molecules.end(); ++it) {
+    for (SetOfMolecules::iterator it = molecules.begin(); it != molecules.end(); ++it) {
       totalToDrop = 0;
       totalAmount = it->second;
       for (int i = 0; i < totalAmount; ++i) {       
@@ -222,7 +262,7 @@ public:
     }
   }
 
-  int readyToReact(const stoichiometryDef& stcmtry, const setOfMolecules& rectnts, const setOfMolecules& prdts, const int amount) const {
+  int readyToReact(const stoichiometryDef& stcmtry, const SetOfMolecules& rectnts, const SetOfMolecules& prdts, const int amount) const {
     int   result, ready_reactant_amount, ready_product_amount, interception;
     bool  reactantsFull, reactantsEmpty, productsFull, productsEmpty;
 
@@ -257,10 +297,10 @@ public:
     return result;
   }
 
-  bool isFull(const setOfMolecules& molecules, const stoichiometryDef& stcmtry) const {
+  bool isFull(const SetOfMolecules& molecules, const stoichiometryDef& stcmtry) const {
     bool result = true;
 
-    for (setOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
+    for (SetOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
       if((stcmtry.at(it->first)).second > it->second) {
         result = false;
         break;
@@ -269,10 +309,10 @@ public:
     return result;
   }
 
-  bool isEmpty(const setOfMolecules& molecules) const {
+  bool isEmpty(const SetOfMolecules& molecules) const {
     bool result = true;
 
-    for (setOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
+    for (SetOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
       if(it->second > 0) {
         result = false;
         break;
@@ -281,13 +321,13 @@ public:
     return result;
   }
 
-  void resetToZero(setOfMolecules& molecules) const {
-    for (setOfMolecules::iterator it = molecules.begin(); it != molecules.end(); ++it) {
+  void resetToZero(SetOfMolecules& molecules) const {
+    for (SetOfMolecules::iterator it = molecules.begin(); it != molecules.end(); ++it) {
       it->second = 0;
     }
   }
 
-  int bindNeededPart(setOfMolecules& molecules, const stoichiometryDef& stcmtry, const MSG& element) {
+  int bindNeededPart(SetOfMolecules& molecules, const stoichiometryDef& stcmtry, const MSG& element) {
     int free_space;
     int result = element.amount;
 
@@ -306,11 +346,11 @@ public:
     return result; 
   }
 
-  vector<MSG> gather(const setOfMolecules& molecules) const {
+  vector<MSG> gather(const SetOfMolecules& molecules) const {
     MSG current_message;
     vector<MSG> result;
 
-    for (setOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
+    for (SetOfMolecules::const_iterator it = molecules.cbegin(); it != molecules.cend(); ++it) {
       current_message.clear();
       current_message.specie = it->first;
       current_message.amount = it->second;
@@ -320,10 +360,10 @@ public:
     return result;
   }
 
-  ostream& show(ostream& os, const setOfMolecules& to) const {
+  ostream& show(ostream& os, const SetOfMolecules& to) const {
   os << "[";
 
-    setOfMolecules::const_iterator it = to.cbegin();
+    SetOfMolecules::const_iterator it = to.cbegin();
     while ( it != to.cend()) {
       os << "(" << it->first << "," << it->second << ")";
       ++it;
