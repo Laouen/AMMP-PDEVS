@@ -147,10 +147,6 @@ bool randomDesition() {
 int main () {
 
   srand(time(NULL));
-  stoichiometryDef stoichiometry;
-  stoichiometry["ADP"] = make_pair("reactant", 4);
-
-  reaction<Time, Message> new_reaction(string("new reaction"), false, Time(2), stoichiometry, randomDesition, Time(15));
 
  /*
   cout << "Creating the model to insert the input from stream" << endl;
