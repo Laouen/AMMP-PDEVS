@@ -8,43 +8,14 @@
 #include <algorithm> // min, max, lowe_bound
 #include <memory> // shared_ptr
 #include <random> // rand
+#include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+#include "../data-structures/types.hpp" // SetOfMolecules, Task, Rstate, Way, TaskQueue
 
-// boost simalator include
-#include <boost/simulation/pdevs/atomic.hpp>
+
 
 using namespace boost::simulation::pdevs;
 using namespace std;
 
-/******************************************/
-/********** Type definations **************/
-/******************************************/
-
-enum RState { REJECTING, REACTING, SELECTING, IDLE };
-enum Way { RTP, PTR };
-
-using SetOfMolecules  = map<string, int>;
-
-template<class TIME>
-struct Task {
-  TIME            time_left;
-  RState          task_kind;
-  SetOfMolecules  rejected;  
-  pair<Way, int>  reaction;
-
-  inline bool operator<(const Task<TIME>& o) {
-    if (time_left < o.time_left) return true;
-    else if ((task_kind == SELECTING) && (o.task_kind != SELECTING)) return true;
-    else if ((task_kind == REJECTING) && (o.task_kind != SELECTING) && (o.task_kind != REJECTING)) return true;
-    return false;
-  }
-};
-
-template<class TIME>
-using TaskQueue = list< Task<TIME> >;
-
-/******************************************/
-/******** End type definations ************/
-/******************************************/
 
 template<class TIME, class MSG>
 class reaction : public atomic<TIME, MSG>
@@ -108,14 +79,14 @@ public:
 
           amount_leaving  = rand() % (it->second + 1);
           it->second      -= amount_leaving;
-          increaseValue(to_reject.rejected, it->first, amount_leaving);
+          addRejected(to_reject.rejected, it->first, amount_leaving);
         }
 
         for (SetOfMolecules::iterator it = _products.begin(); it != _products.end(); ++it) {
 
           amount_leaving  = rand() % (it->second + 1);
           it->second      -= amount_leaving;
-          increaseValue(to_reject.rejected, it->first, amount_leaving);
+          addRejected(to_reject.rejected, it->first, amount_leaving);
         }
 
         if (to_reject.rejected.size() > 0) {
@@ -134,6 +105,7 @@ public:
   }
 
   TIME advance() const noexcept {
+
     return _tasks.front().time_left;
   }
 
@@ -222,30 +194,46 @@ public:
   ***************************************/
 
   void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, Task<TIME>& tr) {
-    int free_space;
-    int metabolites_taken = 0;
+    int free_space, metabolites_taken_r, metabolites_taken_p;
+    bool is_reactant, is_product;
 
     for (typename vector<MSG>::cont_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-        
-      // binding the allowed amount of metabolits
-      if (_reactants_sctry.find(it->specie) != _reactants_sctry.end()){
-
-        free_space                = (_amount * _reactants_sctry.at(it->specie)) - _reactants.at(it->specie);
-        metabolites_taken         = min(it->amount, free_space);
-        _reactants.at(it->specie) += metabolites_taken;
-      } else if ((_products_sctry.find(it->specie) != _products_sctry.end()) && _reversible) {
       
-        free_space                = (_amount * _products_sctry.at(it->specie)) - _products.at(it->specie);
-        metabolites_taken         = min(it->amount, free_space);
-        _products.at(it->specie)  += metabolites_taken;
+      metabolites_taken_r = metabolites_taken_p = 0;
+      is_reactant = _reactants_sctry.find(it->specie) != _reactants_sctry.end();
+      is_product  = _products_sctry.find(it->specie) != _products_sctry.end(); 
+
+      // binding the allowed amount of metabolits
+      if (is_reactant){
+
+        free_space          = (_amount * _reactants_sctry.at(it->specie)) - _reactants.at(it->specie);
+        metabolites_taken_r = min(it->amount, free_space);
+
+        if (is_product) {
+          metabolites_taken_r = rand() % (metabolites_taken_r + 1);
+        }
+
+        _reactants.at(it->specie) += metabolites_taken_r;
+      } 
+
+      if (is_product && _reversible) {
+      
+        free_space          = (_amount * _products_sctry.at(it->specie)) - _products.at(it->specie);
+        metabolites_taken_p = min(it->amount, free_space);
+
+        if (is_reactant) {
+          metabolites_taken_p = min(metabolites_taken_p, it->amount - metabolites_taken_r);
+        }
+
+        _products.at(it->specie) += metabolites_taken_p;
       }
       
       // placing the surplus metabolites in the rejected list
-      increaseValue(tr.rejected, it->specie, it->amount - metabolites_taken);
+      addRejected(tr.rejected, it->specie, it->amount - (metabolites_taken_p + metabolites_taken_r));
     }
   }
 
-  void increaseValue(SetOfMolecules& t, string n, int a){
+  void addRejected(SetOfMolecules& t, string n, int a){
 
     if (a > 0) {
       if (t.find(n) != t.end()) {

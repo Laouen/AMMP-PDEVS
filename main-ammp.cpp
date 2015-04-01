@@ -22,6 +22,7 @@
 // data structure includes
 #include "data-structures/unit_definition.hpp"
 #include "data-structures/message.hpp"
+#include "data-structures/types.hpp"
 
 #define TIXML_USE_STL
 
@@ -138,7 +139,6 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 /***************************************** Testing models *****************************************************/
 /**************************************************************************************************************/
 
-typedef map<string, pair<string, int> > stoichiometryDef;
 
 bool randomDesition() {
   return ((rand() % 100) <= 50);
