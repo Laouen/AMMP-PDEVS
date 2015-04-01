@@ -58,12 +58,11 @@ private:
   SetOfMolecules  _products_sctry;
   SetOfMolecules  _reactants_sctry;
   int             _amount;
+  TIME            _interval_time;
   // elements bound
   SetOfMolecules  _reactants;
   SetOfMolecules  _products;
   TaskQueue<TIME> _tasks;
-  // time information
-  TIME            _interval_time;
 
 
 public:
@@ -81,7 +80,7 @@ public:
   _reversible(other_reversible),
   _rate(other_rate),
   _products_sctry(other_products_sctry),
-  _products_sctry(other_reactants_sctry),
+  _reactants_sctry(other_reactants_sctry),
   _amount(other_amount),
   _interval_time(other_interval_time) {
 
@@ -109,14 +108,14 @@ public:
 
           amount_leaving  = rand() % (it->second + 1);
           it->second      -= amount_leaving;
-          addRejected(to_reject.rejected, it->first, amount_leaving);
+          increaseValue(to_reject.rejected, it->first, amount_leaving);
         }
 
         for (SetOfMolecules::iterator it = _products.begin(); it != _products.end(); ++it) {
 
           amount_leaving  = rand() % (it->second + 1);
           it->second      -= amount_leaving;
-          addRejected(to_reject.rejected, it->first, amount_leaving);
+          increaseValue(to_reject.rejected, it->first, amount_leaving);
         }
 
         if (to_reject.rejected.size() > 0) {
@@ -125,6 +124,9 @@ public:
           to_reject.task_kind = REJECTING;
           this->innsertTask(to_reject);
         }
+      } else if (_tasks.front().task_kind == REACTING) {
+
+        _amount += _tasks.front().reaction.second;
       }
 
       _tasks.pop_front();
@@ -179,13 +181,11 @@ public:
     this->bindMetabolitsAndDropSurplus(mb, to_reject);
 
     // looking for new reactions
-    free_of_products    = this->freeOf(_products);
-    free_of_reactants   = this->freeOf(_reactants);
-    reactant_ready      = this->totalReadyFor(RTP, free_of_products);
-    product_ready       = this->totalReadyFor(PTR, free_of_reactants);
-    intersection        = rand() % min(reactant_ready, product_ready); // tengo que mejorar este random
-    reactant_ready      -= intersection;
-    product_ready       -= intersection;
+    reactant_ready  = this->totalReadyFor(RTP);
+    product_ready   = this->totalReadyFor(PTR);
+    intersection    = rand() % min(reactant_ready, product_ready); // tengo que mejorar este random
+    reactant_ready  -= intersection;
+    product_ready   -= intersection;
 
     if (to_reject.rejected.size() > 0) {
 
@@ -213,45 +213,39 @@ public:
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
 
-    internal();
     external(mb, t);
+    internal();
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
 
-  bool randomBool() {
-    
-    return ((rand() % 100) <= 50);
-  }
-
   void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, Task<TIME>& tr) {
-    int free_space, metabolites_taken;
+    int free_space;
+    int metabolites_taken = 0;
 
     for (typename vector<MSG>::cont_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
         
       // binding the allowed amount of metabolits
       if (_reactants_sctry.find(it->specie) != _reactants_sctry.end()){
 
-        free_space        = (_amount * _reactants_sctry.at(it->specie)) - _reactants.at(it->specie);
-        metabolites_taken = min(it->amount, free_space);
-        this->insertMetabolit(it->specie, metabolites_taken);
-      
+        free_space                = (_amount * _reactants_sctry.at(it->specie)) - _reactants.at(it->specie);
+        metabolites_taken         = min(it->amount, free_space);
+        _reactants.at(it->specie) += metabolites_taken;
       } else if ((_products_sctry.find(it->specie) != _products_sctry.end()) && _reversible) {
       
-        free_space        = (_amount * _products_sctry.at(it->specie)) - _products.at(it->specie);
-        metabolites_taken = min(it->amount, free_space);
-        this->insertMetabolit(it->specie, metabolites_taken);
-      
+        free_space                = (_amount * _products_sctry.at(it->specie)) - _products.at(it->specie);
+        metabolites_taken         = min(it->amount, free_space);
+        _products.at(it->specie)  += metabolites_taken;
       }
       
       // placing the surplus metabolites in the rejected list
-      addRejected(tr.rejected, it->specie, it->amount - metabolites_taken);
+      increaseValue(tr.rejected, it->specie, it->amount - metabolites_taken);
     }
   }
 
-  void addRejected(SetOfMolecules& t, string n, int a){
+  void increaseValue(SetOfMolecules& t, string n, int a){
 
     if (a > 0) {
       if (t.find(n) != t.end()) {
@@ -273,6 +267,8 @@ public:
     for (SetOfMolecules::iterator it = _products.begin(); it != _products.end(); ++it) {
       it->second -= r * _products_sctry.at(it->first); 
     }
+
+    _amount -= r + p;
   }
 
   // inserta la tarea t a la cola de tareas de manera de mantener el orden de menor a mayor time_left.
@@ -283,19 +279,22 @@ public:
 
   // usando la stoichiometria y el espacio libre (segundo parametro) devuelve la cantidad total de elemento
   // listo a reaccionar.
-  int totalReadyFor(Way d, int fr) const {
-    
+  int totalReadyFor(Way d) const {
+    int fr;
+
     SetOfMolecules *curr_metabolics, *curr_sctry;   
     if (d == RTP) {
       curr_metabolics = &_reactants;
       curr_sctry      = &_reactants_sctry;
+      fr              = this->freeOf(_products);
     } else {
       curr_metabolics = &_products;
       curr_sctry      = &_products_sctry;
+      fr              = this->freeOf(_reactants);
     }
 
     int m = 0;
-    for (SetOfMolecules::iterator it = curr_metabolics->begin(); it != curr_metabolics->end(); ++it)
+    for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
       m = min(m, (it->second / curr_sctry->at(it->first)));
 
     return min(m,fr);
@@ -315,18 +314,10 @@ public:
     }
 
     int m = 0;
-    for (SetOfMolecules::iterator it = curr_metabolics->begin(); it != curr_metabolics->end(); ++it)
+    for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
       m = max(m, (it->second / curr_sctry->at(it->first)) + 1); 
 
     return m;
-  }
-
-  // mirando si la especia y el amount agrega esa cantidad de elementos a los reactantes o productos segun corresponda
-  // o sea, donde pertenesca la especie.
-  void insertMetabolit(string s, int a) {
-
-    if (_reactants_sctry.find(s) != _reactants_sctry.end())     _reactants.at(s) += a;
-    else if (_products_sctry.find(s) != _products_sctry.end())  _products.at(s)  += a;
   }
 
 
