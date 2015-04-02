@@ -94,7 +94,7 @@ struct Message {
 	
 	Adress to;
 	string specie;
-	double amount;
+	int amount;
 
 	Message(Adress other_to, string other_specie, double other_amount)
 	: to(other_to), specie(other_specie), amount(other_amount) {}

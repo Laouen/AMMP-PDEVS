@@ -8,6 +8,7 @@
 #include <vector>
 #include <cmath>
 #include <stdlib.h>
+#include <limits>
 
 // boost simalator include
 #include <boost/simulation.hpp>
@@ -140,14 +141,39 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 /**************************************************************************************************************/
 
 
-bool randomDesition() {
-  return ((rand() % 100) <= 50);
-}
-
 int main () {
 
   srand(time(NULL));
-
+  
+  Task<double> a, b, c, d, e;
+  SetOfMolecules react_stoichiometry;
+  SetOfMolecules prod_stoichiometry;
+  react_stoichiometry["M_12dgr140_c"] = 1;
+  react_stoichiometry["M_atp_c"]      = 1;
+  prod_stoichiometry["M_adp_c"]       = 1;
+  prod_stoichiometry["M_h_c"]         = 1;
+  prod_stoichiometry["M_pa140_c"]     = 1;
+  
+  reaction<Time, Message> r1("diacylglycerol kinase (n-C14:0)", true, 0.5, react_stoichiometry, prod_stoichiometry, 20, 1);
+  Message m1 ,m2, m3, m4;
+  m1.specie = "M_atp_c";
+  m1.amount = 15;
+  r1.external({m1}, 1);
+  r1.show(cout);
+  m1.specie = "M_12dgr140_c";
+  m1.amount = 12;
+  m2.specie = "M_adp_c";
+  m2.amount = 11;
+  m3.specie = "M_h_c";
+  m3.amount = 6;
+  m4.specie = "M_pa140_c";
+  m4.amount = 9;
+  r1.internal();
+  r1.external({m2, m3, m1}, 4);
+  r1.show(cout);
+  r1.internal();
+  r1.external({m4}, 6);
+  r1.show(cout);
  /*
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
