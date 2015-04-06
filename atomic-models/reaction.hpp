@@ -67,65 +67,42 @@ public:
 
   void internal() noexcept {
 
-    bool reactants_clean, products_clean;
-    int amount_leaving;
-    Task<TIME> to_reject, new_selection;
-    bool already_selected_them  = false;
-    TIME current_time = _tasks.front().time_left;
-    TaskQueue<TIME> new_Tasks;
-
+    Task<TIME> to_reject;
+    bool already_selected = false;
 
     // Updating time left
-    this->updateTaskTimeLefts(current_time);
+    this->updateTaskTimeLefts(_tasks.front().time_left);
 
 
     // Processing all the tasks with time left == 0 (happening now)
-    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)){
+    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+      cout << "entra" << endl;  
+      if ((it->task_kind == SELECTING) && !already_selected) {
+
+        this->selectFrom(_reactants, to_reject);
+        
+        this->selectFrom(_products, to_reject);
+
+        this->lookForNewReactions();
+
+        already_selected = true;
       
-      if ((it->task_kind == SELECTING) && !already_selected_them) {
-
-        for (SetOfMolecules::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
-
-          amount_leaving  = rand() % (it->second + 1);
-          it->second      -= amount_leaving;
-          addRejected(to_reject.rejected, it->first, amount_leaving);
-        }
-
-        for (SetOfMolecules::iterator it = _products.begin(); it != _products.end(); ++it) {
-
-          amount_leaving  = rand() % (it->second + 1);
-          it->second      -= amount_leaving;
-          addRejected(to_reject.rejected, it->first, amount_leaving);
-        }
-
-        if (to_reject.rejected.size() > 0) {
-
-          to_reject.time_left = TIME(0);
-          to_reject.task_kind = REJECTING;
-          new_Tasks.push_back(to_reject);
-        }
-
-        reactants_clean = isClean(_reactants);
-        products_clean  = isClean(_products);
-
-        if (!reactants_clean || !products_clean) {
-
-          new_selection.time_left = _interval_time;
-          new_selection.task_kind = SELECTING;
-          new_Tasks.push_back(new_selection);
-        }
-
-        already_selected_them = true;
       } else if (it->task_kind == REACTING) {
 
         _amount += it->reaction.second;
       } 
     }
 
-    // inserting new task
-    for (typename TaskQueue<TIME>::iterator it = new_Tasks.begin(); it != new_Tasks.end(); ++it) {
-      this->innsertTask(*it);
+    // add leaving metabolites to the tasks
+    if (to_reject.rejected.size() > 0) {
+
+      to_reject.time_left = TIME(0);
+      to_reject.task_kind = REJECTING;
+      this->innsertTask(to_reject);
     }
+
+    // if there is more metabolites set a new selection tasks in interval time
+    this->setNextSelection();
   }
 
   TIME advance() const noexcept {
@@ -140,9 +117,7 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    for (typename TaskQueue<TIME>::const_iterator it = _tasks.cbegin(); it != _tasks.cend(); ++it) {
-      
-      if (it->time_left > current_time) break;
+    for (typename TaskQueue<TIME>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
 
       if (it->task_kind == REJECTING) {
         
@@ -171,15 +146,18 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
-    int reactant_ready, product_ready, free_of_reactants, free_of_products, intersection;
-    bool reactants_clean, products_clean, selection_already_programed;
-    Task<TIME> to_reject, rtp, ptr, new_selection;
+    Task<TIME> to_reject, new_selection;
+    
     // Updating time left
     this->updateTaskTimeLefts(t);
 
     // inserting new metaboolits and rejecting the surplus
     this->bindMetabolitsAndDropSurplus(mb, to_reject);
 
+    // looking for new reactions
+    this->lookForNewReactions();
+
+    // add rejecting surplus to the tasks
     if (to_reject.rejected.size() > 0) {
 
       to_reject.time_left = TIME(0);
@@ -187,43 +165,14 @@ public:
       this->innsertTask(to_reject);
     }
 
-    // looking for new reactions
-    reactant_ready  = this->totalReadyFor(RTP);
-    product_ready   = this->totalReadyFor(PTR);
-    intersection    = rand() % (min(reactant_ready, product_ready) + 1); // tengo que mejorar este random
-    reactant_ready  -= intersection;
-    product_ready   -= intersection;
-
-    this->deleteUsedMetabolics(reactant_ready, product_ready);
-
-    if (reactant_ready > 0) {
-      rtp.time_left = _rate;
-      rtp.task_kind = REACTING;
-      rtp.reaction  = make_pair(RTP, reactant_ready);
-      this->innsertTask(rtp);
-    }
-
-    if (product_ready > 0) {
-      ptr.time_left = _rate;
-      ptr.task_kind = REACTING;
-      ptr.reaction  = make_pair(PTR, product_ready);
-      this->innsertTask(ptr);
-    }
-
-    reactants_clean = isClean(_reactants);
-    products_clean  = isClean(_products);
-    if ((!reactants_clean || !products_clean) && !this->thereIsNextSelection()) {
-
-      new_selection.time_left = _interval_time;
-      new_selection.task_kind = SELECTING;
-      this->innsertTask(new_selection);
-    }
+    // if there is more metabolites set a new selection tasks in interval time
+    this->setNextSelection();
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
 
     internal();
-    external(mb, t);
+    external(mb, TIME(0));
   }
 
   /***************************************
@@ -279,6 +228,56 @@ public:
     }
   }
 
+  void lookForNewReactions() {
+    int reactant_ready, product_ready, intersection_range, intersection;
+    Task<TIME> rtp, ptr;
+
+    reactant_ready      = this->totalReadyFor(RTP);
+    product_ready       = this->totalReadyFor(PTR);
+    intersection_range  = min(reactant_ready, product_ready) + 1;
+    intersection        = rand() % intersection_range; // I MUST TO USE BETTER RANDOM FUNCTIONS
+    reactant_ready      -= intersection;
+    product_ready       -= intersection;
+
+    this->deleteUsedMetabolics(reactant_ready, product_ready);
+
+    if (reactant_ready > 0) {
+      rtp.time_left = _rate;
+      rtp.task_kind = REACTING;
+      rtp.reaction  = make_pair(RTP, reactant_ready);
+      this->innsertTask(rtp);
+    }
+
+    if (product_ready > 0) {
+      ptr.time_left = _rate;
+      ptr.task_kind = REACTING;
+      ptr.reaction  = make_pair(PTR, product_ready);
+      this->innsertTask(ptr);
+    }
+  }
+
+  void setNextSelection() {
+    Task<TIME> new_selection;
+    
+    if ( (!isClean(_reactants) || !isClean(_products)) && !this->thereIsNextSelection() ) {
+
+      new_selection.time_left = _interval_time;
+      new_selection.task_kind = SELECTING;
+      this->innsertTask(new_selection);
+    }
+  }
+
+  void selectFrom(SetOfMolecules& m, Task<TIME>& t) {
+    int amount_leaving;
+
+    for (SetOfMolecules::iterator it = m.begin(); it != m.end(); ++it) {
+
+      amount_leaving  = rand() % (it->second + 1); // I MUST TO USE BETTER RANDOM FUNCTIONS
+      it->second      -= amount_leaving;
+      addRejected(t.rejected, it->first, amount_leaving);
+    }
+  }
+
   // Add the rejected amount of the species specified in n by inserting/increasing the amount a in the set Of Molecule (garbage set) t.
   void addRejected(SetOfMolecules& t, string n, int a){
 
@@ -331,7 +330,7 @@ public:
 
     int m = numeric_limits<int>::max();
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = min(m, (it->second / curr_sctry->at(it->first)));
+      m = min(m, (int)floor(it->second / curr_sctry->at(it->first)));
 
     return min(m,fr);
   }
@@ -344,18 +343,18 @@ public:
     const SetOfMolecules *curr_sctry;
 
     if (d == RTP) {
-      curr_metabolics = &_reactants;
-      curr_sctry      = &_reactants_sctry;
-    } else {
       curr_metabolics = &_products;
       curr_sctry      = &_products_sctry;
+    } else {
+      curr_metabolics = &_reactants;
+      curr_sctry      = &_reactants_sctry;
     }
 
     int m = 0;
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = max(m, (it->second / curr_sctry->at(it->first)) + 1); 
+      m = max( m, (int)ceil(it->second / curr_sctry->at(it->first)) ); 
 
-    return m;
+    return _amount - m;
   }
 
   bool isClean(const SetOfMolecules& t) {
@@ -375,7 +374,7 @@ public:
     bool result = false;
 
     for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      if (it->task_kind == SELECTING) {
+      if ((it->task_kind == SELECTING) && (it->time_left <= _interval_time)) {
         result = true;
         break;
       }
