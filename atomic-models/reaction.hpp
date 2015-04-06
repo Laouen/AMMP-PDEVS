@@ -66,21 +66,23 @@ public:
   }
 
   void internal() noexcept {
+
     bool reactants_clean, products_clean;
     int amount_leaving;
-    Task<TIME> to_reject, new_programed_selection;
+    Task<TIME> to_reject, new_selection;
     bool already_selected_them  = false;
-    Task<TIME> curr_task        = _tasks.front();
-    TIME current_time           = curr_task.time_left;
+    TIME current_time = _tasks.front().time_left;
+    TaskQueue<TIME> new_Tasks;
+
 
     // Updating time left
     this->updateTaskTimeLefts(current_time);
 
 
-    // Processing all the tasks with time left 0 (happening now)
-    while(curr_task.time_left == 0) {
-
-      if ((curr_task.task_kind == SELECTING) && !already_selected_them) {
+    // Processing all the tasks with time left == 0 (happening now)
+    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)){
+      
+      if ((it->task_kind == SELECTING) && !already_selected_them) {
 
         for (SetOfMolecules::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
 
@@ -100,7 +102,7 @@ public:
 
           to_reject.time_left = TIME(0);
           to_reject.task_kind = REJECTING;
-          this->innsertTask(to_reject);
+          new_Tasks.push_back(to_reject);
         }
 
         reactants_clean = isClean(_reactants);
@@ -108,19 +110,21 @@ public:
 
         if (!reactants_clean || !products_clean) {
 
-          new_programed_selection.time_left = _interval_time;
-          new_programed_selection.task_kind = SELECTING;
-          this->innsertTask(new_programed_selection);
+          new_selection.time_left = _interval_time;
+          new_selection.task_kind = SELECTING;
+          new_Tasks.push_back(new_selection);
         }
 
         already_selected_them = true;
-      } else if (curr_task.task_kind == REACTING) {
+      } else if (it->task_kind == REACTING) {
 
-        _amount += curr_task.reaction.second;
-      }
+        _amount += it->reaction.second;
+      } 
+    }
 
-      _tasks.pop_front();
-      curr_task = _tasks.front();
+    // inserting new task
+    for (typename TaskQueue<TIME>::iterator it = new_Tasks.begin(); it != new_Tasks.end(); ++it) {
+      this->innsertTask(*it);
     }
   }
 
@@ -166,9 +170,10 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
+
     int reactant_ready, product_ready, free_of_reactants, free_of_products, intersection;
     bool reactants_clean, products_clean, selection_already_programed;
-    Task<TIME> to_reject, rtp, ptr, new_programed_selection;
+    Task<TIME> to_reject, rtp, ptr, new_selection;
     // Updating time left
     this->updateTaskTimeLefts(t);
 
@@ -209,9 +214,9 @@ public:
     products_clean  = isClean(_products);
     if ((!reactants_clean || !products_clean) && !this->thereIsNextSelection()) {
 
-      new_programed_selection.time_left = _interval_time;
-      new_programed_selection.task_kind = SELECTING;
-      this->innsertTask(new_programed_selection);
+      new_selection.time_left = _interval_time;
+      new_selection.task_kind = SELECTING;
+      this->innsertTask(new_selection);
     }
   }
 
