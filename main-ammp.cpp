@@ -146,31 +146,31 @@ int main () {
   srand(time(NULL));
   SetOfMolecules react_stoichiometry, prod_stoichiometry;
   string reaction_name;
-  vectorOfModels models, eic, eoc;
+  vectorOfModels models, eic, eoc, m;
   vectorOfModelPairs ic;
   Message msg;
-  string specie_names[12] = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+  string specie_names[26] = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
   cout << "Creating the reaction models" << endl;
-  for (int i = 0; i < 5; ++i){
+  for (int i = 0; i < 20; ++i){
     for (int j = 0; j < 100; ++j){
       react_stoichiometry.clear();
       prod_stoichiometry.clear();
-      reaction_name                               = "r" + to_string((i*100)+j);
-      react_stoichiometry[specie_names[(i*2)+0]]  = 1;
-      react_stoichiometry[specie_names[(i*2)+1]]  = 1;
-      prod_stoichiometry[specie_names[(i*2)+2]]   = 1;
-      prod_stoichiometry[specie_names[(i*2)+3]]   = 1;
+      reaction_name                                       = "r" + to_string((i*100)+j);
+      react_stoichiometry[specie_names[((i*2)+0) % 26]]   = 1;
+      react_stoichiometry[specie_names[((i*2)+1) % 26]]   = 1;
+      prod_stoichiometry[specie_names[((i*2)+2) % 26]]    = 1;
+      prod_stoichiometry[specie_names[((i*2)+3) % 26]]    = 1;
 
       models.push_back( make_atomic_ptr<reaction<Time, Message>, string, bool, Time, SetOfMolecules, SetOfMolecules, int, Time>(reaction_name, false, 0.000001, react_stoichiometry, prod_stoichiometry, 100, 0.000001) );
     }
   }
-  
+
+  // puting a lots of reactions together and look the performance
   cout << "Creating lists" << endl;
-  for (int i = 0; i < 4; ++i){
+  for (int i = 0; i < 19; ++i){
     for (int j = 0; j < 100; ++j){
       for (int l = 0; l < 100; ++l){
-
         ic.push_back(make_pair(models[i*100+j], models[i*100+100+l]));
       }
     }
@@ -179,17 +179,31 @@ int main () {
   for (int i = 0; i < 100; ++i) {
     eic.push_back(models[i]);
   }
-
-  for (int i = 400; i < 500; ++i) {
+  
+  for (int i = 1900; i < 2000; ++i) {
     eoc.push_back(models[i]);
   }
-
   cout << "Coupling the reaction models" << endl;
   shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{models, eic, ic, eoc});
   
+  /*
+  tracing a reaction chain starting with A and B and ending with O and P.
+  for (int i = 0; i < 1900; i +=100) {
+    ic.push_back(make_pair(models[i], models[i+100]));
+    m.push_back(models[i]);
+  }
+
+  m.push_back(models[1900]);
+
+  eic.push_back(models[0]);
+  eoc.push_back(models[1900]);
+  cout << "Coupling the reaction models" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{m, eic, ic, eoc});
+  */
+  
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
-  piss->str("1 | A 1");
+  piss->str("1 | A 1 \n 1 | B 1");
   
   auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
     [](const string& s, Time& t_next, Message& m_next)->void{ 
@@ -237,7 +251,7 @@ int main () {
 
 
   cout << "Coupling the input to the model" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cell}, {}, {{pf, cell}}, {}});
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cell}, {}, {{pf,cell}}, {cell}});
 
   cout << "Preparing runner" << endl;
   Time initial_time{0};
