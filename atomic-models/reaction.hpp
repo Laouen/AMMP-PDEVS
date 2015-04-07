@@ -24,29 +24,29 @@ class reaction : public atomic<TIME, MSG>
 
 private:
   // enzyme information
-  string          _name;
-  bool            _reversible;
-  TIME            _rate;
-  SetOfMolecules  _reactants_sctry;
-  SetOfMolecules  _products_sctry;
-  int             _amount;
-  TIME            _interval_time;
+  string              _name;
+  bool                _reversible;
+  TIME                _rate;
+  SetOfMolecules      _reactants_sctry;
+  SetOfMolecules      _products_sctry;
+  integer             _amount;
+  TIME                _interval_time;
   // elements bound
-  SetOfMolecules  _reactants;
-  SetOfMolecules  _products;
-  TaskQueue<TIME> _tasks;
+  SetOfMolecules      _reactants;
+  SetOfMolecules      _products;
+  TaskQueue<TIME>     _tasks;
 
 
 public:
 
   explicit reaction(
-    const string&           other_name,
-    const bool&             other_reversible,
-    const TIME&             other_rate,
-    const SetOfMolecules&   other_reactants_sctry,
-    const SetOfMolecules&   other_products_sctry,
-    const int               other_amount,
-    const TIME&             other_interval_time
+    const string&             other_name,
+    const bool&               other_reversible,
+    const TIME&               other_rate,
+    const SetOfMolecules&     other_reactants_sctry,
+    const SetOfMolecules&     other_products_sctry,
+    const integer             other_amount,
+    const TIME&               other_interval_time
   ) noexcept :
   _name(other_name),
   _reversible(other_reversible),
@@ -180,7 +180,7 @@ public:
 
   // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
   void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, Task<TIME>& tr) {
-    int free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
+    integer free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
     bool is_reactant, is_product;
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
@@ -228,7 +228,7 @@ public:
   }
 
   void lookForNewReactions() {
-    int reactant_ready, product_ready, intersection_range, intersection;
+    integer reactant_ready, product_ready, intersection_range, intersection;
     Task<TIME> rtp, ptr;
 
     reactant_ready      = this->totalReadyFor(RTP);
@@ -267,7 +267,7 @@ public:
   }
 
   void selectFrom(SetOfMolecules& m, Task<TIME>& t) {
-    int amount_leaving;
+    integer amount_leaving;
 
     for (SetOfMolecules::iterator it = m.begin(); it != m.end(); ++it) {
 
@@ -278,7 +278,7 @@ public:
   }
 
   // Add the rejected amount of the species specified in n by inserting/increasing the amount a in the set Of Molecule (garbage set) t.
-  void addRejected(SetOfMolecules& t, string n, int a){
+  void addRejected(SetOfMolecules& t, string n, integer a){
 
     if (a > 0) {
       if (t.find(n) != t.end()) {
@@ -290,7 +290,7 @@ public:
   }
 
   // It decrease the number of reactants and products removing the specified number by the parameters r and p.
-  void deleteUsedMetabolics(int r, int p) {
+  void deleteUsedMetabolics(integer r, integer p) {
 
     for (SetOfMolecules::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
       it->second -= r * _reactants_sctry.at(it->first); 
@@ -311,8 +311,8 @@ public:
   }
 
   // It return the total number of enzymes that are ready to react in the way specified by the parameter d.
-  int totalReadyFor(Way d) const {
-    int fr;
+  integer totalReadyFor(Way d) const {
+    integer fr;
 
     const SetOfMolecules *curr_metabolics; 
     const SetOfMolecules *curr_sctry;
@@ -327,16 +327,16 @@ public:
       fr              = this->freeFor(PTR);
     }
 
-    int m = numeric_limits<int>::max();
+    integer m = numeric_limits<integer>::max();
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = min(m, (int)floor(it->second / curr_sctry->at(it->first)));
+      m = min(m, (integer)floor(it->second / curr_sctry->at(it->first)));
 
     return min(m,fr);
   }
 
   //usando la stoichiometry y el _amount calcula cuanto es la cantidad de enzymas que estan libres de
   // ese set de elementos. mira la maximo elemento que aparece y cuantas enzymas este ocupa.
-  int freeFor(Way d) const {
+  integer freeFor(Way d) const {
     
     const SetOfMolecules *curr_metabolics;
     const SetOfMolecules *curr_sctry;
@@ -349,9 +349,9 @@ public:
       curr_sctry      = &_reactants_sctry;
     }
 
-    int m = 0;
+    integer m = 0;
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = max( m, (int)ceil(it->second / curr_sctry->at(it->first)) ); 
+      m = max( m, (integer)ceil(it->second / curr_sctry->at(it->first)) ); 
 
     return _amount - m;
   }

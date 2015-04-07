@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include "types.hpp"
 
 using namespace std;
 
@@ -94,9 +95,9 @@ struct Message {
 	
 	Adress to;
 	string specie;
-	int amount;
+	integer amount;
 
-	Message(Adress other_to, string other_specie, double other_amount)
+	Message(Adress other_to, string other_specie, integer other_amount)
 	: to(other_to), specie(other_specie), amount(other_amount) {}
 
 	Message()

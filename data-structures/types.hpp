@@ -1,6 +1,10 @@
 #ifndef BOOST_SIMULATION_TYPES_H
 #define BOOST_SIMULATION_TYPES_H
 
+
+#include <list>
+#include <vector>
+#include <map>
 /******************************************/
 /********** Type definations **************/
 /******************************************/
@@ -10,14 +14,15 @@ using namespace std;
 enum RState { REJECTING, REACTING, SELECTING };
 enum Way { RTP, PTR };
 
-using SetOfMolecules  = map<string, int>;
+using integer = unsigned long long;
+using SetOfMolecules  = map<string, integer>;
 
 template<class TIME>
 struct Task {
   TIME            time_left;
   RState          task_kind;
   SetOfMolecules  rejected;  
-  pair<Way, int>  reaction;
+  pair<Way, integer>  reaction;
 
   Task() {}
 
