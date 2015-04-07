@@ -183,16 +183,7 @@ int main () {
   for (int i = 400; i < 500; ++i) {
     eoc.push_back(models[i]);
   }
-  
-  cout << "conextions: " << ic.size() << endl;
-  msg.specie = "A";
-  msg.amount = 1;
-  auto r1 = dynamic_pointer_cast< reaction<Time, Message> >(models[0]);
-  r1->external({msg}, 0);
-  r1->show(cout);
-  cout << endl;
 
-  /*
   cout << "Coupling the reaction models" << endl;
   shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{models, eic, ic, eoc});
   
