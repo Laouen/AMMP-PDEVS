@@ -144,244 +144,40 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 int main () {
 
   srand(time(NULL));
-  SetOfMolecules react_stoichiometry;
-  SetOfMolecules prod_stoichiometry;
+  SetOfMolecules react_stoichiometry, prod_stoichiometry;
+  string reaction_name;
   int action, enzymes;
   double rate, interval_time, current_time;
-  bool reversible, add;
-  bool non_stop = true;
-  map<string, shared_ptr< reaction<Time, Message> > > reactions;
-  map<string, Message> messages;
-  vector<Message> messages_to_send, output;
-  string name, reaction_name, trash;
+  bool reversible;
+  vectorOfModels models(500);
+  vector<Message> messages, messages_to_send, output;
   Message msg;
+  char specieas[12] = "ABCDEFGHIJKL";
 
-  // initial reaction
-  react_stoichiometry["A"] = 1;
-  react_stoichiometry["B"] = 2;
-  prod_stoichiometry["C"] = 3;
-  prod_stoichiometry["D"] = 1;
-  reactions["r1"] = make_shared< reaction<Time, Message> > (reaction<Time, Message>("r1", true, 0.3, react_stoichiometry, prod_stoichiometry, 1, 0.5) );
+  cout << "Creating the reaction models" << endl
+  for (int i = 0; i < 5; ++i){
+    for (int j = 0; j < 100; ++j){
+      reaction_name                           = "r" + to_string((i*100)+j);
+      react_stoichiometry[specieas[(i*2)+0]]  = 1;
+      react_stoichiometry[specieas[(i*2)+1]]  = 1;
+      prod_stoichiometry[specieas[(i*2)+2]]   = 1;
+      prod_stoichiometry[specieas[(i*2)+3]]   = 1;
 
-  // initial menssages
-  msg.specie = "A";
-  msg.amount = 8;
-  messages["m1"] = msg;
+      models.push_back( make_atomic_ptr<reaction<Time, Message>, string, bool, Time, SetOfMolecules, SetOfMolecules, int, Time>(reaction_name, false, 0.000001, react_stoichiometry, prod_stoichiometry, 100, 0.000001) );
+    }
+  }
 
-  msg.specie = "B";
-  msg.amount = 15;
-  messages["m2"] = msg;
-
-  msg.specie = "C";
-  msg.amount = 23;
-  messages["m3"] = msg;
-
-  msg.specie = "D";
-  msg.amount = 5;
-  messages["m4"] = msg;
-
-  // menu
-  while(non_stop) {
-    system("clear");
-    cout << "chois next action:" << endl;
-    cout << "1 \t create new reaction" << endl;
-    cout << "2 \t create new message" << endl;
-    cout << "3 \t show messages" << endl;
-    cout << "4 \t show reactions" << endl;
-    cout << "5 \t make external" << endl;
-    cout << "6 \t make internal" << endl;
-    cout << "7 \t make out" << endl;
-    cout << "8 \t make advance" << endl;
-    cout << "9 \t make confluence" << endl;
-    cout << "other \t exit" << endl;
-    cin >> action;
-
-    switch(action) {
-      case 1:
-        system("clear");
-        react_stoichiometry.clear();
-        prod_stoichiometry.clear();
-
-        cout << "name: ";
-        cin >> reaction_name;
-        
-        cout << "make react_stoichiometry:" << endl;
-        cout << "add specie: ";
-        cin >> add;
-        while(add) {
-          cout << "new specie name: ";
-          cin >> name;
-          cout << "amount: ";
-          cin >> react_stoichiometry[name];
-          cout << "add specie: ";
-          cin >> add;
-        }
-
-        cout << "make prod_stoichiometry:" << endl;
-        cout << "add specie: ";
-        cin >> add;
-        while(add) {
-          cout << "new specie name: ";
-          cin >> name;
-          cout << "amount: ";
-          cin >> prod_stoichiometry[name];
-          cout << "add specie: ";
-          cin >> add;
-        }
-
-        cout << "reversible: ";
-        cin >> reversible;
-
-        cout << "rate time: ";
-        cin >> rate;
-
-        cout << "interval time: ";
-        cin >> interval_time;
-
-        cout << "total enzymes: ";
-        cin >> enzymes;
-
-        reactions[reaction_name] = make_shared< reaction<Time, Message> > (reaction<Time, Message>(reaction_name, reversible, rate, react_stoichiometry, prod_stoichiometry, enzymes, interval_time) );
-        break;
-
-      case 2:
-        system("clear");
-        cout << "message name: ";
-        cin >> name;
-
-        cout << "specie: ";
-        cin >> msg.specie;
-
-        cout << "amount: ";
-        cin >> msg.amount;
-
-        messages[name] = msg;
-        break;
-
-      case 3:
-        system("clear");
-        for (map<string, Message>::iterator i = messages.begin(); i != messages.end(); ++i) {
-          cout << i->first << ":" << endl;
-          cout << i->second << endl;
-        }
-
-        cout << "come back to menu: ";
-        cin >> trash;
-        break;
+  cout << "Coupling the reaction models" << endl
+  for (int i = 0; i < 5; ++i){
+    for (int j = 0; j < 100; ++j){
       
-      case 4:
-        system("clear");
-        for (map<string, shared_ptr< reaction<Time, Message> > >::iterator i = reactions.begin(); i != reactions.end(); ++i) {
-          cout << i->first << ":" << endl;
-          i->second->show(cout);
-          cout << endl;
-        }
-
-        cout << "come back to menu: ";
-        cin >> trash;
-        break;
-
-      case 5:
-        system("clear");
-        messages_to_send.clear();
-
-        cout << "reaction name: ";
-        cin >> reaction_name;
-
-        cout << "add messages: ";
-        cin >> add;
-
-        while(add) {
-
-          cout << "message name: ";
-          cin >> name;
-          messages_to_send.push_back(messages[name]);
-
-          cout << "add messages: ";
-          cin >> add;
-        }
-
-        cout << "time elapsed: ";
-        cin >> current_time;
-
-        reactions[reaction_name]->external(messages_to_send, current_time);
-        break;
-
-      case 6:
-        system("clear");
-        
-        cout << "reaction name: ";
-        cin >> reaction_name;
-
-        reactions[reaction_name]->internal();
-        break;
-
-      case 7:
-        system("clear");
-        
-        cout << "reaction name: ";
-        cin >> reaction_name;
-
-        output = reactions[reaction_name]->out();
-
-        for (vector<Message>::iterator i = output.begin(); i != output.end(); ++i) {
-          cout << *i << endl;
-        }
-
-        cout << "come back to menu: ";
-        cin >> trash;
-        break;
-
-      case 8:
-        system("clear");
-        
-        cout << "reaction name: ";
-        cin >> reaction_name;
-
-        cout << "next internal: ";
-        cout << reactions[reaction_name]->advance();
-        cout << endl;
-
-        cout << "come back to menu: ";
-        cin >> trash;
-        break;
-
-      case 9:
-        system("clear");
-        messages_to_send.clear();
-
-        cout << "reaction name: ";
-        cin >> reaction_name;
-
-        cout << "add messages: ";
-        cin >> add;
-
-        while(add) {
-
-          cout << "message name: ";
-          cin >> name;
-          messages_to_send.push_back(messages[name]);
-
-          cout << "add messages: ";
-          cin >> add;
-        }
-
-        cout << "time elapsed: ";
-        cin >> current_time;
-
-        reactions[reaction_name]->confluence(messages_to_send, current_time);
-        break;
-
-      default:
-        system("clear");
-        non_stop = false;
+      models.push_back( make_atomic_ptr<reaction<Time, Message>, string, bool, Time, SetOfMolecules, SetOfMolecules, int, Time>(reaction_name, false, 0.000001, react_stoichiometry, prod_stoichiometry, 100, 0.000001) );
     }
   }
   
- /*
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
-  piss->str("1 {organelle,org} {enzyme set,inner} {enzyme,enzyme 10} | ADP 2");
+  piss->str("1 | ADP 2");
   
   auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
     [](const string& s, Time& t_next, Message& m_next)->void{ 
