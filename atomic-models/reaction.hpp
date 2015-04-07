@@ -73,10 +73,9 @@ public:
     // Updating time left
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-
     // Processing all the tasks with time left == 0 (happening now)
     for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
-      cout << "entra" << endl;  
+
       if ((it->task_kind == SELECTING) && !already_selected) {
 
         this->selectFrom(_reactants, to_reject);
@@ -221,7 +220,7 @@ public:
   }
 
   // Decrease the time left of all the current tasks in _tasks by the parameter t.
-  void updateTaskTimeLefts(const TIME& t){
+  void updateTaskTimeLefts(TIME t){
 
     for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
       it->time_left -= t;
