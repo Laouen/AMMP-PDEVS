@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 #include <map>
-#include "../data-structures/reaction_input.hpp"
+#include "../data-structures/types.hpp"
 
 
 using namespace boost::simulation::pdevs;
@@ -24,6 +24,8 @@ template<class TIME, class MSG>
 class space : public atomic<TIME, MSG>
 {
 private:
+  TIME _next_internal;
+  TIME _interval_time;
 
 public:
 
@@ -34,6 +36,8 @@ public:
   }
 
   TIME advance() const noexcept {
+    
+    return _next_internal;
   }
 
   vector<MSG> out() const noexcept {
@@ -44,6 +48,9 @@ public:
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
+
+    internal();
+    external(mb, TIME(0));
   }
 };
 
