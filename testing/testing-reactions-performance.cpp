@@ -100,7 +100,7 @@ int main () {
   shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{models, eic, ic, eoc});
   
   /*
-  tracing a reaction chain starting with A and B and ending with O and P.
+  //tracing a reaction chain starting with A and B and ending with O and P.
   for (int i = 0; i < 1900; i +=100) {
     ic.push_back(make_pair(models[i], models[i+100]));
     m.push_back(models[i]);

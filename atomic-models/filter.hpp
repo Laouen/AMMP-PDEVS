@@ -4,7 +4,6 @@
 #include <string>
 #include <utility>
 #include <map>
-#include "../data-structures/message.hpp"
 
 
 using namespace boost::simulation::pdevs;
