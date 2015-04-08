@@ -12,8 +12,6 @@
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 #include "../data-structures/types.hpp" // SetOfMolecules, Task, Rstate, Way, TaskQueue
 
-
-
 using namespace boost::simulation::pdevs;
 using namespace std;
 
@@ -29,7 +27,7 @@ private:
   TIME                _rate;
   SetOfMolecules      _reactants_sctry;
   SetOfMolecules      _products_sctry;
-  integer             _amount;
+  Integer             _amount;
   TIME                _interval_time;
   // elements bound
   SetOfMolecules      _reactants;
@@ -45,7 +43,7 @@ public:
     const TIME&               other_rate,
     const SetOfMolecules&     other_reactants_sctry,
     const SetOfMolecules&     other_products_sctry,
-    const integer             other_amount,
+    const Integer             other_amount,
     const TIME&               other_interval_time
   ) noexcept :
   _name(other_name),
@@ -76,7 +74,7 @@ public:
     // Processing all the tasks with time left == 0 (happening now)
     for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
 
-      if ((it->task_kind == SELECTING) && !already_selected) {
+      if ((it->task_kind == RState::SELECTING) && !already_selected) {
 
         this->selectFrom(_reactants, to_reject);
         
@@ -86,7 +84,7 @@ public:
 
         already_selected = true;
       
-      } else if (it->task_kind == REACTING) {
+      } else if (it->task_kind == RState::REACTING) {
 
         _amount += it->reaction.second;
       } 
@@ -96,7 +94,7 @@ public:
     if (to_reject.rejected.size() > 0) {
 
       to_reject.time_left = TIME(0);
-      to_reject.task_kind = REJECTING;
+      to_reject.task_kind = RState::REJECTING;
       this->innsertTask(to_reject);
     }
 
@@ -118,7 +116,7 @@ public:
 
     for (typename TaskQueue<TIME>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
 
-      if (it->task_kind == REJECTING) {
+      if (it->task_kind == RState::REJECTING) {
         
         for (SetOfMolecules::const_iterator jt = it->rejected.cbegin(); jt != it->rejected.cend(); ++jt) {
           new_message.clear();
@@ -126,10 +124,10 @@ public:
           new_message.amount = jt->second;
           result.push_back(new_message); 
         }
-      } else if (it->task_kind == REACTING) {
+      } else if (it->task_kind == RState::REACTING) {
 
-        if (it->reaction.first == RTP)      curr_sctry = &_products_sctry;
-        else if (it->reaction.first == PTR) curr_sctry = &_reactants_sctry;
+        if (it->reaction.first == Way::RTP)      curr_sctry = &_products_sctry;
+        else if (it->reaction.first == Way::PTR) curr_sctry = &_reactants_sctry;
 
         for (SetOfMolecules::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
           new_message.clear();
@@ -160,7 +158,7 @@ public:
     if (to_reject.rejected.size() > 0) {
 
       to_reject.time_left = TIME(0);
-      to_reject.task_kind = REJECTING;
+      to_reject.task_kind = RState::REJECTING;
       this->innsertTask(to_reject);
     }
 
@@ -180,7 +178,7 @@ public:
 
   // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
   void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, Task<TIME>& tr) {
-    integer free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
+    Integer free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
     bool is_reactant, is_product;
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
@@ -228,11 +226,11 @@ public:
   }
 
   void lookForNewReactions() {
-    integer reactant_ready, product_ready, intersection_range, intersection;
+    Integer reactant_ready, product_ready, intersection_range, intersection;
     Task<TIME> rtp, ptr;
 
-    reactant_ready      = this->totalReadyFor(RTP);
-    product_ready       = this->totalReadyFor(PTR);
+    reactant_ready      = this->totalReadyFor(Way::RTP);
+    product_ready       = this->totalReadyFor(Way::PTR);
     intersection_range  = min(reactant_ready, product_ready) + 1;
     intersection        = rand() % intersection_range; // I MUST TO USE BETTER RANDOM FUNCTIONS
     reactant_ready      -= intersection;
@@ -242,15 +240,15 @@ public:
 
     if (reactant_ready > 0) {
       rtp.time_left = _rate;
-      rtp.task_kind = REACTING;
-      rtp.reaction  = make_pair(RTP, reactant_ready);
+      rtp.task_kind = RState::REACTING;
+      rtp.reaction  = make_pair(Way::RTP, reactant_ready);
       this->innsertTask(rtp);
     }
 
     if (product_ready > 0) {
       ptr.time_left = _rate;
-      ptr.task_kind = REACTING;
-      ptr.reaction  = make_pair(PTR, product_ready);
+      ptr.task_kind = RState::REACTING;
+      ptr.reaction  = make_pair(Way::PTR, product_ready);
       this->innsertTask(ptr);
     }
   }
@@ -261,13 +259,13 @@ public:
     if ( (!isClean(_reactants) || !isClean(_products)) && !this->thereIsNextSelection() ) {
 
       new_selection.time_left = _interval_time;
-      new_selection.task_kind = SELECTING;
+      new_selection.task_kind = RState::SELECTING;
       this->innsertTask(new_selection);
     }
   }
 
   void selectFrom(SetOfMolecules& m, Task<TIME>& t) {
-    integer amount_leaving;
+    Integer amount_leaving;
 
     for (SetOfMolecules::iterator it = m.begin(); it != m.end(); ++it) {
 
@@ -278,7 +276,7 @@ public:
   }
 
   // Add the rejected amount of the species specified in n by inserting/increasing the amount a in the set Of Molecule (garbage set) t.
-  void addRejected(SetOfMolecules& t, string n, integer a){
+  void addRejected(SetOfMolecules& t, string n, Integer a){
 
     if (a > 0) {
       if (t.find(n) != t.end()) {
@@ -290,7 +288,7 @@ public:
   }
 
   // It decrease the number of reactants and products removing the specified number by the parameters r and p.
-  void deleteUsedMetabolics(integer r, integer p) {
+  void deleteUsedMetabolics(Integer r, Integer p) {
 
     for (SetOfMolecules::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
       it->second -= r * _reactants_sctry.at(it->first); 
@@ -311,37 +309,37 @@ public:
   }
 
   // It return the total number of enzymes that are ready to react in the way specified by the parameter d.
-  integer totalReadyFor(Way d) const {
-    integer fr;
+  Integer totalReadyFor(Way d) const {
+    Integer fr;
 
     const SetOfMolecules *curr_metabolics; 
     const SetOfMolecules *curr_sctry;
 
-    if (d == RTP) {
+    if (d == Way::RTP) {
       curr_metabolics = &_reactants;
       curr_sctry      = &_reactants_sctry;
-      fr              = this->freeFor(RTP);
+      fr              = this->freeFor(Way::RTP);
     } else {
       curr_metabolics = &_products;
       curr_sctry      = &_products_sctry;
-      fr              = this->freeFor(PTR);
+      fr              = this->freeFor(Way::PTR);
     }
 
-    integer m = numeric_limits<integer>::max();
+    Integer m = numeric_limits<Integer>::max();
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = min(m, (integer)floor(it->second / curr_sctry->at(it->first)));
+      m = min(m, (Integer)floor(it->second / curr_sctry->at(it->first)));
 
     return min(m,fr);
   }
 
   //usando la stoichiometry y el _amount calcula cuanto es la cantidad de enzymas que estan libres de
   // ese set de elementos. mira la maximo elemento que aparece y cuantas enzymas este ocupa.
-  integer freeFor(Way d) const {
+  Integer freeFor(Way d) const {
     
     const SetOfMolecules *curr_metabolics;
     const SetOfMolecules *curr_sctry;
 
-    if (d == RTP) {
+    if (d == Way::RTP) {
       curr_metabolics = &_products;
       curr_sctry      = &_products_sctry;
     } else {
@@ -349,9 +347,9 @@ public:
       curr_sctry      = &_reactants_sctry;
     }
 
-    integer m = 0;
+    Integer m = 0;
     for (SetOfMolecules::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = max( m, (integer)ceil(it->second / curr_sctry->at(it->first)) ); 
+      m = max( m, (Integer)ceil(it->second / curr_sctry->at(it->first)) ); 
 
     return _amount - m;
   }
@@ -373,7 +371,7 @@ public:
     bool result = false;
 
     for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      if ((it->task_kind == SELECTING) && (it->time_left <= _interval_time)) {
+      if ((it->task_kind == RState::SELECTING) && (it->time_left <= _interval_time)) {
         result = true;
         break;
       }
@@ -403,19 +401,19 @@ public:
   ostream& show(ostream& os, const Task<TIME>& to) {
 
     string kind, w;
-    if (to.task_kind == SELECTING)        kind = "SELECTING";
-    else if (to.task_kind == REJECTING)   kind = "REJECTING";
-    else if (to.task_kind == REACTING)    kind = "REACTING";
+    if (to.task_kind == RState::SELECTING)        kind = "RState::SELECTING";
+    else if (to.task_kind == RState::REJECTING)   kind = "RState::REJECTING";
+    else if (to.task_kind == RState::REACTING)    kind = "RState::REACTING";
 
     os << "Task Kind: " << kind << endl;
     os << "Time left: " << to.time_left << endl;
 
-    if(to.task_kind == REJECTING) {
+    if(to.task_kind == RState::REJECTING) {
       show(os, to.rejected);
-    } else if (to.task_kind == REACTING) {
+    } else if (to.task_kind == RState::REACTING) {
 
-      if (to.reaction.first == RTP)       w = "RTP";
-      else if (to.reaction.first == PTR)  w = "PTR";
+      if (to.reaction.first == Way::RTP)       w = "Way::RTP";
+      else if (to.reaction.first == Way::PTR)  w = "Way::PTR";
 
       os << "way: " << w << " amount: " << to.reaction.second;
     }

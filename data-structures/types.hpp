@@ -5,24 +5,27 @@
 #include <list>
 #include <vector>
 #include <map>
+
 /******************************************/
 /********** Type definations **************/
 /******************************************/
 
 using namespace std;
 
-enum RState { REJECTING, REACTING, SELECTING };
-enum Way { RTP, PTR };
 
-using integer = unsigned long long;
-using SetOfMolecules  = map<string, integer>;
+enum class RState { REJECTING, REACTING, SELECTING };
+enum class SState { SENDING, SELECTING };
+enum class Way { RTP, PTR };
+
+using Integer = unsigned long long;
+using SetOfMolecules  = map<string, Integer>;
 
 template<class TIME>
 struct Task {
-  TIME            time_left;
-  RState          task_kind;
-  SetOfMolecules  rejected;  
-  pair<Way, integer>  reaction;
+  TIME                time_left;
+  RState              task_kind;
+  SetOfMolecules      rejected;  
+  pair<Way, Integer>  reaction;
 
   Task() {}
 
@@ -41,8 +44,8 @@ struct Task {
       result = (time_left < o.time_left);
     } else {
 
-      if ((task_kind == SELECTING) && (o.task_kind != SELECTING)) result = true;
-      else if ((task_kind == REJECTING) && (o.task_kind == REACTING)) result = true;
+      if ((task_kind == RState::SELECTING) && (o.task_kind != RState::SELECTING)) result = true;
+      else if ((task_kind == RState::REJECTING) && (o.task_kind == RState::REACTING)) result = true;
       else result = false;
     }
 
@@ -56,11 +59,11 @@ struct Task {
     result = (time_left == o.time_left);
     result = result && (task_kind == o.task_kind);
 
-    if (task_kind == REJECTING) {
+    if (task_kind == RState::REJECTING) {
       result = result && (rejected == o.rejected);
     }
 
-    if (task_kind == REACTING) {
+    if (task_kind == RState::REACTING) {
       result = result && (reaction == o.reaction);
     }    
 
@@ -72,54 +75,6 @@ struct Task {
 template<class TIME>
 using TaskQueue = list< Task<TIME> >;
 
-ostream& show(ostream& os, const SetOfMolecules& to) {
-
-  os << "[";
-
-  SetOfMolecules::const_iterator it = to.cbegin();
-  while ( it != to.cend()) {
-    os << "(" << it->first << "," << it->second << ")";
-    ++it;
-    if (it != to.cend()) os << ",";
-  }
-  os << "]";
-  return os;
-}
-
-template<class TIME>
-ostream& show(ostream& os, const Task<TIME>& to) {
-
-  string kind, w;
-  if (to.task_kind == SELECTING)        kind = "SELECTING";
-  else if (to.task_kind == REJECTING)   kind = "REJECTING";
-  else if (to.task_kind == REACTING)    kind = "REACTING";
-
-  os << "Task Kind: " << kind << endl;
-  os << "Time left: " << to.time_left << endl;
-
-  if(to.task_kind == REJECTING) {
-    show(os, to.rejected);
-  } else if (to.task_kind == REACTING) {
-
-    if (to.reaction.first == RTP)       w = "RTP";
-    else if (to.reaction.first == PTR)  w = "PTR";
-
-    os << "way: " << w << " amount: " << to.reaction.second;
-  }
-
-  return os;
-}
-
-template<class TIME>
-ostream& show(ostream& os, const TaskQueue<TIME>& to) {
-
-  os << "Current Tasks in the queue: ";
-  for (typename TaskQueue<TIME>::const_iterator it = to.cbegin(); it != to.cend(); ++it) {
-    os << endl << endl;
-    show(cout, *it);
-  }
-  return os;
-}
 
 /******************************************/
 /******** End type definations ************/
