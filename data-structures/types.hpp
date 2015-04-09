@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 
-#define e 2.71828182845904523536028747135266249775724709369995
 
 using namespace std;
 
@@ -16,7 +15,7 @@ using namespace std;
 /******************************************/
 
 enum class RState { REJECTING, REACTING, SELECTING };
-enum class SState { SENDING, SELECTING };
+enum class SState { SENDING, SELECTING, IDLE };
 enum class Way { RTP, PTR };
 
 using Integer = unsigned long long;
@@ -27,6 +26,8 @@ using SetOfMolecules  = map<string, Integer>;
 /******************************************/
 /******** End enums and renames ***********/
 /******************************************/
+
+long double e = 2.71828182845904523536028747135266249775724709369995L;
 
 template<class TIME>
 struct Task {

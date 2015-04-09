@@ -2,9 +2,9 @@ CC=g++-4.9
 CFLAGS=-std=c++11
 INCLUDEBOOST=-I /home/lao/boost_1_57_0
 INCLUDEBCDPP=-I /home/lao/Documents/cdboost/include
-MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp
+MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/space.hpp
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
-STRUCTUREHEADERS=data-structures/types.hpp
+STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp
 
 all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o
 	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o

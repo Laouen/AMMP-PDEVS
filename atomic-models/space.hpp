@@ -1,12 +1,15 @@
 #ifndef BOOST_SIMULATION_PDEVS_CONTROLER_H
 #define BOOST_SIMULATION_PDEVS_CONTROLER_H
-#include <boost/simulation/pdevs/atomic.hpp>
 #include <string>
 #include <utility>
 #include <map>
 #include <math.h>
 #include <random>
+
+#include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+
 #include "../data-structures/types.hpp" // number e, metabolite_info_t, enzyme_info_t, SState, Integer
+#include "../data-structures/randomNumbers.hpp" // IntegerRandom
 
 
 using namespace boost::simulation::pdevs;
@@ -25,37 +28,46 @@ private:
   map<string, metabolite_info_t>    _metabolites;
   map<string, enzyme_info_t>        _enzymes;
   double                            _volume;
+  double                            _factor;
   SState                            _s;
-  // used for
-  random_device                     _rd;
-  mt19937                           _generator;
-  uniform_real_distribution<double> _distribution;
+  // used for uniform random numbers
+  RealRandom<double>                _distribution;
 
 public:
 
   explicit space(
-    TIME                            other_next_internal,
-    TIME                            other_interval_time,
-    map<string, metabolite_info_t>  other_metabolites
-    map<string, enzyme_info_t>      other_enzymes,
-    double                          other_volume,
+    const TIME                            other_interval_time,
+    const map<string, metabolite_info_t>& other_metabolites,
+    const map<string, enzyme_info_t>&     other_enzymes,
+    const double                          other_volume,
+    const double                          other_factor
     ) noexcept :
-  _next_internal(other_next_internal),
   _interval_time(other_interval_time),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume),
-  _s(SState::SELECTING),
-  _rd(),
-  _generator(_rd),
-  _distribution(0.0,1.0) {}
+  _factor(other_factor) {
+
+    random_device rd;
+    _distribution.seed(rd());
+
+    if (this->thereIsMetabolites()) {
+      
+      _s              = SState::SELECTING;
+      _next_internal  = _interval_time;
+    } else {
+      
+      _s = SState::IDLE;
+      _next_internal = atomic<TIME, MSG>::infinity;
+    }
+  }
 
   void internal() noexcept {
 
     if (_s == SState::SELECTING) {
       
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-        it->to_send = this->weightedRandomBool(it->amount);
+        it->second.to_send = this->weightedRandomBool(it->second.amount);
       }
 
       _next_internal  = TIME(0);
@@ -64,14 +76,21 @@ public:
 
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
-        if (it->to_send) {
-          it->amount  = 0;
-          it->to_send = false;
+        if (it->second.to_send) {
+          it->second.amount  = 0;
+          it->second.to_send = false;
         }
       }
 
-      _next_internal  = _interval_time;
-      _s              = SState::SELECTING;
+      if (this->thereIsMetabolites()) {
+        
+        _s              = SState::SELECTING;
+        _next_internal  = _interval_time;
+      } else {
+        
+        _s              = SState::IDLE;
+        _next_internal  = atomic<TIME, MSG>::infinity;
+      }
     }
   }
 
@@ -91,7 +110,7 @@ public:
         
         if (it->second.to_send) {
           distributed_reactants.clear();
-          distributed_reactants.resize(it->second.enzymes.size())
+          distributed_reactants.resize(it->second.enzymes.size());
           randomDistribution(distributed_reactants, it->second.amount);
           current_message.specie = it->first; 
 
@@ -110,12 +129,19 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
-    for (vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
       
       this->addToMetabolites(it->specie, it->amount);
     }
 
-    _next_internal = _interval_time - t;
+    if (_next_internal != atomic<TIME, MSG>::infinity) {
+      
+      _next_internal = _interval_time - t;
+    } else if (this->thereIsMetabolites()) {
+      
+      _s              = SState::SELECTING;
+      _next_internal  = _interval_time;
+    }
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
@@ -162,22 +188,22 @@ public:
 
     for (vector<string>::const_iterator it = ls.cbegin(); it != ls.cend(); ++it) {
       if (n == *it) {
-        result true;
+        result = true;
         break;
       }
     }
     return result;
   }
 
-  bool weightedRandomBool(Integer a) const {
+  bool weightedRandomBool(Integer a) {
 
     double proportion = _volume / (double)a;
-    double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion )
+    double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
     
-    return _distribution(_generator) < threshold ;
+    return (_distribution.drawNumber(0.0, 1.0) < threshold);
   }
 
-  void randomDistribution(vector<Integer>& ds, Integer a) {
+  void randomDistribution(vector<Integer>& ds, Integer a) const {
     Integer current_amount;
 
     for (int i = 0; i < ds.size(); ++i) {
@@ -187,6 +213,18 @@ public:
     for (Integer i = 0; i < a; ++i) {
       ds[rand() % ds.size()] += 1;
     }
+  }
+
+  bool thereIsMetabolites() const {
+
+    bool result = false;
+    for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+      if (it->second.amount > 0) {
+        result = true;
+        break;
+      }
+    }
+    return result;
   }
 };
   

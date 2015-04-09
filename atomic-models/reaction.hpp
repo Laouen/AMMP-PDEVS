@@ -9,8 +9,11 @@
 #include <memory> // shared_ptr
 #include <random> // rand
 #include <limits> // numeric_limits
+
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+
 #include "../data-structures/types.hpp" // SetOfMolecules, Task, Rstate, Way, TaskQueue
+#include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace boost::simulation::pdevs;
 using namespace std;
@@ -22,17 +25,20 @@ class reaction : public atomic<TIME, MSG>
 
 private:
   // enzyme information
-  string              _name;
-  bool                _reversible;
-  TIME                _rate;
-  SetOfMolecules      _reactants_sctry;
-  SetOfMolecules      _products_sctry;
-  Integer             _amount;
-  TIME                _interval_time;
+  string                  _name;
+  bool                    _reversible;
+  TIME                    _rate;
+  SetOfMolecules          _reactants_sctry;
+  SetOfMolecules          _products_sctry;
+  Integer                 _amount;
+  TIME                    _interval_time;
   // elements bound
-  SetOfMolecules      _reactants;
-  SetOfMolecules      _products;
-  TaskQueue<TIME>     _tasks;
+  SetOfMolecules          _reactants;
+  SetOfMolecules          _products;
+  TaskQueue<TIME>         _tasks;
+  // used for uniform random numbers
+  // used for uniform random numbers
+  IntegerRandom<Integer>  _distribution;
 
 
 public:
@@ -53,6 +59,9 @@ public:
   _products_sctry(other_products_sctry),
   _amount(other_amount),
   _interval_time(other_interval_time) {
+
+    random_device rd;
+    _distribution.seed(rd());
 
     for (SetOfMolecules::const_iterator it = _reactants_sctry.cbegin(); it != _reactants_sctry.cend(); ++it) {
       _reactants[it->first] = 0;
@@ -190,7 +199,7 @@ public:
 
       // dividing the metabolit between reactants and products
       if (is_reactant && is_product && _reversible) {
-        amount_for_r = rand() % (it->amount + 1);
+        amount_for_r = _distribution.drawNumber(0, it->amount);
         amount_for_p = it->amount - amount_for_r;
       } else {
         amount_for_r = it->amount;
@@ -231,8 +240,8 @@ public:
 
     reactant_ready      = this->totalReadyFor(Way::RTP);
     product_ready       = this->totalReadyFor(Way::PTR);
-    intersection_range  = min(reactant_ready, product_ready) + 1;
-    intersection        = rand() % intersection_range; // I MUST TO USE BETTER RANDOM FUNCTIONS
+    intersection_range  = min(reactant_ready, product_ready);
+    intersection        =  _distribution.drawNumber(0, intersection_range);
     reactant_ready      -= intersection;
     product_ready       -= intersection;
 
@@ -269,7 +278,7 @@ public:
 
     for (SetOfMolecules::iterator it = m.begin(); it != m.end(); ++it) {
 
-      amount_leaving  = rand() % (it->second + 1); // I MUST TO USE BETTER RANDOM FUNCTIONS
+      amount_leaving  = _distribution.drawNumber(0, it->second);
       it->second      -= amount_leaving;
       addRejected(t.rejected, it->first, amount_leaving);
     }
