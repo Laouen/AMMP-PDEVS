@@ -89,12 +89,12 @@ using TaskQueue = list< Task<TIME> >;
 /**************** Message ******************/
 /*******************************************/
 
-using Adress = list<string>;
+using Address = list<string>;
 
-ostream& operator<<(ostream& os, Adress to) {
+ostream& operator<<(ostream& os, Address to) {
   
   os << "[";
-  Adress::iterator i = to.begin();
+  Address::iterator i = to.begin();
   while(i != to.end()){
     os << *i;
     ++i;
@@ -106,11 +106,11 @@ ostream& operator<<(ostream& os, Adress to) {
 
 struct Message {
   
-  Adress to;
+  Address to;
   string specie;
   Integer amount;
 
-  Message(Adress other_to, string other_specie, Integer other_amount)
+  Message(Address other_to, string other_specie, Integer other_amount)
   : to(other_to), specie(other_specie), amount(other_amount) {}
 
   Message()
@@ -145,12 +145,12 @@ struct metabolite_info_t {
   
   Integer         amount;
   bool            to_send;
-  vector<Adress>  enzymes;
+  vector<Address>  enzymes;
 
   metabolite_info_t()
   : amount(0), to_send(false), enzymes() {}
 
-  metabolite_info_t(string other_specie, Integer other_amount, bool other_to_send, vector<Adress> other_enzymes)
+  metabolite_info_t(string other_specie, Integer other_amount, bool other_to_send, vector<Address> other_enzymes)
   : amount(other_amount), to_send(other_to_send), enzymes(other_enzymes) {}
 
   metabolite_info_t(const metabolite_info_t& other)
@@ -159,13 +159,13 @@ struct metabolite_info_t {
 
 struct enzyme_info_t {
 
-  Adress          location;
+  Address          location;
   vector<string>  reactants;
 
   enzyme_info_t()
   : location(), reactants() {}
 
-  enzyme_info_t(Adress other_location, vector<string> other_reactants)
+  enzyme_info_t(Address other_location, vector<string> other_reactants)
   : location(other_location), reactants(other_reactants) {}
 
   enzyme_info_t(const enzyme_info_t& other)

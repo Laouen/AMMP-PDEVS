@@ -171,8 +171,8 @@ public:
     }
   }
 
-  vector<Adress> lookForEnzymes(string n) const {
-    vector<Adress> result;
+  vector<Address> lookForEnzymes(string n) const {
+    vector<Address> result;
 
     for (map<string, enzyme_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
       if (belong(n, it->second.reactants)) {
