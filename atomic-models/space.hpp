@@ -72,7 +72,7 @@ public:
     MSG current_message;
     
     if (_s == SState::SELECTING) {
-      
+
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
         if (this->weightedRandomBool(it->second.amount)){
 
@@ -189,7 +189,11 @@ public:
 
   bool weightedRandomBool(Integer a) {
 
-    double proportion = _volume / (double)a;
+    double proportion;
+
+    if (a > 0)  proportion = _volume / (double)a;
+    else        proportion = numeric_limits<double>::infinity();
+    
     double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
 
     return (_real_random.drawNumber(0.0, 1.0) < threshold);
