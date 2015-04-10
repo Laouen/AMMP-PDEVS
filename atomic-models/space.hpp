@@ -30,8 +30,10 @@ private:
   double                            _volume;
   double                            _factor;
   SState                            _s;
+  vector<MSG>                       _output;
   // used for uniform random numbers
-  RealRandom<double>                _distribution;
+  RealRandom<double>                _real_random;
+  IntegerRandom<Integer>            _integer_random;
 
 public:
 
@@ -48,8 +50,10 @@ public:
   _volume(other_volume),
   _factor(other_factor) {
 
-    random_device rd;
-    _distribution.seed(rd());
+    random_device real_rd;
+    _real_random.seed(real_rd());
+    random_device integer_rd;
+    _integer_random.seed(integer_rd());
 
     if (this->thereIsMetabolites()) {
       
@@ -57,30 +61,43 @@ public:
       _next_internal  = _interval_time;
     } else {
       
-      _s = SState::IDLE;
-      _next_internal = atomic<TIME, MSG>::infinity;
+      _s              = SState::IDLE;
+      _next_internal  = atomic<TIME, MSG>::infinity;
     }
   }
 
   void internal() noexcept {
 
+    vector<Integer> distributed_reactants = {};
+    MSG current_message;
+    
     if (_s == SState::SELECTING) {
       
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-        it->second.to_send = this->weightedRandomBool(it->second.amount);
+        if (this->weightedRandomBool(it->second.amount)){
+
+          distributed_reactants.clear();
+          distributed_reactants.resize(it->second.enzymes.size());
+          randomDistribution(distributed_reactants, it->second.amount);
+          current_message.specie = it->first; 
+          
+
+          for (int i = 0; i < distributed_reactants.size(); ++i) {
+            
+            current_message.amount  = distributed_reactants[i];
+            current_message.to      = it->second.enzymes[i];
+            _output.push_back(current_message);
+          }
+
+          it->second.amount = 0;
+        }
       }
 
       _next_internal  = TIME(0);
       _s              = SState::SENDING;
     } else if (_s == SState::SENDING) {
 
-      for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-
-        if (it->second.to_send) {
-          it->second.amount  = 0;
-          it->second.to_send = false;
-        }
-      }
+      _output.clear();
 
       if (this->thereIsMetabolites()) {
         
@@ -101,42 +118,18 @@ public:
 
   vector<MSG> out() const noexcept {
 
-    vector<MSG> result                    = {};
-    vector<Integer> distributed_reactants = {};
-    MSG current_message;
-
-    if (_s == SState::SENDING) {
-      for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-        
-        if (it->second.to_send) {
-          distributed_reactants.clear();
-          distributed_reactants.resize(it->second.enzymes.size());
-          randomDistribution(distributed_reactants, it->second.amount);
-          current_message.specie = it->first; 
-
-          for (int i = 0; i < distributed_reactants.size(); ++it) {
-
-            current_message.amount  = distributed_reactants[i];
-            current_message.to      = it->second.enzymes[i];
-            result.push_back(current_message);
-          }
-        } 
-      }
-    }
-
-    return result;
+    return _output;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-
+    
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
       
       this->addToMetabolites(it->specie, it->amount);
     }
 
     if (_next_internal != atomic<TIME, MSG>::infinity) {
-      
-      _next_internal = _interval_time - t;
+      _next_internal = _next_internal - t;
     } else if (this->thereIsMetabolites()) {
       
       _s              = SState::SELECTING;
@@ -145,7 +138,7 @@ public:
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-
+    
     internal();
     external(mb, TIME(0));
   }
@@ -164,7 +157,6 @@ public:
       } else {
         
         new_metabolite.amount   = a;
-        new_metabolite.to_send  = false;
         new_metabolite.enzymes  = lookForEnzymes(n);
         _metabolites[n]         = new_metabolite;
       }
@@ -199,12 +191,11 @@ public:
 
     double proportion = _volume / (double)a;
     double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
-    cout << "proportion: " << proportion << endl;
-    cout << "threshold: " << threshold << endl;
-    return (_distribution.drawNumber(0.0, 1.0) < threshold);
+
+    return (_real_random.drawNumber(0.0, 1.0) < threshold);
   }
 
-  void randomDistribution(vector<Integer>& ds, Integer a) const {
+  void randomDistribution(vector<Integer>& ds, Integer a) {
     Integer current_amount;
 
     for (int i = 0; i < ds.size(); ++i) {
@@ -212,7 +203,8 @@ public:
     }
 
     for (Integer i = 0; i < a; ++i) {
-      ds[rand() % ds.size()] += 1;
+
+      ds[_integer_random.drawNumber(0, ds.size() - 1)] += 1;
     }
   }
 

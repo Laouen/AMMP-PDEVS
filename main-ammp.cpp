@@ -63,10 +63,14 @@ int main () {
     cout << "Creating the space models" << endl;
     map<string, metabolite_info_t> metabolites;
     map<string, enzyme_info_t> enzymes;
-    auto cytoplasm = make_atomic_ptr<space<Time, Message>, Time, map<string, metabolite_info_t>, map<string, enzyme_info_t>, double, double >(0.2, metabolites, enzymes, 250.0, 1.0);
+    enzymes["ABCD"] = enzyme_info_t({"Cytoplasm", "ABCD"}, {"A","B","C","D"});;
+    enzymes["EFGH"] = enzyme_info_t({"Cytoplasm", "EFGH"}, {"E","F","G","H"});;
+    enzymes["IJKL"] = enzyme_info_t({"Cytoplasm", "IJKL"}, {"I","J","K","L"});;
+    enzymes["A"] = enzyme_info_t({"Cytoplasm", "A"}, {"A"});
+    auto cytoplasm = make_atomic_ptr<space<Time, Message>, Time, map<string, metabolite_info_t>, map<string, enzyme_info_t>, double, double >(0.2, metabolites, enzymes, 0.00001, 1.0);
 
     //shared_ptr<space<Time, Message>> c = dynamic_pointer_cast<space<Time, Message>>(cytoplasm);
-    //c->weightedRandomBool(10000);
+    //c->weightedRandomBool(1);
 
     cout << "Creating the model to insert the input from stream" << endl;
     auto piss = make_shared<istringstream>();
@@ -139,7 +143,7 @@ int main () {
 
 
     cout << "Coupling the input to the model" << endl;
-    shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf}, {}, {}, {pf}});
+    shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cytoplasm}, {}, {{pf, cytoplasm}}, {cytoplasm}});
 
     cout << "Preparing runner" << endl;
     Time initial_time{0};

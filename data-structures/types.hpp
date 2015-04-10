@@ -140,21 +140,19 @@ ostream& operator<<(ostream& os, Message msg) {
 /************** End Message ****************/
 /*******************************************/
 
-
 struct metabolite_info_t {
   
   Integer         amount;
-  bool            to_send;
-  vector<Address>  enzymes;
+  vector<Address> enzymes;
 
   metabolite_info_t()
-  : amount(0), to_send(false), enzymes() {}
+  : amount(0), enzymes() {}
 
-  metabolite_info_t(string other_specie, Integer other_amount, bool other_to_send, vector<Address> other_enzymes)
-  : amount(other_amount), to_send(other_to_send), enzymes(other_enzymes) {}
+  metabolite_info_t(Integer other_amount, const vector<Address>& other_enzymes)
+  : amount(other_amount), enzymes(other_enzymes) {}
 
   metabolite_info_t(const metabolite_info_t& other)
-  : amount(other.amount), to_send(other.to_send), enzymes(other.enzymes) {}
+  : amount(other.amount), enzymes(other.enzymes) {}
 };
 
 struct enzyme_info_t {
@@ -165,7 +163,7 @@ struct enzyme_info_t {
   enzyme_info_t()
   : location(), reactants() {}
 
-  enzyme_info_t(Address other_location, vector<string> other_reactants)
+  enzyme_info_t(const Address& other_location, const vector<string>& other_reactants)
   : location(other_location), reactants(other_reactants) {}
 
   enzyme_info_t(const enzyme_info_t& other)
