@@ -199,7 +199,8 @@ public:
 
     double proportion = _volume / (double)a;
     double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
-    
+    cout << "proportion: " << proportion << endl;
+    cout << "threshold: " << threshold << endl;
     return (_distribution.drawNumber(0.0, 1.0) < threshold);
   }
 
