@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <memory>
 
 
 using namespace boost::simulation::pdevs;

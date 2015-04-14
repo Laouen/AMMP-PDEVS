@@ -5,6 +5,8 @@
 #include <map>
 #include <math.h>
 #include <random>
+#include <limits>
+#include <memory>
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
