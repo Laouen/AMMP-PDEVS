@@ -9,6 +9,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <limits>
+#include <memory>
 
 // Boost simalator include
 #include <boost/simulation.hpp>
@@ -22,6 +23,9 @@
 #include "data-structures/unit_definition.hpp"
 #include "data-structures/types.hpp"
 #include "data-structures/randomNumbers.hpp"
+
+// tinyXML parser
+#include "parser/parser.hpp"
 
 #define TIXML_USE_STL
 
@@ -54,63 +58,36 @@ int main(int argc, char* argv[]) {
   /************************************* Parsing the SBML file **************************************************/
   /**************************************************************************************************************/
 
-  TiXmlDocument doc;
-
-  TiXmlElement *root, *lists, *listOfReactions;
-  map<string, TiXmlElement *> model_lists;
-
   if (argc <= 1){
       cout << "The SBML file is required." << endl;
       exit(1);
   }
 
-  if ( !doc.LoadFile(argv[1]) ){
-      cout << "Fail loading SBML file." << endl;
-      exit(1);
+  Parser_t input_doc(argv[1]);
+  input_doc.loadFile();
+
+  list<UnitDefinition> units = input_doc.getUnitDefinitions();
+  for (list<UnitDefinition>::iterator it = units.begin(); it != units.end(); ++it) {
+    cout << it->unitName() << endl;
   }
 
-  root  = doc.FirstChildElement();
-  lists = root->FirstChildElement();
-
-  for(TiXmlElement *it = lists->FirstChildElement(); it != NULL; it = it->NextSiblingElement()){
-    model_lists[it->Value()] = it;
-    cout << it->Value() << endl;
+  cout << endl;
+  map<string, string> compartements = input_doc.getCompartments();
+  for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
+    cout << "id: " << it->first << " - name: " << it->second << endl;
   }
 
-  /**************************************************************************************************************/
-  /********************************* Creating unit definitions **************************************************/
-  /**************************************************************************************************************/
+  cout << endl;
+  map<string, map<string, string> > species = input_doc.getSpeciesByCompartment();
 
-  // declaring variables
-  string kind, factors_in_string;
-  double exponent, multiplier;
-  int scale;
-  list<Unit> list_of_units;
-  list<UnitDefinition> list_of_units_definitions;
-
-  for (TiXmlElement * current_unit_definition = model_lists["listOfUnitDefinitions"]->FirstChildElement(); current_unit_definition != NULL; current_unit_definition = current_unit_definition->NextSiblingElement()){
-    for(TiXmlElement * current_list_of_units = current_unit_definition->FirstChildElement(); current_list_of_units != NULL; current_list_of_units = current_list_of_units->NextSiblingElement()){
-
-      list_of_units.clear();
-      for(TiXmlElement * current_unit = current_list_of_units->FirstChildElement(); current_unit != NULL; current_unit = current_unit->NextSiblingElement()){
-        kind = current_unit->Attribute("kind");
-
-        if (current_unit->Attribute("multiplier") != NULL) multiplier = stod(current_unit->Attribute("multiplier"));
-        else multiplier = 1;
-
-        if (current_unit->Attribute("scale") != NULL) scale = stod(current_unit->Attribute("scale"));
-        else scale = 0;
-
-        if (current_unit->Attribute("exponent") != NULL) exponent = stod(current_unit->Attribute("exponent"));
-        else exponent = 1;
-
-        list_of_units.push_back(Unit(kind, exponent, scale, multiplier));
-      }
-
-      list_of_units_definitions.push_back(UnitDefinition(list_of_units, current_unit_definition->Attribute("id")));
-    }
+  for (map<string, map<string, string> >::iterator it = species.begin(); it != species.end(); ++it) {
+    cout << " compartement: " << it->first << endl << endl;
+   for (map<string, string>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
+     cout << "id: " << jt->first << " - name: " << jt->second << endl;
+   }
   }
 
+  
   /**************************************************************************************************************/
   /*********************************** End creating unit definitions ********************************************/
   /**************************************************************************************************************/
