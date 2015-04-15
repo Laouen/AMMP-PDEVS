@@ -30,7 +30,8 @@ struct enzyme_parameter {
 class Parser_t {
 
 private:
-	TiXmlDocument _document;
+	TiXmlDocument               _document;
+  map<string, TiXmlElement*> _models;
 
 public:
   // Constructors
@@ -46,8 +47,7 @@ public:
   list<UnitDefinition> getUnitDefinitions();
   map<string, string> getCompartments();
   map<string, map<string, string> > getSpeciesByCompartment();
-  template<class TIME>
-  list< enzyme_parameter<TIME> > getReactions();
+  map<string, enzyme_parameter<double> > getReactions(double, unsigned long long, double);
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

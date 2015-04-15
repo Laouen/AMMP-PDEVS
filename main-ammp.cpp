@@ -66,6 +66,8 @@ int main(int argc, char* argv[]) {
   Parser_t input_doc(argv[1]);
   input_doc.loadFile();
 
+  input_doc.getReactions(0.001, 2, 0.01);
+  /*
   list<UnitDefinition> units = input_doc.getUnitDefinitions();
   for (list<UnitDefinition>::iterator it = units.begin(); it != units.end(); ++it) {
     cout << it->unitName() << endl;
@@ -86,6 +88,7 @@ int main(int argc, char* argv[]) {
      cout << "id: " << jt->first << " - name: " << jt->second << endl;
    }
   }
+  */
 
   
   /**************************************************************************************************************/

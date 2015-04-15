@@ -4,12 +4,34 @@ using namespace std;
 
 bool Parser_t::loadFile(const char *fileName) {
 
-	return _document.LoadFile(fileName);
+  bool result = _document.LoadFile(fileName);
+
+  if (result) {
+    string name;
+    TiXmlElement *root  = _document.FirstChildElement();
+    TiXmlElement *model = root->FirstChildElement();
+    for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+      _models[it->Value()] = it;
+    }
+  }
+
+	return result;
 }
 
 bool Parser_t::loadFile() {
 
-	return _document.LoadFile();
+  bool result = _document.LoadFile();
+
+  if (result) {
+    string name;
+    TiXmlElement *root  = _document.FirstChildElement();
+    TiXmlElement *model = root->FirstChildElement();
+    for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+      _models[it->Value()] = it;
+    }
+  }
+
+  return result;
 }
 
 list<UnitDefinition> Parser_t::getUnitDefinitions() {
@@ -18,20 +40,9 @@ list<UnitDefinition> Parser_t::getUnitDefinitions() {
   double exponent, multiplier;
   int scale;
   list<UnitDefinition> result;
-  TiXmlElement *listOfUnitDefinitions;
   list<Unit> list_of_units;
 
-  name                = "listOfUnitDefinitions"; 
-  TiXmlElement *root  = _document.FirstChildElement();
-  TiXmlElement *model = root->FirstChildElement();
-  for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    if (it->Value() == name) {
-      listOfUnitDefinitions = it;
-      break;
-    }
-  }
-
-  for (TiXmlElement *current_unit_definition = listOfUnitDefinitions->FirstChildElement(); current_unit_definition != NULL; current_unit_definition = current_unit_definition->NextSiblingElement()) {  
+  for (TiXmlElement *current_unit_definition = _models["listOfUnitDefinitions"]->FirstChildElement(); current_unit_definition != NULL; current_unit_definition = current_unit_definition->NextSiblingElement()) {  
     for (TiXmlElement *list_of_sub_units = current_unit_definition->FirstChildElement(); list_of_sub_units != NULL; list_of_sub_units = list_of_sub_units->NextSiblingElement()) {
 
       list_of_units.clear();
@@ -61,21 +72,7 @@ map<string, string> Parser_t::getCompartments() {
   
   map<string, string> result;
 
-  string name;
-  TiXmlElement *listOfCompartments;
-
-  name                = "listOfCompartments"; 
-  TiXmlElement *root  = _document.FirstChildElement();
-  TiXmlElement *model = root->FirstChildElement();
-  for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    if (it->Value() == name) {
-      listOfCompartments = it;
-      break;
-    }
-  }
-
-  for (TiXmlElement *it = listOfCompartments->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    
+  for (TiXmlElement *it = _models["listOfCompartments"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
     result[it->Attribute("id")] = it->Attribute("name");
   }
 
@@ -84,21 +81,9 @@ map<string, string> Parser_t::getCompartments() {
 
 map<string, map<string, string> > Parser_t::getSpeciesByCompartment() {
   map<string, map<string, string> > result;
+  string specieID;
 
-  string listName, specieID;
-  TiXmlElement *listOfSpecies;
-
-  listName                = "listOfSpecies"; 
-  TiXmlElement *root  = _document.FirstChildElement();
-  TiXmlElement *model = root->FirstChildElement();
-  for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    if (it->Value() == listName) {
-      listOfSpecies = it;
-      break;
-    }
-  }
-
-  for (TiXmlElement *it = listOfSpecies->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+  for (TiXmlElement *it = _models["listOfSpecies"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
     
     specieID = it->Attribute("id");
     specieID.resize(specieID.length()-2);
@@ -108,25 +93,49 @@ map<string, map<string, string> > Parser_t::getSpeciesByCompartment() {
   return result; 
 }
 
-template<class TIME>
-list< enzyme_parameter<TIME> > Parser_t::getReactions() {
+map<string, enzyme_parameter<double> > Parser_t::getReactions(double rate, unsigned long long amount, double interval_time) {
   
-  list< enzyme_parameter<TIME> > result;
+  map<string, enzyme_parameter<double> > result;
+  string specieID;
+  enzyme_parameter<double> new_enzyme;
 
-  string name;
-  TiXmlElement *listOfReactions;
+  for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+    
+    result[it->Attribute("id")] = new_enzyme;
+    enzyme_parameter current    = result[it->Attribute("id")];
 
-  name                = "listOfReactions"; 
-  TiXmlElement *root  = _document.FirstChildElement();
-  TiXmlElement *model = root->FirstChildElement();
-  for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    if (it->Value() == name) {
-      listOfReactions = it;
-      break;
+    current.name          = it->Attribute("name");
+    current.reversible    = (it->Attribute("reversible") != NULL) ? it->Attribute("reversible") : true;
+    current.rate          = rate;
+    current.amount        = amount;
+    current.interval_time = interval_time;
+
+    for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
+      
+      if ((string)it->Value() == "listOfReactants") {
+
+        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
+          specieID = lt->Attribute();
+          specieID.resize(specieID.length()-2);
+          current.reactants_sctry[specieID] = getStoichiometryFrom(lt->Attribute());
+        } 
+      } else if ((string)it->Value() == "listOfProducts") {
+
+        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
+          specieID = lt->Attribute();
+          specieID.resize(specieID.length()-2);
+          current.products_sctry[specieID] = getStoichiometryFrom(lt->Attribute());
+        } 
+      }
     }
   }
 
-  // FALTA TERMINAR
 
   return result;
+}
+
+// Get better this function
+long long integer getStoichiometryFrom(double amount) {
+
+  return (long long integer)amount;
 }
