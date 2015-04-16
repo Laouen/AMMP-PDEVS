@@ -50,6 +50,20 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 /******** End type definations *********/
 /***************************************/
 
+ostream& show(ostream& os, const SetOfMolecules& to) {
+
+  os << "[";
+
+  SetOfMolecules::const_iterator it = to.cbegin();
+  while ( it != to.cend()) {
+    os << "(" << it->first << "," << it->second << ")";
+    ++it;
+    if (it != to.cend()) os << ",";
+  }
+  os << "]";
+  return os;
+}
+
 
 int main(int argc, char* argv[]) {
 
@@ -66,7 +80,21 @@ int main(int argc, char* argv[]) {
   Parser_t input_doc(argv[1]);
   input_doc.loadFile();
 
-  input_doc.getReactions(0.001, 2, 0.01);
+  map<string, enzyme_parameter > react = input_doc.getReactions();
+
+  for (map<string, enzyme_parameter >::iterator i = react.begin(); i != react.end(); ++i) {
+    
+    cout << i->first << ":" << endl;
+    cout << "name: " << i->second.name << endl;
+    cout << "reversible: " << (i->second.reversible ? "true" : "false") << endl;
+    cout << "reactants stoichiometry: ";
+    show(cout, i->second.reactants_sctry);
+    cout << endl;
+    cout << "reactants stoichiometry: ";
+    show(cout, i->second.products_sctry);
+    cout << endl;
+
+  }
   /*
   list<UnitDefinition> units = input_doc.getUnitDefinitions();
   for (list<UnitDefinition>::iterator it = units.begin(); it != units.end(); ++it) {

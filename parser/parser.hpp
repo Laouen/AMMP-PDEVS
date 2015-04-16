@@ -4,7 +4,8 @@
 // STL
 #include <list>
 #include <map>
-#include <memory> // shared_ptr
+#include <memory> /* shared_ptr */
+#include <string> /* atof */
 
 // XML parser include
 #include "../tinyXML/tinyxml.h"
@@ -15,15 +16,12 @@
 
 using namespace std;
 
-template<class TIME>
 struct enzyme_parameter {
-  string&                           name;
-  bool&                             reversible;
-  TIME&                             rate;
-  map<string, unsigned long long>&  reactants_sctry;
-  map<string, unsigned long long>&  products_sctry;
-  unsigned long long                amount;
-  TIME&                             interval_time;
+  
+  string                           name;
+  bool                             reversible;
+  map<string, unsigned long long>  reactants_sctry;
+  map<string, unsigned long long>  products_sctry;
 };
 
 
@@ -47,7 +45,7 @@ public:
   list<UnitDefinition> getUnitDefinitions();
   map<string, string> getCompartments();
   map<string, map<string, string> > getSpeciesByCompartment();
-  map<string, enzyme_parameter<double> > getReactions(double, unsigned long long, double);
+  map<string, enzyme_parameter > getReactions();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

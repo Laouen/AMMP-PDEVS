@@ -2,6 +2,20 @@
 
 using namespace std;
 
+/***************************************************************/
+/******************** HELPER FUNCTIONS *************************/
+/***************************************************************/
+
+// is a temporary implemetation
+unsigned long long getStoichiometryFrom(double amount) {
+
+  return (unsigned long long)amount;
+}
+
+/***************************************************************/
+/******************* END HELPER FUNCTIONS **********************/
+/***************************************************************/
+
 bool Parser_t::loadFile(const char *fileName) {
 
   bool result = _document.LoadFile(fileName);
@@ -93,38 +107,39 @@ map<string, map<string, string> > Parser_t::getSpeciesByCompartment() {
   return result; 
 }
 
-map<string, enzyme_parameter<double> > Parser_t::getReactions(double rate, unsigned long long amount, double interval_time) {
+map<string, enzyme_parameter > Parser_t::getReactions() {
   
-  map<string, enzyme_parameter<double> > result;
-  string specieID;
-  enzyme_parameter<double> new_enzyme;
-
+  map<string, enzyme_parameter > result;
+  string specieID, stoichiometry;
+  enzyme_parameter new_enzyme;
   for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
     
     result[it->Attribute("id")] = new_enzyme;
-    enzyme_parameter current    = result[it->Attribute("id")];
+    enzyme_parameter *current    = &result[it->Attribute("id")];
 
-    current.name          = it->Attribute("name");
-    current.reversible    = (it->Attribute("reversible") != NULL) ? it->Attribute("reversible") : true;
-    current.rate          = rate;
-    current.amount        = amount;
-    current.interval_time = interval_time;
+    current->name = it->Attribute("name");
+
+    if ( it->Attribute("reversible") == NULL )                current->reversible = true;
+    else if ((string)it->Attribute("reversible") == "false")  current->reversible = false;
+    else                                                      current->reversible = true;
 
     for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
       
-      if ((string)it->Value() == "listOfReactants") {
+      if ((string)jt->Value() == "listOfReactants") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          specieID = lt->Attribute();
+          specieID = lt->Attribute("species");
           specieID.resize(specieID.length()-2);
-          current.reactants_sctry[specieID] = getStoichiometryFrom(lt->Attribute());
+          stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
+          current->reactants_sctry[specieID] = getStoichiometryFrom( stod(stoichiometry) );
         } 
-      } else if ((string)it->Value() == "listOfProducts") {
+      } else if ((string)jt->Value() == "listOfProducts") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          specieID = lt->Attribute();
+          specieID = lt->Attribute("species");
           specieID.resize(specieID.length()-2);
-          current.products_sctry[specieID] = getStoichiometryFrom(lt->Attribute());
+          stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
+          current->products_sctry[specieID] = getStoichiometryFrom( stod(stoichiometry) );
         } 
       }
     }
@@ -132,10 +147,4 @@ map<string, enzyme_parameter<double> > Parser_t::getReactions(double rate, unsig
 
 
   return result;
-}
-
-// Get better this function
-long long integer getStoichiometryFrom(double amount) {
-
-  return (long long integer)amount;
 }
