@@ -7,10 +7,10 @@ TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
 STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp
 PARSERHEADERS=parser/parser.hpp
 
-all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o
-	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o
+all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o data-structures/types.o parser/parser.o
+	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o data-structures/types.o
 
-main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS)
+main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS)
 	$(CC) -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
@@ -30,6 +30,9 @@ data-structures/unit_definition.o: data-structures/unit_definition.cpp data-stru
 
 parser/parser.o: parser/parser.cpp parser/parser.hpp $(STRUCTUREHEADERS)
 	$(CC) -c $(CFLAGS) parser/parser.cpp -o parser/parser.o
+
+data-structures/types.o: data-structures/types.cpp data-structures/types.hpp
+	$(CC) -c $(CFLAGS) data-structures/types.cpp -o data-structures/types.o
 
 clean:
 	rm -f ammp *.o *~

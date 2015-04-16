@@ -11,7 +11,7 @@
 #include "../tinyXML/tinyxml.h"
 
 // Data structures
-//#include "../data-structures/types.hpp"
+#include "../data-structures/types.hpp"
 #include "../data-structures/unit_definition.hpp"
 
 using namespace std;
@@ -20,8 +20,8 @@ struct enzyme_parameter {
   
   string                           name;
   bool                             reversible;
-  map<string, unsigned long long>  reactants_sctry;
-  map<string, unsigned long long>  products_sctry;
+  SetOfMolecules  reactants_sctry;
+  SetOfMolecules  products_sctry;
 };
 
 

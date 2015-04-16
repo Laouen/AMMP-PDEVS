@@ -27,8 +27,6 @@ using SetOfMolecules  = map<string, Integer>;
 /******** End enums and renames ***********/
 /******************************************/
 
-long double e = 2.71828182845904523536028747135266249775724709369995L;
-
 template<class TIME>
 struct Task {
   TIME                time_left;
@@ -91,18 +89,6 @@ using TaskQueue = list< Task<TIME> >;
 
 using Address = list<string>;
 
-ostream& operator<<(ostream& os, Address to) {
-  
-  os << "[";
-  Address::iterator i = to.begin();
-  while(i != to.end()){
-    os << *i;
-    ++i;
-    if (i != to.end()) os << ", ";
-  }
-  os << "]";
-  return os;
-}
 
 struct Message {
   
@@ -129,12 +115,8 @@ struct Message {
   }
 };
 
-ostream& operator<<(ostream& os, Message msg) {
-  os << "To: " << endl << msg.to << endl;
-  os << "Specie: " << msg.specie << endl;
-  os << "Amount: " << msg.amount << endl;
-  return os;
-}
+ostream& operator<<(ostream& os, Message msg);
+ostream& operator<<(ostream& os, Address to);
 
 /*******************************************/
 /************** End Message ****************/

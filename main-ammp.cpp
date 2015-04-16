@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
   map<string, string>               compartements = input_doc.getCompartments();
   map<string, map<string, string> > species       = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter >    reactions     = input_doc.getReactions();
-
+  /*
   << "creating space atomic models"
   Time interval_time;
   map<string, metabolite_info_t> enzymes;

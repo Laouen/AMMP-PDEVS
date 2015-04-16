@@ -10,16 +10,14 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // number e, metabolite_info_t, enzyme_info_t, SState, Integer
+#include "../data-structures/types.hpp" // metabolite_info_t, enzyme_info_t, SState, Integer
 #include "../data-structures/randomNumbers.hpp" // IntegerRandom
 
 
 using namespace boost::simulation::pdevs;
 using namespace std;
 
-/*************************************
-*********type definations*************
-*************************************/
+long double e = 2.71828182845904523536028747135266249775724709369995L;
 
 template<class TIME, class MSG>
 class space : public atomic<TIME, MSG>
