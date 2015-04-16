@@ -50,20 +50,17 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 /******** End type definations *********/
 /***************************************/
 
-ostream& show(ostream& os, const SetOfMolecules& to) {
+/***************************************/
+/********** Helper functions ***********/
+/***************************************/
 
-  os << "[";
+map<string, enzyme_parameter > getMetabolites(const map<string, enzyme_parameter >& reactions) {
 
-  SetOfMolecules::const_iterator it = to.cbegin();
-  while ( it != to.cend()) {
-    os << "(" << it->first << "," << it->second << ")";
-    ++it;
-    if (it != to.cend()) os << ",";
-  }
-  os << "]";
-  return os;
 }
 
+/***************************************/
+/******** END Helper functions *********/
+/***************************************/
 
 int main(int argc, char* argv[]) {
 
@@ -73,50 +70,39 @@ int main(int argc, char* argv[]) {
   /**************************************************************************************************************/
 
   if (argc <= 1){
-      cout << "The SBML file is required." << endl;
+      cout << "an SBML file is required." << endl;
       exit(1);
   }
 
   Parser_t input_doc(argv[1]);
   input_doc.loadFile();
 
-  map<string, enzyme_parameter > react = input_doc.getReactions();
+  map<string, string>               compartements = input_doc.getCompartments();
+  map<string, map<string, string> > species       = input_doc.getSpeciesByCompartment();
+  map<string, enzyme_parameter >    reactions     = input_doc.getReactions();
 
-  for (map<string, enzyme_parameter >::iterator i = react.begin(); i != react.end(); ++i) {
+  << "creating space atomic models"
+  Time interval_time;
+  map<string, metabolite_info_t> enzymes;
+  map<string, enzyme_info_t> metabolites;
+  double volume, factor, amount;
+  vectorOfModels spaces = {};
+
+  for (map<string, string>::iterator ct = compartements.begin(); ct != compartements.end(); ++ct) {
     
-    cout << i->first << ":" << endl;
-    cout << "name: " << i->second.name << endl;
-    cout << "reversible: " << (i->second.reversible ? "true" : "false") << endl;
-    cout << "reactants stoichiometry: ";
-    show(cout, i->second.reactants_sctry);
-    cout << endl;
-    cout << "reactants stoichiometry: ";
-    show(cout, i->second.products_sctry);
-    cout << endl;
+    cout << "interval time for: " << i->second << endl;
+    cin >> interval_time;
+    cout << "volume time for: " << i->second << endl;
+    cin >> volume;
+    cout << "factor time for: " << i->second << endl;
+    cin >> factor;
+    cout << "species initial amount: " << endl;
+    cin >> amount;
 
-  }
-  /*
-  list<UnitDefinition> units = input_doc.getUnitDefinitions();
-  for (list<UnitDefinition>::iterator it = units.begin(); it != units.end(); ++it) {
-    cout << it->unitName() << endl;
-  }
+    enzymes     = getEnzymes(reactions);
 
-  cout << endl;
-  map<string, string> compartements = input_doc.getCompartments();
-  for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
-    cout << "id: " << it->first << " - name: " << it->second << endl;
+    spaces.push_back( make_atomic_ptr< space<Time, Message>, Time, map<string, metabolite_info_t>, map<string, enzyme_info_t>, double, double >(interval_time, metabolites, enzymes, volume, factor) );
   }
-
-  cout << endl;
-  map<string, map<string, string> > species = input_doc.getSpeciesByCompartment();
-
-  for (map<string, map<string, string> >::iterator it = species.begin(); it != species.end(); ++it) {
-    cout << " compartement: " << it->first << endl << endl;
-   for (map<string, string>::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
-     cout << "id: " << jt->first << " - name: " << jt->second << endl;
-   }
-  }
-  */
 
   
   /**************************************************************************************************************/

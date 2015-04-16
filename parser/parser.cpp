@@ -98,10 +98,8 @@ map<string, map<string, string> > Parser_t::getSpeciesByCompartment() {
   string specieID;
 
   for (TiXmlElement *it = _models["listOfSpecies"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    
-    specieID = it->Attribute("id");
-    specieID.resize(specieID.length()-2);
-    result[it->Attribute("compartment")][specieID] = it->Attribute("name");
+
+    result[it->Attribute("compartment")][it->Attribute("id")] = it->Attribute("name");
   }
 
   return result; 
@@ -128,16 +126,16 @@ map<string, enzyme_parameter > Parser_t::getReactions() {
       if ((string)jt->Value() == "listOfReactants") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          specieID = lt->Attribute("species");
-          specieID.resize(specieID.length()-2);
+          
+          specieID      = lt->Attribute("species");
           stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
           current->reactants_sctry[specieID] = getStoichiometryFrom( stod(stoichiometry) );
         } 
       } else if ((string)jt->Value() == "listOfProducts") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          specieID = lt->Attribute("species");
-          specieID.resize(specieID.length()-2);
+          
+          specieID      = lt->Attribute("species");
           stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
           current->products_sctry[specieID] = getStoichiometryFrom( stod(stoichiometry) );
         } 
