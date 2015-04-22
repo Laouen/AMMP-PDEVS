@@ -19,3 +19,17 @@ ostream& operator<<(ostream& os, Message msg) {
   os << "Amount: " << msg.amount << endl;
   return os;
 }
+
+ostream& operator<<(ostream& os, vector<string> m) {
+  
+  os << "[";
+  vector<string>::iterator i = m.begin();
+  while(i != m.end()){
+    os << *i;
+    ++i;
+    if (i != m.end()) os << ", ";
+  }
+  os << "]";
+  return os;
+}
+

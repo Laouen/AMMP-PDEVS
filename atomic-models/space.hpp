@@ -23,6 +23,7 @@ template<class TIME, class MSG>
 class space : public atomic<TIME, MSG>
 {
 private:
+  string                            _id;
   TIME                              _next_internal;
   TIME                              _interval_time;
   map<string, metabolite_info_t>    _metabolites;
@@ -38,12 +39,14 @@ private:
 public:
 
   explicit space(
+    const string                          other_id,
     const TIME                            other_interval_time,
     const map<string, metabolite_info_t>& other_metabolites,
     const map<string, enzyme_info_t>&     other_enzymes,
     const double                          other_volume,
     const double                          other_factor
     ) noexcept :
+  _id(other_id),
   _interval_time(other_interval_time),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),

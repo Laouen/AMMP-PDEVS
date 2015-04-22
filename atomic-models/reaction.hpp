@@ -25,7 +25,8 @@ class reaction : public atomic<TIME, MSG>
 
 private:
   // enzyme information
-  string                  _name;
+  string                  _id;
+  Address                 _location;
   bool                    _reversible;
   TIME                    _rate;
   SetOfMolecules          _reactants_sctry;
@@ -43,15 +44,17 @@ private:
 public:
 
   explicit reaction(
-    const string&             other_name,
-    const bool&               other_reversible,
-    const TIME&               other_rate,
+    const string              other_id,
+    const Address             other_location,
+    const bool                other_reversible,
+    const TIME                other_rate,
     const SetOfMolecules&     other_reactants_sctry,
     const SetOfMolecules&     other_products_sctry,
     const Integer             other_amount,
-    const TIME&               other_interval_time
+    const TIME                other_interval_time
   ) noexcept :
-  _name(other_name),
+  _id(other_id),
+  _location(other_location),
   _reversible(other_reversible),
   _rate(other_rate),
   _reactants_sctry(other_reactants_sctry),
@@ -441,7 +444,7 @@ public:
 
   ostream& show(ostream& os) {
 
-    os << "name: "          << _name                            << endl;
+    os << "id: "            << _id                              << endl;
     os << "rate: "          << _rate                            << endl;
     os << "reversible: "    << (_reversible ? "true" : "false") << endl;
     os << "interval time: " << _interval_time                   << endl;

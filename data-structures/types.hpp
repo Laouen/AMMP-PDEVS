@@ -125,6 +125,7 @@ struct Message {
 
 ostream& operator<<(ostream& os, Message msg);
 ostream& operator<<(ostream& os, Address to);
+ostream& operator<<(ostream& os, vector<string> m);
 
 /*******************************************/
 /************** End Message ****************/
