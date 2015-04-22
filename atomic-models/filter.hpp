@@ -6,6 +6,8 @@
 #include <map>
 #include <memory>
 
+#include "../data-structures/types.hpp" /* Address */
+
 
 using namespace boost::simulation::pdevs;
 using namespace std;
@@ -15,15 +17,13 @@ class filter : public atomic<TIME, MSG>
 {
 private:
 
-  string      _model_type;
-  string      _acepted_input;
+  string      _accepted_input;
   vector<MSG> _filtered_input;
 
 public:
 
-  explicit filter(string other_model_type, string other_acepted_input) noexcept :
-  _model_type(other_model_type),
-  _acepted_input(other_acepted_input) {
+  explicit filter(string other_accepted_input) noexcept :
+  _accepted_input(other_accepted_input) {
 
     _filtered_input.clear();
   }
@@ -46,7 +46,8 @@ public:
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
-      if (it->to.atModel(_model_type) == _acepted_input) {
+      
+      if (isAcceptedInpunt(_accepted_input, it->to)) {
         _filtered_input.push_back(*it);
       }
     }
@@ -57,6 +58,23 @@ public:
 
     internal();
     external(mb, t);
+  }
+
+  /***************************************
+  ********* helper functions *************
+  ***************************************/
+
+  bool isAcceptedInpunt(string a, Address to) {
+
+    bool result = false;
+    for (Address::iterator i = to.begin(); i != to.end(); ++i) {
+      if( a == (*i)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
   }
 
 };

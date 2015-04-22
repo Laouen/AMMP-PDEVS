@@ -36,8 +36,7 @@ private:
   SetOfMolecules          _reactants;
   SetOfMolecules          _products;
   TaskQueue<TIME>         _tasks;
-  // used for uniform random numbers
-  // used for uniform random numbers
+  // used for uniform random number
   IntegerRandom<Integer>  _distribution;
 
 
