@@ -105,15 +105,15 @@ map<string, map<string, string> > Parser_t::getSpeciesByCompartment() {
   return result; 
 }
 
-map<string, enzyme_parameter > Parser_t::getReactions() {
+map<string, enzyme_parameter_t > Parser_t::getReactions() {
   
-  map<string, enzyme_parameter > result;
+  map<string, enzyme_parameter_t > result;
   string specieID, stoichiometry;
-  enzyme_parameter new_enzyme;
+  enzyme_parameter_t new_enzyme;
   for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
     
     result[it->Attribute("id")] = new_enzyme;
-    enzyme_parameter *current    = &result[it->Attribute("id")];
+    enzyme_parameter_t *current    = &result[it->Attribute("id")];
 
     current->name = it->Attribute("name");
 

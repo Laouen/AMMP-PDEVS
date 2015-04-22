@@ -16,14 +16,6 @@
 
 using namespace std;
 
-struct enzyme_parameter {
-  
-  string                           name;
-  bool                             reversible;
-  SetOfMolecules  reactants_sctry;
-  SetOfMolecules  products_sctry;
-};
-
 
 class Parser_t {
 
@@ -45,7 +37,7 @@ public:
   list<UnitDefinition> getUnitDefinitions();
   map<string, string> getCompartments();
   map<string, map<string, string> > getSpeciesByCompartment();
-  map<string, enzyme_parameter > getReactions();
+  map<string, enzyme_parameter_t > getReactions();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

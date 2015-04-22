@@ -27,6 +27,14 @@ using SetOfMolecules  = map<string, Integer>;
 /******** End enums and renames ***********/
 /******************************************/
 
+struct enzyme_parameter_t {
+  
+  string          name;
+  bool            reversible;
+  SetOfMolecules  reactants_sctry;
+  SetOfMolecules  products_sctry;
+};
+
 template<class TIME>
 struct Task {
   TIME                time_left;
