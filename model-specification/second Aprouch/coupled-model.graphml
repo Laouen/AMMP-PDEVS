@@ -245,10 +245,10 @@
     <node id="n12">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="40.0" width="133.7987235811695" x="-1272.441568951607" y="24.595661167350244"/>
+          <y:Geometry height="40.0" width="133.7987235811695" x="-1272.4415689516072" y="24.595661167350244"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="125.6875" x="4.055611790584635" y="4.03125">Compartment Filter
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="125.6875" x="4.055611790584862" y="4.03125">Compartment Filter
 (filter)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -323,7 +323,7 @@
           <y:Geometry height="214.67964716519418" width="803.6986804623498" x="-1261.543206915102" y="-347.0161948085786"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="68.21875" x="8.881762513129388" y="-16.87466367503538">Cytoplasm<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="84.033203125" x="8.881762513129388" y="-16.87466367503538">Bulk solution<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -357,7 +357,7 @@
           <y:Geometry height="40.0" width="158.23597188409565" x="-724.216204788155" y="-259.6763712259815"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="150.314453125" x="3.9607593795478806" y="4.03125">Cytoplasm BulkSolution
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="105.068359375" x="26.58380625454788" y="4.03125">Cytoplasm Inner
 (enzyme set)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -405,10 +405,10 @@
     <node id="n21">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="257.7150178691164" width="752.7194613692091" x="-1232.6294522210185" y="-1051.6247975778858"/>
+          <y:Geometry height="257.7150178691164" width="911.4174627552106" x="-1336.0814148978511" y="-1385.5674055292845"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="27.958984375" x="8.318385555947316" y="-16.874663675035436">Cell<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="27.958984375" x="10.07217462377048" y="-16.874663675035436">Cell<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -422,10 +422,11 @@
     <node id="n22">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="40.0" width="141.0351562499999" x="-924.9531685954787" y="-914.6340474836368"/>
+          <y:Geometry height="40.0" width="141.0351562499999" x="-805.7829625510442" y="-1276.7098965947262"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="68.21875" x="36.408203125" y="11.015625">Cytoplasm<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="92.259765625" x="24.3876953125" y="4.03125">Cytoplasm
+(bulk solution)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -438,7 +439,7 @@
     <node id="n23">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="40.0" width="141.0351562499999" x="-743.9180123454792" y="-971.3067941431566"/>
+          <y:Geometry height="40.0" width="141.0351562499999" x="-624.7478063010446" y="-1333.382643254246"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="75.466796875" x="32.7841796875" y="4.03125">Organelle 1
@@ -449,7 +450,7 @@
               <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
             </y:ModelParameter>
           </y:NodeLabel>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="20" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" modelName="custom" textColor="#000000" visible="true" width="10.357421875" x="65.33886718750023" y="35.4179281020464">.
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="20" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="73.84375" modelName="custom" textColor="#000000" visible="true" width="10.357421875" x="65.33886718750023" y="35.41792810204652">.
 .
 .<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
@@ -464,7 +465,7 @@
     <node id="n24">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="40.0" width="141.0351562499999" x="-743.9180123454789" y="-859.3125007060896"/>
+          <y:Geometry height="40.0" width="141.0351562499999" x="-624.7478063010444" y="-1221.388349817179"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="75.560546875" x="32.7373046875" y="4.03125">Organelle n
@@ -481,24 +482,7 @@
     <node id="n25">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="23.68013586081429" width="21.88959881917117" x="-479.90999085180954" y="-906.474115414044"/>
-          <y:Fill hasColor="false" transparent="false"/>
-          <y:BorderStyle hasColor="false" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" textColor="#000000" visible="true" width="4.0" x="8.944799409585585" y="9.840067930407145">
-            <y:LabelModel>
-              <y:SmartNodeLabelModel distance="4.0"/>
-            </y:LabelModel>
-            <y:ModelParameter>
-              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
-            </y:ModelParameter>
-          </y:NodeLabel>
-        </y:GenericNode>
-      </data>
-    </node>
-    <node id="n26">
-      <data key="d6">
-        <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="1.0" width="1.0" x="-1233.6294522210185" y="-895.1340474836368"/>
+          <y:Geometry height="1.0" width="1.0" x="-1098.0775170012546" y="-1257.2098965947262"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle hasColor="false" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" textColor="#000000" visible="true" width="4.0" x="-1.5" y="-1.5">
@@ -512,7 +496,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n27">
+    <node id="n26">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="214.67964716519418" width="961.607983166266" x="-1340.49785826706" y="-683.4980733253152"/>
@@ -529,7 +513,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n28">
+    <node id="n27">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="-1108.3757083062515" y="-596.1582497427181"/>
@@ -546,7 +530,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n29">
+    <node id="n28">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="-866.4809253176974" y="-596.1582497427181"/>
@@ -563,13 +547,13 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n30">
+    <node id="n29">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="152.50236667273043" x="-639.5279482248324" y="-596.1582497427181"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="144.9765625" x="3.762902086365216" y="4.03125">Organelle bulkSolution
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="100.8671875" x="25.817589586365216" y="4.03125">Organelle Inner
 (enzyme set)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -580,7 +564,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n31">
+    <node id="n30">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="-1340.49785826706" y="-576.6582497427181"/>
@@ -597,7 +581,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n32">
+    <node id="n31">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="-378.8898751007947" y="-576.6582497427181"/>
@@ -614,7 +598,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n33">
+    <node id="n32">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="122.62613103983267" x="-1309.304738226565" y="-596.1582497427181"/>
@@ -631,7 +615,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n34">
+    <node id="n33">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="135.2149677061277" x="-1164.7268429571882" y="-259.6763712259815"/>
@@ -648,7 +632,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n35">
+    <node id="n34">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="664.7827375496581" y="-245.3189145466681"/>
@@ -665,7 +649,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n36">
+    <node id="n35">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="713.2604431333716" y="-264.8189145466681"/>
@@ -681,7 +665,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n37">
+    <node id="n36">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1282.3100045713036" y="-264.8189145466681"/>
@@ -697,7 +681,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n38">
+    <node id="n37">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1227.0999088332578" y="-245.3189145466681"/>
@@ -714,7 +698,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n39">
+    <node id="n38">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1788.0436979966998" y="-245.3189145466681"/>
@@ -731,7 +715,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n40">
+    <node id="n39">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1430.4426541426296" y="-341.5908371690807"/>
@@ -757,7 +741,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n41">
+    <node id="n40">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1460.4426541426296" y="-328.69924861815025"/>
@@ -774,7 +758,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n42">
+    <node id="n41">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1550.9114041426296" y="-328.69924861815025"/>
@@ -798,7 +782,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n43">
+    <node id="n42">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1429.4426541426296" y="-309.19924861815025"/>
@@ -815,7 +799,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n44">
+    <node id="n43">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1719.268086393166" y="-309.19924861815025"/>
@@ -832,7 +816,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n45">
+    <node id="n44">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1430.4426541426296" y="-210.20252661447466"/>
@@ -849,7 +833,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n46">
+    <node id="n45">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1460.4426541426296" y="-197.3109380635442"/>
@@ -866,7 +850,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n47">
+    <node id="n46">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1550.9114041426296" y="-197.3109380635442"/>
@@ -890,7 +874,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n48">
+    <node id="n47">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1429.4426541426296" y="-177.8109380635442"/>
@@ -907,7 +891,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n49">
+    <node id="n48">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1719.268086393166" y="-177.8109380635442"/>
@@ -924,7 +908,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n50">
+    <node id="n49">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="253.15090766319202" width="560.943789163442" x="1228.099908833257" y="-371.39436837826406"/>
@@ -941,7 +925,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n51">
+    <node id="n50">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="871.8618138570769" y="-275.89668189177746"/>
@@ -958,7 +942,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n52">
+    <node id="n51">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="901.8618138570769" y="-264.8189145466681"/>
@@ -975,7 +959,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n53">
+    <node id="n52">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="992.3305638570769" y="-264.8189145466681"/>
@@ -999,7 +983,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n54">
+    <node id="n53">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="870.8618138570769" y="-245.2881521390177"/>
@@ -1016,7 +1000,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n55">
+    <node id="n54">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1160.6872461076132" y="-245.3189145466681"/>
@@ -1033,7 +1017,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n56">
+    <node id="n55">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1915.5500901509945" y="-245.3189145466681"/>
@@ -1043,7 +1027,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n57">
+    <node id="n56">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="538.5034143169612" width="1251.7673526013364" x="664.7827375496581" y="-514.0706217051488"/>
@@ -1060,7 +1044,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n58">
+    <node id="n57">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="253.15090766319202" width="560.943789163442" x="1016.2224957996978" y="162.6334897459492"/>
@@ -1077,7 +1061,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n59">
+    <node id="n58">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1507.390673359606" y="356.21692006066905"/>
@@ -1094,7 +1078,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n60">
+    <node id="n59">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1217.5652411090696" y="356.21692006066905"/>
@@ -1111,7 +1095,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n61">
+    <node id="n60">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1339.0339911090696" y="336.71692006066905"/>
@@ -1135,7 +1119,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n62">
+    <node id="n61">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1248.5652411090696" y="336.71692006066905"/>
@@ -1152,7 +1136,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n63">
+    <node id="n62">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1218.5652411090696" y="323.8253315097386"/>
@@ -1169,7 +1153,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n64">
+    <node id="n63">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1507.390673359606" y="224.828609506063"/>
@@ -1186,7 +1170,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n65">
+    <node id="n64">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1217.5652411090696" y="224.828609506063"/>
@@ -1203,7 +1187,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n66">
+    <node id="n65">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1339.0339911090696" y="205.328609506063"/>
@@ -1227,7 +1211,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n67">
+    <node id="n66">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1248.5652411090696" y="205.328609506063"/>
@@ -1244,7 +1228,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n68">
+    <node id="n67">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1218.5652411090696" y="192.43702095513208"/>
@@ -1270,7 +1254,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n69">
+    <node id="n68">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1576.1662849631398" y="295.1547378530104"/>
@@ -1287,7 +1271,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n70">
+    <node id="n69">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1015.2224957996978" y="295.1547378530104"/>
@@ -1304,7 +1288,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n71">
+    <node id="n70">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1070.4325915377435" y="275.6547378530104"/>
@@ -1320,7 +1304,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n72">
+    <node id="n71">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="387.88181622851107" y="-906.474115414044"/>
@@ -1337,7 +1321,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n73">
+    <node id="n72">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="436.35952181222456" y="-925.974115414044"/>
@@ -1353,7 +1337,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n74">
+    <node id="n73">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="616.4821608268649" y="-925.974115414044"/>
@@ -1369,7 +1353,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n75">
+    <node id="n74">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="561.2720650888191" y="-906.474115414044"/>
@@ -1386,7 +1370,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n76">
+    <node id="n75">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1122.2158542522611" y="-906.474115414044"/>
@@ -1403,7 +1387,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n77">
+    <node id="n76">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="764.6148103981909" y="-1002.7460380364571"/>
@@ -1429,7 +1413,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n78">
+    <node id="n77">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="794.6148103981909" y="-989.8544494855262"/>
@@ -1446,7 +1430,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n79">
+    <node id="n78">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="885.0835603981909" y="-989.8544494855262"/>
@@ -1470,7 +1454,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n80">
+    <node id="n79">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="763.6148103981909" y="-970.3544494855262"/>
@@ -1487,7 +1471,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n81">
+    <node id="n80">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1053.4402426487272" y="-970.3544494855262"/>
@@ -1504,7 +1488,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n82">
+    <node id="n81">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="764.6148103981909" y="-871.3577274818506"/>
@@ -1521,7 +1505,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n83">
+    <node id="n82">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="794.6148103981909" y="-858.4661389309197"/>
@@ -1538,7 +1522,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n84">
+    <node id="n83">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="885.0835603981909" y="-858.4661389309197"/>
@@ -1562,7 +1546,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n85">
+    <node id="n84">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="763.6148103981909" y="-838.9661389309197"/>
@@ -1579,7 +1563,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n86">
+    <node id="n85">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1053.4402426487272" y="-838.9661389309197"/>
@@ -1596,7 +1580,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n87">
+    <node id="n86">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="253.15090766319202" width="560.943789163442" x="562.2720650888191" y="-1032.54956924564"/>
@@ -1613,7 +1597,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n88">
+    <node id="n87">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1608.6350486025976" y="-925.974115414044"/>
@@ -1629,7 +1613,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n89">
+    <node id="n88">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1553.4249528645519" y="-906.474115414044"/>
@@ -1646,7 +1630,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n90">
+    <node id="n89">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="2114.368742027994" y="-906.474115414044"/>
@@ -1663,7 +1647,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n91">
+    <node id="n90">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1756.7676981739237" y="-1002.7460380364571"/>
@@ -1689,7 +1673,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n92">
+    <node id="n91">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1786.7676981739237" y="-989.8544494855262"/>
@@ -1706,7 +1690,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n93">
+    <node id="n92">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1877.2364481739237" y="-989.8544494855262"/>
@@ -1730,7 +1714,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n94">
+    <node id="n93">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1755.7676981739237" y="-970.3544494855262"/>
@@ -1747,7 +1731,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n95">
+    <node id="n94">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="2045.59313042446" y="-970.3544494855262"/>
@@ -1764,7 +1748,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n96">
+    <node id="n95">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1756.7676981739237" y="-871.3577274818506"/>
@@ -1781,7 +1765,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n97">
+    <node id="n96">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1786.7676981739237" y="-858.4661389309197"/>
@@ -1798,7 +1782,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n98">
+    <node id="n97">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1877.2364481739237" y="-858.4661389309197"/>
@@ -1822,7 +1806,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n99">
+    <node id="n98">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1755.7676981739237" y="-838.9661389309197"/>
@@ -1839,7 +1823,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n100">
+    <node id="n99">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="2045.59313042446" y="-838.9661389309197"/>
@@ -1856,7 +1840,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n101">
+    <node id="n100">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="253.15090766319202" width="560.943789163442" x="1554.424952864551" y="-1032.54956924564"/>
@@ -1873,7 +1857,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n102">
+    <node id="n101">
       <data key="d6">
         <y:ShapeNode>
           <y:Geometry height="62.1555346902191" width="288.8254322505363" x="1198.186857888371" y="-937.0518827591538"/>
@@ -1890,7 +1874,7 @@
         </y:ShapeNode>
       </data>
     </node>
-    <node id="n103">
+    <node id="n102">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="60.46875" x="1228.186857888371" y="-925.974115414044"/>
@@ -1907,7 +1891,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n104">
+    <node id="n103">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="40.0" width="141.03515625" x="1318.655607888371" y="-925.974115414044"/>
@@ -1931,7 +1915,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n105">
+    <node id="n104">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1197.186857888371" y="-906.4433530063936"/>
@@ -1948,7 +1932,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n106">
+    <node id="n105">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="1487.0122901389072" y="-906.474115414044"/>
@@ -1965,7 +1949,7 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n107">
+    <node id="n106">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
           <y:Geometry height="1.0" width="1.0" x="2241.8751341822885" y="-906.474115414044"/>
@@ -1975,13 +1959,13 @@
         </y:GenericNode>
       </data>
     </node>
-    <node id="n108">
+    <node id="n107">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="538.5034143169612" width="1847.3251266855862" x="388.8818162285106" y="-1168.7800282970597"/>
+          <y:Geometry height="538.5034143169612" width="1847.3251266855862" x="388.8818162285105" y="-1168.7800282970597"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.017578125" x="20.414993154298827" y="-16.874663675035436">Organelle<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.017578125" x="20.41499315429894" y="-16.874663675035436">Organelle<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -1992,14 +1976,193 @@
         </y:ShapeNode>
       </data>
     </node>
+    <node id="n108">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="141.03515625" x="-1027.8454190793661" y="-1276.7098965947262"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.9609375" x="38.037109375" y="11.015625">Periplasm<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
     <node id="n109">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.flowchart.process">
-          <y:Geometry height="40.0" width="141.03515625" x="-1163.39735429913" y="-914.6340474836368"/>
+          <y:Geometry height="40.0" width="141.0351562499999" x="-1239.1126732512544" y="-1276.7098965947262"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="97.943359375" x="21.5458984375" y="4.03125">Cell Membrane
-(enzymes set)<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="92.259765625" x="24.3876953125" y="4.03125">Extra cellular
+(bulk solution)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n110">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry height="30.0" width="30.0" x="-1366.0814148978511" y="-1271.7098965947262"/>
+          <y:Fill hasColor="false" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:Shape type="rectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+    <node id="n111">
+      <data key="d6">
+        <y:ShapeNode>
+          <y:Geometry height="234.3377221755893" width="918.2503494936287" x="-1339.49785826706" y="-1005.9421608677433"/>
+          <y:Fill hasColor="false" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.568359375" x="10.147685606636287" y="-16.874663675035436">periplasm<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="-0.5" labelRatioY="0.43911171756718625" nodeRatioX="-0.4889488900143274" nodeRatioY="-0.5" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:Shape type="rectangle"/>
+        </y:ShapeNode>
+      </data>
+    </node>
+    <node id="n112">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="141.03515625" x="-1080.1000422370696" y="-898.9442622747509"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="109.2109375" x="15.912109375" y="4.03125">Outer Membrane
+(enzyme set)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n113">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="141.03515625" x="-860.7619871065888" y="-898.9442622747509"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="105.654296875" x="17.6904296875" y="4.03125">Periplasm Space
+(compartment)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n114">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="152.50236667273043" x="-656.6835336145118" y="-898.9442622747509"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="101.810546875" x="25.345909898865216" y="4.03125">Periplasm Inner
+(enzyme set)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n115">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="1.0" width="1.0" x="-1340.49785826706" y="-879.4442622747509"/>
+          <y:Fill hasColor="false" transparent="false"/>
+          <y:BorderStyle hasColor="false" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" textColor="#000000" visible="true" width="4.0" x="-1.5" y="-1.5">
+            <y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n116">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="35.401631268191295" width="33.76345835065831" x="-421.2475087734314" y="-906.474115414044"/>
+          <y:Fill hasColor="false" transparent="false"/>
+          <y:BorderStyle hasColor="false" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" modelName="custom" textColor="#000000" visible="true" width="4.0" x="14.881729175329156" y="15.700815634095648">
+            <y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n117">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="122.62613103983267" x="-1309.304738226565" y="-898.9442622747509"/>
+          <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="101.494140625" x="10.565995207416336" y="4.03125">Organelle Filter
+(filter)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n118">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="141.03515625" x="-1080.1000422370696" y="-828.9442622747509"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="107.01953125" x="17.0078125" y="4.03125">Inner Membrane
+(enzyme set)<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:GenericNode>
+      </data>
+    </node>
+    <node id="n119">
+      <data key="d6">
+        <y:GenericNode configuration="com.yworks.flowchart.process">
+          <y:Geometry height="40.0" width="141.03515625" x="-1080.1000422370696" y="-968.9442622747509"/>
+          <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="105.583984375" x="17.7255859375" y="4.03125">trans Membrane
+(enzyme set)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -2131,7 +2294,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e11" source="n19" target="n34">
+    <edge id="e11" source="n19" target="n33">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="14.657093905442732" ty="0.0"/>
@@ -2184,8 +2347,8 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-763.9180123454789" y="-894.6340474836368"/>
-            <y:Point x="-763.9180123454789" y="-951.3067941431566"/>
+            <y:Point x="-644.7478063010444" y="-1256.7098965947262"/>
+            <y:Point x="-644.7478063010444" y="-1313.382643254246"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -2197,8 +2360,8 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-763.9180123454789" y="-894.6340474836368"/>
-            <y:Point x="-763.9180123454789" y="-839.3125007060896"/>
+            <y:Point x="-644.7478063010444" y="-1256.7098965947262"/>
+            <y:Point x="-644.7478063010444" y="-1201.388349817179"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -2206,17 +2369,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e17" source="n26" target="n109">
-      <data key="d10">
-        <y:PolyLineEdge>
-          <y:Path sx="0.0" sy="0.0" tx="15.137035923836265" ty="-2.7798423886206365"/>
-          <y:LineStyle color="#000000" type="line" width="1.0"/>
-          <y:Arrows source="none" target="standard"/>
-          <y:BendStyle smoothed="false"/>
-        </y:PolyLineEdge>
-      </data>
-    </edge>
-    <edge id="e18" source="n31" target="n33">
+    <edge id="e17" source="n110" target="n109">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2226,7 +2379,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e19" source="n28" target="n29">
+    <edge id="e18" source="n30" target="n32">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2236,7 +2389,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e20" source="n29" target="n30">
+    <edge id="e19" source="n27" target="n28">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2246,7 +2399,17 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e21" source="n29" target="n28">
+    <edge id="e20" source="n28" target="n29">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e21" source="n28" target="n27">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="70.49219608306885" sy="0.0" tx="-70.49219608306885" ty="0.0">
@@ -2262,7 +2425,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e22" source="n28" target="n32">
+    <edge id="e22" source="n27" target="n31">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2277,7 +2440,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e23" source="n30" target="n29">
+    <edge id="e23" source="n29" target="n28">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2291,7 +2454,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e24" source="n33" target="n28">
+    <edge id="e24" source="n32" target="n27">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-11.802980524676286" ty="0.0"/>
@@ -2301,7 +2464,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e25" source="n71" target="n63">
+    <edge id="e25" source="n70" target="n62">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-0.9498242986234118" ty="1.7830587981704866">
@@ -2314,7 +2477,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e26" source="n70" target="n71">
+    <edge id="e26" source="n69" target="n70">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2324,7 +2487,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e27" source="n68" target="n69">
+    <edge id="e27" source="n67" target="n68">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2337,7 +2500,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e28" source="n63" target="n69">
+    <edge id="e28" source="n62" target="n68">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2350,7 +2513,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e29" source="n67" target="n66">
+    <edge id="e29" source="n66" target="n65">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2360,7 +2523,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e30" source="n65" target="n67">
+    <edge id="e30" source="n64" target="n66">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2370,7 +2533,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e31" source="n66" target="n64">
+    <edge id="e31" source="n65" target="n63">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2380,7 +2543,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e32" source="n62" target="n61">
+    <edge id="e32" source="n61" target="n60">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2390,7 +2553,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e33" source="n60" target="n62">
+    <edge id="e33" source="n59" target="n61">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2400,7 +2563,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e34" source="n61" target="n59">
+    <edge id="e34" source="n60" target="n58">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2410,7 +2573,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e35" source="n71" target="n68">
+    <edge id="e35" source="n70" target="n67">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2423,7 +2586,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e36" source="n35" target="n36">
+    <edge id="e36" source="n34" target="n35">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="6.554719215856267" ty="0.0"/>
@@ -2433,7 +2596,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e37" source="n37" target="n45">
+    <edge id="e37" source="n36" target="n44">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-0.9498242986234118" ty="1.7830587981704866">
@@ -2446,7 +2609,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e38" source="n38" target="n37">
+    <edge id="e38" source="n37" target="n36">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2456,7 +2619,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e39" source="n40" target="n39">
+    <edge id="e39" source="n39" target="n38">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2469,7 +2632,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e40" source="n45" target="n39">
+    <edge id="e40" source="n44" target="n38">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2482,7 +2645,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e41" source="n41" target="n42">
+    <edge id="e41" source="n40" target="n41">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2492,7 +2655,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e42" source="n43" target="n41">
+    <edge id="e42" source="n42" target="n40">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2502,7 +2665,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e43" source="n42" target="n44">
+    <edge id="e43" source="n41" target="n43">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2512,7 +2675,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e44" source="n46" target="n47">
+    <edge id="e44" source="n45" target="n46">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2522,7 +2685,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e45" source="n48" target="n46">
+    <edge id="e45" source="n47" target="n45">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2532,7 +2695,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e46" source="n47" target="n49">
+    <edge id="e46" source="n46" target="n48">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2542,7 +2705,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e47" source="n37" target="n40">
+    <edge id="e47" source="n36" target="n39">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2555,7 +2718,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e48" source="n52" target="n53">
+    <edge id="e48" source="n51" target="n52">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2565,7 +2728,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e49" source="n54" target="n52">
+    <edge id="e49" source="n53" target="n51">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2575,7 +2738,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e50" source="n53" target="n55">
+    <edge id="e50" source="n52" target="n54">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2585,7 +2748,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e51" source="n51" target="n50">
+    <edge id="e51" source="n50" target="n49">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2595,7 +2758,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e52" source="n50" target="n51">
+    <edge id="e52" source="n49" target="n50">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2609,7 +2772,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e53" source="n51" target="n56">
+    <edge id="e53" source="n50" target="n55">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2624,7 +2787,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e54" source="n72" target="n73">
+    <edge id="e54" source="n71" target="n72">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="6.554719215856267" ty="0.0"/>
@@ -2634,7 +2797,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e55" source="n74" target="n82">
+    <edge id="e55" source="n73" target="n81">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-0.9498242986234118" ty="1.7830587981704866">
@@ -2647,7 +2810,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e56" source="n75" target="n74">
+    <edge id="e56" source="n74" target="n73">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2657,7 +2820,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e57" source="n77" target="n76">
+    <edge id="e57" source="n76" target="n75">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2670,7 +2833,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e58" source="n82" target="n76">
+    <edge id="e58" source="n81" target="n75">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2683,7 +2846,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e59" source="n78" target="n79">
+    <edge id="e59" source="n77" target="n78">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2693,7 +2856,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e60" source="n80" target="n78">
+    <edge id="e60" source="n79" target="n77">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2703,7 +2866,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e61" source="n79" target="n81">
+    <edge id="e61" source="n78" target="n80">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2713,7 +2876,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e62" source="n83" target="n84">
+    <edge id="e62" source="n82" target="n83">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2723,7 +2886,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e63" source="n85" target="n83">
+    <edge id="e63" source="n84" target="n82">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2733,7 +2896,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e64" source="n84" target="n86">
+    <edge id="e64" source="n83" target="n85">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2743,7 +2906,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e65" source="n74" target="n77">
+    <edge id="e65" source="n73" target="n76">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2756,7 +2919,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e66" source="n88" target="n96">
+    <edge id="e66" source="n87" target="n95">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-0.9498242986234118" ty="1.7830587981704866">
@@ -2769,7 +2932,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e67" source="n89" target="n88">
+    <edge id="e67" source="n88" target="n87">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2779,7 +2942,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e68" source="n91" target="n90">
+    <edge id="e68" source="n90" target="n89">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2792,7 +2955,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e69" source="n96" target="n90">
+    <edge id="e69" source="n95" target="n89">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2805,7 +2968,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e70" source="n92" target="n93">
+    <edge id="e70" source="n91" target="n92">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2815,7 +2978,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e71" source="n94" target="n92">
+    <edge id="e71" source="n93" target="n91">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2825,7 +2988,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e72" source="n93" target="n95">
+    <edge id="e72" source="n92" target="n94">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2835,7 +2998,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e73" source="n97" target="n98">
+    <edge id="e73" source="n96" target="n97">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2845,7 +3008,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e74" source="n99" target="n97">
+    <edge id="e74" source="n98" target="n96">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2855,7 +3018,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e75" source="n98" target="n100">
+    <edge id="e75" source="n97" target="n99">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2865,7 +3028,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e76" source="n88" target="n91">
+    <edge id="e76" source="n87" target="n90">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2878,7 +3041,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e77" source="n103" target="n104">
+    <edge id="e77" source="n102" target="n103">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2888,7 +3051,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e78" source="n105" target="n103">
+    <edge id="e78" source="n104" target="n102">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2898,7 +3061,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e79" source="n104" target="n106">
+    <edge id="e79" source="n103" target="n105">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2908,7 +3071,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e80" source="n73" target="n87">
+    <edge id="e80" source="n72" target="n86">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2918,7 +3081,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e81" source="n102" target="n101">
+    <edge id="e81" source="n101" target="n100">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2928,7 +3091,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e82" source="n87" target="n102">
+    <edge id="e82" source="n86" target="n101">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -2938,7 +3101,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e83" source="n101" target="n102">
+    <edge id="e83" source="n100" target="n101">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2952,7 +3115,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e84" source="n102" target="n87">
+    <edge id="e84" source="n101" target="n86">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -2967,7 +3130,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e85" source="n87" target="n107">
+    <edge id="e85" source="n86" target="n106">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-0.533203125" ty="0.0">
@@ -2986,9 +3149,9 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-572.736245569036" y="-951.3067941431566"/>
-            <y:Point x="-572.736245569036" y="-994.5989423593312"/>
-            <y:Point x="-854.4355904704788" y="-994.5989423593312"/>
+            <y:Point x="-453.5660395246015" y="-1313.382643254246"/>
+            <y:Point x="-453.5660395246015" y="-1356.6747914704206"/>
+            <y:Point x="-735.2653844260443" y="-1356.6747914704206"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3000,9 +3163,9 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-572.736245569036" y="-839.3125007060896"/>
-            <y:Point x="-572.736245569036" y="-994.5989423593312"/>
-            <y:Point x="-854.4355904704788" y="-994.5989423593312"/>
+            <y:Point x="-453.5660395246015" y="-1201.388349817179"/>
+            <y:Point x="-453.5660395246015" y="-1356.6747914704206"/>
+            <y:Point x="-735.2653844260443" y="-1356.6747914704206"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3010,7 +3173,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e88" source="n34" target="n16">
+    <edge id="e88" source="n33" target="n16">
       <data key="d10">
         <y:ArcEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
@@ -3022,7 +3185,7 @@
         </y:ArcEdge>
       </data>
     </edge>
-    <edge id="e89" source="n34" target="n17">
+    <edge id="e89" source="n33" target="n17">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3032,7 +3195,7 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e90" source="n109" target="n22">
+    <edge id="e90" source="n108" target="n22">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3042,12 +3205,12 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e91" source="n22" target="n109">
+    <edge id="e91" source="n22" target="n108">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-854.4355904704787" y="-836.0287799206951"/>
-            <y:Point x="-1092.87977617413" y="-836.0287799206951"/>
+            <y:Point x="-735.2653844260442" y="-1198.1046290317845"/>
+            <y:Point x="-957.3278409543661" y="-1198.1046290317845"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3055,14 +3218,16 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e92" source="n109" target="n25">
+    <edge id="e92" source="n108" target="n109">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-991.2374194259057" y="-894.6340474836368"/>
-            <y:Point x="-991.2374194259057" y="-1024.6320149737833"/>
-            <y:Point x="-540.6189306123562" y="-1024.6320149737833"/>
-            <y:Point x="-540.6189306123562" y="-894.6340474836368"/>
+            <y:Point x="-882.3057941160517" y="-1256.7098965947262"/>
+            <y:Point x="-855.6854842061418" y="-1276.3105508520107"/>
+            <y:Point x="-855.6854842061418" y="-1313.382643254246"/>
+            <y:Point x="-1275.5964715808614" y="-1313.382643254246"/>
+            <y:Point x="-1275.5964715808614" y="-1276.013222467478"/>
+            <y:Point x="-1256.3888941227876" y="-1256.7098965947262"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3070,10 +3235,170 @@
         </y:PolyLineEdge>
       </data>
     </edge>
-    <edge id="e93" source="n36" target="n51">
+    <edge id="e93" source="n35" target="n50">
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e94" source="n109" target="n108">
+      <data key="d9"/>
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e95" source="n110" target="n108">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-1305.9181217537653" y="-1256.7098965947262"/>
+            <y:Point x="-1305.9181217537653" y="-1201.388349817179"/>
+            <y:Point x="-1064.0574656514923" y="-1201.388349817179"/>
+            <y:Point x="-1064.0574656514923" y="-1243.1418914524265"/>
+            <y:Point x="-1047.7019472428435" y="-1256.7098965947262"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e96" source="n115" target="n117">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e97" source="n113" target="n114">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e98" source="n114" target="n113">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-484.1811669417815" y="-878.9442622747509"/>
+            <y:Point x="-484.1811669417815" y="-838.9442622747509"/>
+            <y:Point x="-790.2444089815888" y="-838.9442622747509"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e99" source="n117" target="n112">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="-11.802980524676286" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e100" source="n117" target="n119">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-1138.4029411175504" y="-878.9442622747509"/>
+            <y:Point x="-1138.4029411175504" y="-948.9442622747509"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e101" source="n117" target="n118">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-1138.4029411175504" y="-878.9442622747509"/>
+            <y:Point x="-1138.4029411175504" y="-808.9442622747509"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e102" source="n118" target="n113">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-901.3814716351676" y="-808.9442622747509"/>
+            <y:Point x="-901.3814716351676" y="-878.9442622747509"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e103" source="n118" target="n116">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-464.1811669417815" y="-808.9442622747509"/>
+            <y:Point x="-464.1811669417815" y="-888.7732997799484"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e104" source="n112" target="n113">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="-14.107167531748928" ty="0.0"/>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e105" source="n119" target="n113">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
+            <y:Point x="-901.3814716351676" y="-948.9442622747509"/>
+            <y:Point x="-901.3814716351676" y="-878.9442622747509"/>
+          </y:Path>
+          <y:LineStyle color="#000000" type="line" width="1.0"/>
+          <y:Arrows source="none" target="standard"/>
+          <y:BendStyle smoothed="false"/>
+        </y:PolyLineEdge>
+      </data>
+    </edge>
+    <edge id="e106" source="n113" target="n112">
+      <data key="d10">
+        <y:PolyLineEdge>
+          <y:Path sx="0.0" sy="0.0" tx="-24.491013843264454" ty="0.0">
+            <y:Point x="-790.2444089815888" y="-988.9442622747508"/>
+            <y:Point x="-1138.4029411175504" y="-988.9442622747508"/>
+            <y:Point x="-1138.4029411175504" y="-878.9442622747509"/>
+          </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
           <y:BendStyle smoothed="false"/>
