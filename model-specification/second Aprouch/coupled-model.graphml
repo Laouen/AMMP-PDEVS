@@ -340,7 +340,7 @@
           <y:Geometry height="40.0" width="141.03515625" x="-945.4355766696551" y="-259.6763712259815"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="108.912109375" x="16.0615234375" y="4.03125">Cytoplasm Space
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="124.7265625" x="8.154296875" y="4.03125">Bulk solution Space
 (compartment)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -357,7 +357,7 @@
           <y:Geometry height="40.0" width="158.23597188409565" x="-724.216204788155" y="-259.6763712259815"/>
           <y:Fill color="#CCFFCC" color2="#339966" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="105.068359375" x="26.58380625454788" y="4.03125">Cytoplasm Inner
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="120.8828125" x="18.67657969204788" y="4.03125">Bulk solution Inner
 (enzyme set)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
@@ -621,7 +621,7 @@
           <y:Geometry height="40.0" width="135.2149677061277" x="-1164.7268429571882" y="-259.6763712259815"/>
           <y:Fill color="#E8EEF7" color2="#B7C9E3" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="105.6953125" x="14.759827603063968" y="4.03125">Cytoplasm Filter
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="31.9375" modelName="custom" textColor="#000000" visible="true" width="121.509765625" x="6.852601040563968" y="4.03125">Bulk solution Filter
 (filter)<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
