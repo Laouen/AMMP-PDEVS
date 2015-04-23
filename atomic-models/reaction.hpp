@@ -26,7 +26,7 @@ class reaction : public atomic<TIME, MSG>
 private:
   // enzyme information
   string                  _id;
-  Address                 _location;
+  Address                 _space_location;
   bool                    _reversible;
   TIME                    _rate;
   SetOfMolecules          _reactants_sctry;
@@ -45,7 +45,7 @@ public:
 
   explicit reaction(
     const string              other_id,
-    const Address             other_location,
+    const Address             other_space_location,
     const bool                other_reversible,
     const TIME                other_rate,
     const SetOfMolecules&     other_reactants_sctry,
@@ -54,7 +54,7 @@ public:
     const TIME                other_interval_time
   ) noexcept :
   _id(other_id),
-  _location(other_location),
+  _space_location(other_space_location),
   _reversible(other_reversible),
   _rate(other_rate),
   _reactants_sctry(other_reactants_sctry),
@@ -131,6 +131,7 @@ public:
         
         for (SetOfMolecules::const_iterator jt = it->rejected.cbegin(); jt != it->rejected.cend(); ++jt) {
           new_message.clear();
+          new_message.to     = _space_location;
           new_message.specie = jt->first;
           new_message.amount = jt->second;
           result.push_back(new_message); 
@@ -142,6 +143,7 @@ public:
 
         for (SetOfMolecules::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
           new_message.clear();
+          new_message.to     = _space_location;
           new_message.specie = jt->first;
           new_message.amount = it->reaction.second * jt->second;
           result.push_back(new_message); 
