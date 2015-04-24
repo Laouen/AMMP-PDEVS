@@ -26,7 +26,6 @@ class reaction : public atomic<TIME, MSG>
 private:
   // enzyme information
   string                  _id;
-  Address                 _space_location;
   bool                    _reversible;
   TIME                    _rate;
   SetOfMolecules          _reactants_sctry;

@@ -43,6 +43,7 @@ typedef double Time;
 typedef chrono::high_resolution_clock hclock;
 typedef vector< shared_ptr< model<Time> > > vectorOfModels;
 typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
+typedef map<string, shared_ptr< model<Time> > > modelsMap;
 
 
 
@@ -54,9 +55,127 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 /********** Helper functions ***********/
 /***************************************/
 
+string compartmentOfReactants(const map<string, int>& c) {
+
+  string result;
+
+  for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+    
+    if (i->second > 0) {
+      result = i->first;
+      break;
+    }
+  }
+
+  return result;
+}
+
+string organelleOfReactants(const map<string, int>& c, string* sp) {
+
+  string result;
+  bool is_not_special;
+
+  for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+    
+    is_not_special = (i->first != sp[0]) && (i->first != sp[1]) && (i->first != sp[2]);
+    
+    if (is_not_special && (i->second > 0)) {
+      result = i->first;
+      break;
+    }
+  }
+
+  return result;
+}
+
+bool thereAreOrganelleInvolved(const map<string, int>& c, string* sp) {
+
+  bool result = false;
+  bool is_not_special;
+
+  for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+    
+    is_not_special = (i->first != sp[0]) && (i->first != sp[1]) && (i->first != sp[2]);
+    
+    if (is_not_special && (i->second > 0)) {
+      result = true;
+      break;
+    }
+  }
+
+  return result;
+}
+
+string getPlace(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
+
+  string result;
+  int amount_compartments;
+  string curr_space;
+  map<string, int> compartments;
+
+  for (map<string, string>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+    compartments[i->first] = 0;
+  }
+
+  for (SetOfMolecules::const_iterator jt = e.reactants_sctry.cbegin(); jt != e.reactants_sctry.cend(); ++jt) {
+    
+    for (map<string, map<string, string> >::const_iterator i = s.cbegin(); i != s.cend(); ++i) {
+      if (i->second.find(jt->first) != i->second.end()) {
+        
+        curr_space = i->first;
+        break;
+      }
+    }
+    compartments[curr_space] += 1;
+  }
+
+  for (SetOfMolecules::const_iterator jt = e.products_sctry.cbegin(); jt != e.products_sctry.cend(); ++jt) {
+    
+    for (map<string, map<string, string> >::const_iterator i = s.cbegin(); i != s.cend(); ++i) {
+      if (i->second.find(jt->first) != i->second.end()) {
+        
+        curr_space = i->first;
+        break;
+      }
+    }
+    compartments[curr_space] += 1;
+  }
+
+
+  amount_compartments = 0;
+  for (map<string, int>::iterator i = compartments.begin(); i != compartments.end(); ++i) {   
+    if (i->second > 0) ++amount_compartments;
+  }
+
+  switch(amount_compartments) {
+    case 1:
+
+      result = compartmentOfReactants(compartments) + "_i";
+      break;
+    case 2:
+
+      if (thereAreOrganelleInvolved(compartments, sp)) {
+        result = organelleOfReactants(compartments, sp) + "_m";
+      
+      } else if (compartments[sp[0]] > 0){
+
+        result = sp[1] + "_um";
+      } else if (compartments[sp[2]] > 0) {
+
+        result = sp[1] + "_lm";
+      }
+      break;
+    case 3:
+
+      result = sp[1] + "_tm";
+      break;
+  }
+
+  return result;
+}
 
 /***************************************/
-/******** END Helper functions *********/
+/******** End helper functions *********/
 /***************************************/
 
 int main(int argc, char* argv[]) {
@@ -74,18 +193,36 @@ int main(int argc, char* argv[]) {
   Parser_t input_doc(argv[1]);
   input_doc.loadFile();
 
-  map<string, string>               compartements   = input_doc.getCompartments();
-  map<string, map<string, string> > species         = input_doc.getSpeciesByCompartment();
-  map<string, enzyme_parameter_t >  reactions       = input_doc.getReactions();
-  string                            e_ID            = "e";
-  string                            p_ID            = "p";
-  string                            c_ID            = "c";
+  map<string, string>               compartements     = input_doc.getCompartments();
+  map<string, map<string, string> > species           = input_doc.getSpeciesByCompartment();
+  map<string, enzyme_parameter_t >  reactions         = input_doc.getReactions();
+  string                            special_places[3]  = {"e", "p", "c"};
 
   cout << "creating enzymes atomic models" << endl;
-  vectorOfModels              reaction_models;
-  Time                        interval_time, rate;
-  Integer                     amount;
-  Address                     space_location;
+  map< string, modelsMap >  reaction_models;
+  Time                      interval_time, rate;
+  Integer                   amount;
+  bool                      isCompartment;
+  string                    place;
+
+  for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
+    
+    isCompartment = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
+    if (isCompartment) {
+      reaction_models[it->first + "_i"] = {};
+      reaction_models[it->first + "_m"] = {};
+    }
+  }
+
+  reaction_models[special_places[0] + "_i"] = {};
+  reaction_models[special_places[2] + "_i"] = {};
+  reaction_models[special_places[1] + "_i"] = {};
+  reaction_models[special_places[1] + "_lm"] = {};
+  reaction_models[special_places[1] + "_um"] = {};
+  reaction_models[special_places[1] + "_tm"] = {};
+
+  cout << reaction_models.size() << endl;
+
 
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
@@ -93,45 +230,21 @@ int main(int argc, char* argv[]) {
     rate            = 0.001;
     amount          = 1;
 
-    reaction_models.push_back( make_atomic_ptr< reaction<Time, Message>, string, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time) );
+    place = getPlace(it->second, species, compartements, special_places);
+
+    reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
-/*
-  int cantComps;
-  string k;
-  map<string, int> comps; 
+  for (map< string, modelsMap >::iterator i = reaction_models.begin(); i != reaction_models.end(); ++i) {
 
-  for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
-    
-    comps["c"] = 0;
-    comps["p"] = 0;
-    comps["e"] = 0;
-
-    for (SetOfMolecules::iterator jt = it->second.reactants_sctry.begin(); jt != it->second.reactants_sctry.end(); ++jt) {
-      k = jt->first.back();
-      if (comps.find(k) == comps.end()) cout << jt->first << endl;
-      comps[k] += 1;
+    cout << i->first << " " <<  i->second.size() << endl << endl;
+    for (modelsMap::iterator j = i->second.begin(); j != i->second.end(); ++j) {
+      
+      cout << j->first << endl;
     }
-
-    for (SetOfMolecules::iterator jt = it->second.products_sctry.begin(); jt != it->second.products_sctry.end(); ++jt) {
-      k = jt->first.back();
-      if (comps.find(k) == comps.end()) cout << jt->first << endl;
-      comps[k] += 1;
-    }
-    cantComps = 0;
-    if (comps["c"] > 0) ++cantComps;
-    if (comps["p"] > 0) ++cantComps;
-    if (comps["e"] > 0) ++cantComps;
-
-    if (cantComps > 2) {
-      cout << it->first << endl;
-    }
-
-
   }
 
 
-  
   /**************************************************************************************************************/
   /*********************************** End creating unit definitions ********************************************/
   /**************************************************************************************************************/
