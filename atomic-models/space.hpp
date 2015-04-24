@@ -23,30 +23,33 @@ template<class TIME, class MSG>
 class space : public atomic<TIME, MSG>
 {
 private:
-  string                            _id;
-  TIME                              _next_internal;
-  TIME                              _interval_time;
-  map<string, metabolite_info_t>    _metabolites;
-  map<string, enzyme_info_t>        _enzymes;
-  double                            _volume;
-  double                            _factor;
-  SState                            _s;
-  vector<MSG>                       _output;
+  string                              _id;
+  shared_ptr< map<string, Address> >  _addresses;
+  TIME                                _next_internal;
+  TIME                                _interval_time;
+  map<string, metabolite_info_t>      _metabolites;
+  map<string, enzyme_info_t>          _enzymes;
+  double                              _volume;
+  double                              _factor;
+  SState                              _s;
+  vector<MSG>                         _output;
   // used for uniform random numbers
-  RealRandom<double>                _real_random;
-  IntegerRandom<Integer>            _integer_random;
+  RealRandom<double>                  _real_random;
+  IntegerRandom<Integer>              _integer_random;
 
 public:
 
   explicit space(
-    const string                          other_id,
-    const TIME                            other_interval_time,
-    const map<string, metabolite_info_t>& other_metabolites,
-    const map<string, enzyme_info_t>&     other_enzymes,
-    const double                          other_volume,
-    const double                          other_factor
+    const string                              other_id,
+    const shared_ptr< map<string, Address> >  other_addresses;
+    const TIME                                other_interval_time,
+    const map<string, metabolite_info_t>&     other_metabolites,
+    const map<string, enzyme_info_t>&         other_enzymes,
+    const double                              other_volume,
+    const double                              other_factor
     ) noexcept :
   _id(other_id),
+  _addresses(other_addresses),
   _interval_time(other_interval_time),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
