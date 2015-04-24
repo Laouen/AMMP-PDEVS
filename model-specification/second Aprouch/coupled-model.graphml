@@ -2022,10 +2022,10 @@
     <node id="n111">
       <data key="d6">
         <y:ShapeNode>
-          <y:Geometry height="234.3377221755893" width="918.2503494936287" x="-1339.49785826706" y="-1005.9421608677433"/>
+          <y:Geometry height="234.3377221755893" width="918.2503494936287" x="-1339.49785826706" y="-1005.942160867743"/>
           <y:Fill hasColor="false" transparent="false"/>
           <y:BorderStyle color="#000000" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.568359375" x="10.147685606636287" y="-16.874663675035436">periplasm<y:LabelModel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="custom" textColor="#000000" visible="true" width="64.568359375" x="10.147685606636287" y="-16.874663675035322">periplasm<y:LabelModel>
               <y:SmartNodeLabelModel distance="4.0"/>
             </y:LabelModel>
             <y:ModelParameter>
@@ -2413,11 +2413,11 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="70.49219608306885" sy="0.0" tx="-70.49219608306885" ty="0.0">
-            <y:Point x="-705.4457690676974" y="-585.2964115500639"/>
-            <y:Point x="-705.4457690676974" y="-616.1582497427181"/>
-            <y:Point x="-1147.5271577464919" y="-616.1582497427181"/>
-            <y:Point x="-1147.5271577464919" y="-591.0403989718241"/>
-            <y:Point x="-1123.670052602197" y="-576.1582497427181"/>
+            <y:Point x="-711.2423290174777" y="-585.2964115500639"/>
+            <y:Point x="-711.2423290174777" y="-616.1582497427181"/>
+            <y:Point x="-1128.3757083062515" y="-616.1582497427181"/>
+            <y:Point x="-1128.3757083062515" y="-585.2438390220439"/>
+            <y:Point x="-1120.7489710213413" y="-576.1582497427181"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
@@ -3223,10 +3223,10 @@
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
             <y:Point x="-882.3057941160517" y="-1256.7098965947262"/>
-            <y:Point x="-855.6854842061418" y="-1276.3105508520107"/>
-            <y:Point x="-855.6854842061418" y="-1313.382643254246"/>
-            <y:Point x="-1275.5964715808614" y="-1313.382643254246"/>
-            <y:Point x="-1275.5964715808614" y="-1276.013222467478"/>
+            <y:Point x="-866.8102628293661" y="-1269.3546789122745"/>
+            <y:Point x="-866.8102628293661" y="-1313.382643254246"/>
+            <y:Point x="-1265.162663671257" y="-1313.382643254246"/>
+            <y:Point x="-1265.162663671257" y="-1269.0573505277418"/>
             <y:Point x="-1256.3888941227876" y="-1256.7098965947262"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
@@ -3246,7 +3246,6 @@
       </data>
     </edge>
     <edge id="e94" source="n109" target="n108">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
@@ -3260,7 +3259,8 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="-1305.9181217537653" y="-1256.7098965947262"/>
+            <y:Point x="-1317.1959087920577" y="-1256.7098965947262"/>
+            <y:Point x="-1305.9181217537653" y="-1244.9876240753317"/>
             <y:Point x="-1305.9181217537653" y="-1201.388349817179"/>
             <y:Point x="-1064.0574656514923" y="-1201.388349817179"/>
             <y:Point x="-1064.0574656514923" y="-1243.1418914524265"/>
@@ -3396,7 +3396,8 @@
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="-24.491013843264454" ty="0.0">
             <y:Point x="-790.2444089815888" y="-988.9442622747508"/>
-            <y:Point x="-1138.4029411175504" y="-988.9442622747508"/>
+            <y:Point x="-1149.996061017111" y="-988.9442622747508"/>
+            <y:Point x="-1149.996061017111" y="-889.5332934588845"/>
             <y:Point x="-1138.4029411175504" y="-878.9442622747509"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
