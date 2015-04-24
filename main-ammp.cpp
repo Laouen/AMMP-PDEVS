@@ -215,12 +215,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  for (map<string, Address>::iterator i = species_addresses->begin(); i != species_addresses->end(); ++i) {
-    cout << i->first << ": " << i->second << endl;
-  }
-
-
-  cout << "shared with: " << species_addresses.use_count() << " people" << endl;
   cout << "creating enzymes atomic models and ordering them by places" << endl;
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
@@ -249,14 +243,13 @@ int main(int argc, char* argv[]) {
     
     interval_time   = 0.001;
     rate            = 0.001;
-    amount          = 1;
+    amount          = 3;
 
     place = getPlace(it->second, species, compartements, special_places);
 
     reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, shared_ptr< map<string, Address> >, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, species_addresses, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
-  cout << "shared with: " << species_addresses.use_count() << " people" << endl;
 
   cout << "creating addresses to send metabolites from spaces to enzymes" << endl;
   map<string, Address> reaction_addresses;
@@ -281,6 +274,41 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  shared_ptr< reaction<Time, Message> > m = dynamic_pointer_cast< reaction<Time, Message> >( reaction_models["c_i"].at("R_2AGPEAT120") );
+
+  Message m1;
+  Message m2;
+  Message m3;
+
+  m1.specie = "M_2agpe120_c";
+  m1.amount = 10;
+  m2.specie = "M_atp_c";
+  m2.amount = 2;
+  m3.specie = "M_ddca_c";
+  m3.amount = 5;
+
+  cout << endl;
+  m->show(cout);
+  cout << endl;
+  m->external({m1, m2, m3}, 0);
+  m->show(cout);
+  cout << endl;
+  vector<Message> ms = m->out();
+  for(vector<Message>::iterator i = ms.begin(); i != ms.end(); ++i) {
+    cout << *i << endl;
+  }
+  m->internal();
+  m->advance();
+  m->show(cout);
+  cout << endl;
+  ms = m->out();
+  for(vector<Message>::iterator i = ms.begin(); i != ms.end(); ++i) {
+    cout << *i << endl;
+  }
+  m->internal();
+  m->advance();
+  m->show(cout);
+  cout << endl;
 
 
   /**************************************************************************************************************/
