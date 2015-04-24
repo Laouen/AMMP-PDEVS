@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
     reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
-  cout << "creating addresses to send metabolites to enzymes" << endl;
+  cout << "creating addresses to send metabolites from spaces to enzymes" << endl;
   map<string, Address> reaction_addresses;
   Address new_address;
 
@@ -259,11 +259,25 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  for (map<string, Address>::iterator i = reaction_addresses.begin(); i != reaction_addresses.end(); ++i) {
+  cout << "creating addresses to send metabolites from enzymes to spaces" << endl;
+  map<string, Address> species_addresses;
+
+  for (map<string, map<string, string> >::const_iterator i = species.cbegin(); i != species.end(); ++i) {
+    
+    new_address.clear();
+    new_address.push_back(i->first);
+    for (map<string, string>::const_iterator j = i->second.cbegin(); j != i->second.cend(); ++j) {
+      
+      new_address.push_back(i->first + "_s");
+      species_addresses[j->first] = new_address;
+      new_address.pop_back();
+    }
+  }
+
+  for (map<string, Address>::iterator i = species_addresses.begin(); i != species_addresses.end(); ++i) {
     cout << i->first << ": " << i->second << endl;
   }
 
-  cout << reaction_addresses.size() << endl;
 
 
   /**************************************************************************************************************/
