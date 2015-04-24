@@ -198,12 +198,12 @@ int main(int argc, char* argv[]) {
   map<string, enzyme_parameter_t >  reactions         = input_doc.getReactions();
   string                            special_places[3]  = {"e", "p", "c"};
 
-  cout << "creating enzymes atomic models" << endl;
+  cout << "creating enzymes atomic models and ordering them by places" << endl;
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
   Integer                   amount;
   bool                      isCompartment;
-  string                    place;
+  string                    place, sub_place;
 
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
@@ -235,14 +235,35 @@ int main(int argc, char* argv[]) {
     reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
-  for (map< string, modelsMap >::iterator i = reaction_models.begin(); i != reaction_models.end(); ++i) {
+  cout << "creating addresses to send metabolites to enzymes" << endl;
+  map<string, Address> reaction_addresses;
+  Address new_address;
 
-    cout << i->first << " " <<  i->second.size() << endl << endl;
-    for (modelsMap::iterator j = i->second.begin(); j != i->second.end(); ++j) {
-      
-      cout << j->first << endl;
+  for (map<string, modelsMap>::const_iterator it = reaction_models.cbegin(); it != reaction_models.cend(); ++it) {
+    
+
+    place       = it->first.substr(0, it->first.find_last_of("_"));
+    sub_place   = it->first.substr(it->first.find_last_of("_") + 1);
+
+    
+    new_address.clear();
+    new_address.push_back(place);
+    new_address.push_back(it->first);
+    if (sub_place == "i") new_address.push_back(place + "_s");
+
+    for (modelsMap::const_iterator jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
+
+      new_address.push_back(jt->first);
+      reaction_addresses[jt->first] = new_address;
+      new_address.pop_back();
     }
   }
+
+  for (map<string, Address>::iterator i = reaction_addresses.begin(); i != reaction_addresses.end(); ++i) {
+    cout << i->first << ": " << i->second << endl;
+  }
+
+  cout << reaction_addresses.size() << endl;
 
 
   /**************************************************************************************************************/
