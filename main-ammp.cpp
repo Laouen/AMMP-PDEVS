@@ -197,13 +197,35 @@ int main(int argc, char* argv[]) {
   map<string, map<string, string> > species           = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter_t >  reactions         = input_doc.getReactions();
   string                            special_places[3]  = {"e", "p", "c"};
+  string                            place, sub_place;
 
+  cout << "creating addresses to send metabolites from enzymes to spaces" << endl;
+  shared_ptr< map<string, Address> > species_addresses = make_shared< map<string, Address> >();
+  Address new_address;
+
+  for (map<string, map<string, string> >::const_iterator i = species.cbegin(); i != species.end(); ++i) {
+    
+    new_address.clear();
+    new_address.push_back(i->first);
+    for (map<string, string>::const_iterator j = i->second.cbegin(); j != i->second.cend(); ++j) {
+      
+      new_address.push_back(i->first + "_s");
+      species_addresses->emplace(j->first, new_address);
+      new_address.pop_back();
+    }
+  }
+
+  for (map<string, Address>::iterator i = species_addresses->begin(); i != species_addresses->end(); ++i) {
+    cout << i->first << ": " << i->second << endl;
+  }
+
+
+  cout << "shared with: " << species_addresses.use_count() << " people" << endl;
   cout << "creating enzymes atomic models and ordering them by places" << endl;
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
   Integer                   amount;
   bool                      isCompartment;
-  string                    place, sub_place;
 
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
@@ -221,7 +243,6 @@ int main(int argc, char* argv[]) {
   reaction_models[special_places[1] + "_um"] = {};
   reaction_models[special_places[1] + "_tm"] = {};
 
-  cout << reaction_models.size() << endl;
 
 
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
@@ -232,12 +253,13 @@ int main(int argc, char* argv[]) {
 
     place = getPlace(it->second, species, compartements, special_places);
 
-    reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
+    reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, shared_ptr< map<string, Address> >, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, species_addresses, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
+
+  cout << "shared with: " << species_addresses.use_count() << " people" << endl;
 
   cout << "creating addresses to send metabolites from spaces to enzymes" << endl;
   map<string, Address> reaction_addresses;
-  Address new_address;
 
   for (map<string, modelsMap>::const_iterator it = reaction_models.cbegin(); it != reaction_models.cend(); ++it) {
     
@@ -257,25 +279,6 @@ int main(int argc, char* argv[]) {
       reaction_addresses[jt->first] = new_address;
       new_address.pop_back();
     }
-  }
-
-  cout << "creating addresses to send metabolites from enzymes to spaces" << endl;
-  map<string, Address> species_addresses;
-
-  for (map<string, map<string, string> >::const_iterator i = species.cbegin(); i != species.end(); ++i) {
-    
-    new_address.clear();
-    new_address.push_back(i->first);
-    for (map<string, string>::const_iterator j = i->second.cbegin(); j != i->second.cend(); ++j) {
-      
-      new_address.push_back(i->first + "_s");
-      species_addresses[j->first] = new_address;
-      new_address.pop_back();
-    }
-  }
-
-  for (map<string, Address>::iterator i = species_addresses.begin(); i != species_addresses.end(); ++i) {
-    cout << i->first << ": " << i->second << endl;
   }
 
 

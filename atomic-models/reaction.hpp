@@ -25,33 +25,36 @@ class reaction : public atomic<TIME, MSG>
 
 private:
   // enzyme information
-  string                  _id;
-  bool                    _reversible;
-  TIME                    _rate;
-  SetOfMolecules          _reactants_sctry;
-  SetOfMolecules          _products_sctry;
-  Integer                 _amount;
-  TIME                    _interval_time;
+  string                              _id;
+  shared_ptr< map<string, Address> >  _addresses;
+  bool                                _reversible;
+  TIME                                _rate;
+  SetOfMolecules                      _reactants_sctry;
+  SetOfMolecules                      _products_sctry;
+  Integer                             _amount;
+  TIME                                _interval_time;
   // elements bound
-  SetOfMolecules          _reactants;
-  SetOfMolecules          _products;
-  TaskQueue<TIME>         _tasks;
+  SetOfMolecules                      _reactants;
+  SetOfMolecules                      _products;
+  TaskQueue<TIME>                     _tasks;
   // used for uniform random number
-  IntegerRandom<Integer>  _distribution;
+  IntegerRandom<Integer>              _distribution;
 
 
 public:
 
   explicit reaction(
-    const string              other_id,
-    const bool                other_reversible,
-    const TIME                other_rate,
-    const SetOfMolecules&     other_reactants_sctry,
-    const SetOfMolecules&     other_products_sctry,
-    const Integer             other_amount,
-    const TIME                other_interval_time
+    const string                              other_id,
+    const shared_ptr< map<string, Address> >  other_addresses,
+    const bool                                other_reversible,
+    const TIME                                other_rate,
+    const SetOfMolecules&                     other_reactants_sctry,
+    const SetOfMolecules&                     other_products_sctry,
+    const Integer                             other_amount,
+    const TIME                                other_interval_time
   ) noexcept :
   _id(other_id),
+  _addresses(other_addresses),
   _reversible(other_reversible),
   _rate(other_rate),
   _reactants_sctry(other_reactants_sctry),
@@ -128,6 +131,7 @@ public:
         
         for (SetOfMolecules::const_iterator jt = it->rejected.cbegin(); jt != it->rejected.cend(); ++jt) {
           new_message.clear();
+          new_message.to     = _addresses->at(jt->first);
           new_message.specie = jt->first;
           new_message.amount = jt->second;
           result.push_back(new_message); 
@@ -139,6 +143,7 @@ public:
 
         for (SetOfMolecules::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
           new_message.clear();
+          new_message.to     = _addresses->at(jt->first);
           new_message.specie = jt->first;
           new_message.amount = it->reaction.second * jt->second;
           result.push_back(new_message); 
