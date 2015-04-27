@@ -55,6 +55,21 @@ typedef map<string, shared_ptr< model<Time> > > modelsMap;
 /********** Helper functions ***********/
 /***************************************/
 
+vector<string> getReactants(const enzyme_parameter_t& e) {
+  vector<string> result;
+
+  for (SetOfMolecules::const_iterator it = e.reactants_sctry.cbegin(); it != e.reactants_sctry.cend(); ++it) {
+    result.push_back(it->first);
+  }
+
+  if (e.reversible) {
+    for (SetOfMolecules::const_iterator it = e.products_sctry.cbegin(); it != e.products_sctry.cend(); ++it) {
+      result.push_back(it->first);
+    }
+  }
+  return result;
+}
+
 string compartmentOfReactants(const map<string, int>& c) {
 
   string result;
@@ -174,6 +189,51 @@ string getPlace(const enzyme_parameter_t& e, const map<string, map<string, strin
   return result;
 }
 
+vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
+
+  vector<string> result;
+  string curr_space;
+  map<string, int> compartments;
+
+  for (map<string, string>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+    compartments[i->first] = 0;
+  }
+
+  for (SetOfMolecules::const_iterator jt = e.reactants_sctry.cbegin(); jt != e.reactants_sctry.cend(); ++jt) {
+    
+    for (map<string, map<string, string> >::const_iterator i = s.cbegin(); i != s.cend(); ++i) {
+      if (i->second.find(jt->first) != i->second.end()) {
+        
+        curr_space = i->first;
+        break;
+      }
+    }
+    compartments[curr_space] += 1;
+  }
+
+  if (e.reversible) {
+
+    for (SetOfMolecules::const_iterator jt = e.products_sctry.cbegin(); jt != e.products_sctry.cend(); ++jt) {
+      
+      for (map<string, map<string, string> >::const_iterator i = s.cbegin(); i != s.cend(); ++i) {
+        if (i->second.find(jt->first) != i->second.end()) {
+          
+          curr_space = i->first;
+          break;
+        }
+      }
+      compartments[curr_space] += 1;
+    }
+  }
+
+  for (map<string, int>::iterator i = compartments.begin(); i != compartments.end(); ++i) {   
+    
+    if (i->second > 0) result.push_back(i->first);
+  }
+
+  return result;
+}
+
 /***************************************/
 /******** End helper functions *********/
 /***************************************/
@@ -186,7 +246,7 @@ int main(int argc, char* argv[]) {
   /**************************************************************************************************************/
 
   if (argc <= 1){
-      cout << "an SBML file is required." << endl;
+      cout << "An SBML file is required." << endl;
       exit(1);
   }
 
@@ -199,7 +259,7 @@ int main(int argc, char* argv[]) {
   string                            special_places[3]  = {"e", "p", "c"};
   string                            place, sub_place;
 
-  cout << "creating addresses to send metabolites from enzymes to spaces" << endl;
+  cout << "Creating space addresses." << endl;
   shared_ptr< map<string, Address> > species_addresses = make_shared< map<string, Address> >();
   Address new_address;
 
@@ -215,7 +275,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  cout << "creating enzymes atomic models and ordering them by places" << endl;
+  cout << "Creating enzymes atomic models and ordering them by places." << endl;
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
   Integer                   amount;
@@ -251,7 +311,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cout << "creating addresses to send metabolites from spaces to enzymes" << endl;
+  cout << "Creating enzyme addresses." << endl;
   map<string, Address> reaction_addresses;
 
   for (map<string, modelsMap>::const_iterator it = reaction_models.cbegin(); it != reaction_models.cend(); ++it) {
@@ -274,6 +334,55 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  cout << "Getting enzyme information for spaces creation." << endl;
+  map<string, map<string, enzyme_info_t> > enzyme_informations;
+  enzyme_info_t new_enzyme;
+  vector<string> compartments_who_use_the_enzyme;
+
+  for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
+    
+    isCompartment = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
+    if (isCompartment) {
+      enzyme_informations[it->first] = {};
+    }
+  }
+
+  enzyme_informations[special_places[0]] = {};
+  enzyme_informations[special_places[2]] = {};
+  enzyme_informations[special_places[1]] = {};
+
+
+  for (map<string, enzyme_parameter_t >::const_iterator it = reactions.cbegin(); it != reactions.end(); ++it) {
+    
+    new_enzyme.location   = reaction_addresses[it->first];
+    new_enzyme.reactants  = getReactants(it->second); 
+
+    compartments_who_use_the_enzyme = getCompartments(it->second, species, compartements, special_places);
+
+    for (vector<string>::iterator i = compartments_who_use_the_enzyme.begin(); i != compartments_who_use_the_enzyme.end(); ++i) {
+      
+      enzyme_informations.at(*i)[it->first] = new_enzyme;
+    }
+  }
+
+
+  cout << "Testing enzyme info" << endl;
+  for (map<string, map<string, enzyme_info_t> >::iterator i = enzyme_informations.begin(); i != enzyme_informations.end(); ++i) {
+    
+    cout << "compartment: " << i->first << " amount of reactions: " << i->second.size() << endl;
+    for (map<string, enzyme_info_t>::iterator j = i->second.begin(); j != i->second.end(); ++j) {
+
+      cout << j->first << ": " << j->second.location << " [";
+      for (vector<string>::iterator l = j->second.reactants.begin(); l != j->second.reactants.end(); ++l) {
+        
+        cout << (*l) << ", ";   
+      }
+      cout << "]" << endl;
+    }
+  }
+
+
+/*
   shared_ptr< reaction<Time, Message> > m = dynamic_pointer_cast< reaction<Time, Message> >( reaction_models["c_i"].at("R_2AGPEAT120") );
 
   Message m1;
