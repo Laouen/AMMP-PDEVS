@@ -366,21 +366,116 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cout << "Testing enzyme info" << endl;
-  for (map<string, map<string, enzyme_info_t> >::iterator i = enzyme_informations.begin(); i != enzyme_informations.end(); ++i) {
-    
-    cout << "compartment: " << i->first << " amount of reactions: " << i->second.size() << endl;
-    for (map<string, enzyme_info_t>::iterator j = i->second.begin(); j != i->second.end(); ++j) {
+  cout << "Creating space atomic models." << endl;
+  modelsMap space_models;
+  double volume, factor;
+  map<string, metabolite_info_t> metabolites;
 
-      cout << j->first << ": " << j->second.location << " [";
-      for (vector<string>::iterator l = j->second.reactants.begin(); l != j->second.reactants.end(); ++l) {
-        
-        cout << (*l) << ", ";   
-      }
-      cout << "]" << endl;
-    }
+
+  for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
+    
+    interval_time = 0.05;
+    volume        = 5;
+    factor        = 1;
+
+    space_models[it->first] = make_atomic_ptr< space<Time, Message>, string, Time, map<string, metabolite_info_t>&, map<string, enzyme_info_t>&, double, double >(it->first, interval_time, metabolites, enzyme_informations[it->first], volume, factor);
   }
 
+
+
+
+  /*****************************************************************************************************/
+  /*********************** Testing reaction atomic model ***********************************************/
+  /*****************************************************************************************************/
+
+
+  cout << "Testing spaces atomic models" << endl;
+  //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
+  auto cytoplasm = space_models["c"];
+
+  cout << "Creating the model to insert the input from stream" << endl;
+  auto piss = make_shared<istringstream>();
+  string input = "";
+
+  for (double i = 0.001; i < 0.109; i += 0.001) {
+
+    input += to_string(i) + " | M_adphep_DASH_DD_c 1 \n ";
+    input += to_string(i) + " | M_acon_DASH_T_c 1 \n ";
+    //input += to_string(i) + " | M_hdcea_c 1 \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
+    [](const string& s, Time& t_next, Message& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    int delimiter;
+    string send_to;
+    string collector;
+    string thrash;
+    stringstream ss;
+    Message msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    ss >> collector;
+
+    while (collector != "|") {     
+      send_to = "";
+
+      do {
+
+        if (send_to != "") send_to += " ";
+        send_to += collector;
+        ss >> collector;
+
+      } while (send_to.at(send_to.size()-1) != '}');
+      
+      send_to.erase(send_to.begin());
+      send_to.erase(send_to.end()-1);
+      delimiter = send_to.find(",");
+
+
+      msg_out.to.push_back("ID");
+    }
+
+    ss >> msg_out.specie;
+    ss >> msg_out.amount;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+  cout << "Coupling the input to the model" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cytoplasm}, {}, {{pf, cytoplasm}}, {cytoplasm}});
+
+  cout << "Preparing runner" << endl;
+  Time initial_time{0};
+  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+
+  cout << "Starting simulation until passivate" << endl;
+
+  auto start = hclock::now(); //to measure simulation execution time
+
+  r.runUntilPassivate();
+
+  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+
+  cout << "Simulation took:" << elapsed << "sec" << endl;
+
+
+
+  /*****************************************************************************************************/
+  /*********************** Testing reaction atomic model ***********************************************/
+  /*****************************************************************************************************/
 
 /*
   shared_ptr< reaction<Time, Message> > m = dynamic_pointer_cast< reaction<Time, Message> >( reaction_models["c_i"].at("R_2AGPEAT120") );

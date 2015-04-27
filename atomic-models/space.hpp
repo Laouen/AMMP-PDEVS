@@ -77,8 +77,8 @@ public:
     if (_s == SState::SELECTING) {
 
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-        if (this->weightedRandomBool(it->second.amount)){
 
+        if (this->weightedRandomBool(it->second.amount)){
           distributed_reactants.clear();
           distributed_reactants.resize(it->second.enzymes.size());
           randomDistribution(distributed_reactants, it->second.amount);
@@ -137,6 +137,7 @@ public:
       
       _s              = SState::SELECTING;
       _next_internal  = _interval_time;
+
     }
   }
 
@@ -198,6 +199,7 @@ public:
     else        proportion = numeric_limits<double>::infinity();
     
     double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
+
 
     return (_real_random.drawNumber(0.0, 1.0) < threshold);
   }
