@@ -22,7 +22,7 @@ private:
 
 public:
 
-  explicit filter(string other_accepted_input) noexcept :
+  explicit filter(const string other_accepted_input) noexcept :
   _accepted_input(other_accepted_input) {
 
     _filtered_input.clear();

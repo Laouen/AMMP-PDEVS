@@ -44,6 +44,7 @@ typedef chrono::high_resolution_clock hclock;
 typedef vector< shared_ptr< model<Time> > > vectorOfModels;
 typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
 typedef map<string, shared_ptr< model<Time> > > modelsMap;
+typedef map<string, shared_ptr< flattened_coupled<Time, Message> > > coupledModelsMap;
 
 
 
@@ -310,6 +311,28 @@ int main(int argc, char* argv[]) {
     reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, shared_ptr< map<string, Address> >, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, species_addresses, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
+  cout << "Creating filters for enzyme coupled models." << endl;
+  map< string, coupledModelsMap >  enzyme_models;
+
+  for (map<string, modelsMap>::iterator it = reaction_models.begin(); it != reaction_models.end(); ++it) {    
+    for (modelsMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
+
+      auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(jt->first);
+      enzyme_models[it->first][jt->first] = make_shared<
+              flattened_coupled<Time, Message>,
+              vector<shared_ptr<model<Time> > >,
+              vector<shared_ptr<model<Time> > >,
+              vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
+              vector<shared_ptr<model<Time> > > 
+            >(
+              {new_filter, jt->second}, 
+              {new_filter}, 
+              {{new_filter, jt->second}}, 
+              {jt->second}
+            );
+    }
+  }
+  
 
   cout << "Creating enzyme addresses." << endl;
   map<string, Address> reaction_addresses;
@@ -333,6 +356,7 @@ int main(int argc, char* argv[]) {
       new_address.pop_back();
     }
   }
+
 
   cout << "Getting enzyme information for spaces creation." << endl;
   map<string, map<string, enzyme_info_t> > enzyme_informations;
@@ -382,13 +406,13 @@ int main(int argc, char* argv[]) {
   }
 
 
-
-
   /*****************************************************************************************************/
-  /*********************** Testing reaction atomic model ***********************************************/
+  /************************** Testing space atomic model ***********************************************/
   /*****************************************************************************************************/
 
 
+
+/*
   cout << "Testing spaces atomic models" << endl;
   //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
   auto cytoplasm = space_models["c"];
