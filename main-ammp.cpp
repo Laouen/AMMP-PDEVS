@@ -302,8 +302,8 @@ int main(int argc, char* argv[]) {
 
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 0.001;
-    rate            = 0.001;
+    interval_time   = 0.1;
+    rate            = 0.01;
     amount          = 3;
 
     place = getPlace(it->second, species, compartements, special_places);
@@ -311,7 +311,7 @@ int main(int argc, char* argv[]) {
     reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, shared_ptr< map<string, Address> >, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, species_addresses, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
   }
 
-  cout << "Creating filters for enzyme coupled models." << endl;
+  cout << "Creating enzyme coupled models with filters." << endl;
   map< string, coupledModelsMap >  enzyme_models;
 
   for (map<string, modelsMap>::iterator it = reaction_models.begin(); it != reaction_models.end(); ++it) {    
@@ -330,6 +330,7 @@ int main(int argc, char* argv[]) {
               {{new_filter, jt->second}}, 
               {jt->second}
             );
+
     }
   }
   
@@ -404,6 +405,81 @@ int main(int argc, char* argv[]) {
 
     space_models[it->first] = make_atomic_ptr< space<Time, Message>, string, Time, map<string, metabolite_info_t>&, map<string, enzyme_info_t>&, double, double >(it->first, interval_time, metabolites, enzyme_informations[it->first], volume, factor);
   }
+
+
+
+  /*****************************************************************************************************/
+  /**************************** Testing enzyme coupled model *******************************************/
+  /*****************************************************************************************************/
+
+
+  cout << "Testing spaces atomic models" << endl;
+  //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
+  auto enzyme = enzyme_models.at("p_lm").at("R_F6Pt6_2pp");
+
+  cout << "Creating the model to insert the input from stream" << endl;
+  auto piss = make_shared<istringstream>();
+  string input = "";
+
+  for (double i = 0.001; i < 0.009; i += 0.001) {
+
+    input += to_string(i) + " R_F6Pt6_2pp | M_pi_c 1 \n ";
+    input += to_string(i) + " R_F6Pt6_2pp | M_f6p_p 1 \n ";
+    //input += to_string(i) + " | M_hdcea_c 1 \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
+    [](const string& s, Time& t_next, Message& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    int delimiter;
+    string collector;
+    string thrash;
+    stringstream ss;
+    Message msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    ss >> collector;
+
+    while (collector != "|") {     
+  
+      msg_out.to.push_back(collector);
+      ss >>collector;
+    }
+
+    ss >> msg_out.specie;
+    ss >> msg_out.amount;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+  cout << "Coupling the input to the model" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, enzyme}, {}, {{pf, enzyme}}, {enzyme}});
+
+  cout << "Preparing runner" << endl;
+  Time initial_time{0};
+  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+
+  cout << "Starting simulation until passivate" << endl;
+
+  auto start = hclock::now(); //to measure simulation execution time
+
+  r.runUntilPassivate();
+
+  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+
+  cout << "Simulation took:" << elapsed << "sec" << endl;
 
 
   /*****************************************************************************************************/
