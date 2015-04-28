@@ -281,12 +281,12 @@ int main(int argc, char* argv[]) {
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
   Integer                   amount;
-  bool                      isCompartment;
+  bool                      is_not_special;
 
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
-    isCompartment = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
-    if (isCompartment) {
+    is_not_special = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
+    if (is_not_special) {
       reaction_models[it->first + "_i"] = {};
       reaction_models[it->first + "_m"] = {};
     }
@@ -309,7 +309,24 @@ int main(int argc, char* argv[]) {
 
     place = getPlace(it->second, species, compartements, special_places);
 
-    reaction_models.at(place)[it->first] = make_atomic_ptr< reaction<Time, Message>, string, shared_ptr< map<string, Address> >, bool, Time, SetOfMolecules&, SetOfMolecules&, Integer, Time >(it->first, species_addresses, it->second.reversible, rate, it->second.reactants_sctry, it->second.products_sctry, amount, interval_time);
+    reaction_models.at(place)[it->first] = make_atomic_ptr< 
+      reaction<Time, Message>, 
+      string, 
+      shared_ptr< map<string, Address> >, 
+      bool, 
+      Time, 
+      SetOfMolecules&, 
+      SetOfMolecules&, 
+      Integer, 
+      Time >(
+        it->first, 
+        species_addresses, 
+        it->second.reversible, 
+        rate, 
+        it->second.reactants_sctry, 
+        it->second.products_sctry, 
+        amount, interval_time
+      );
   }
 
   cout << "Creating enzyme coupled models with filters." << endl;
@@ -320,17 +337,17 @@ int main(int argc, char* argv[]) {
 
       auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(jt->first);
       enzyme_models[it->first][jt->first] = make_shared<
-              flattened_coupled<Time, Message>,
-              vector<shared_ptr<model<Time> > >,
-              vector<shared_ptr<model<Time> > >,
-              vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
-              vector<shared_ptr<model<Time> > > 
-            >(
-              {new_filter, jt->second}, 
-              {new_filter}, 
-              {{new_filter, jt->second}}, 
-              {jt->second}
-            );
+        flattened_coupled<Time, Message>,
+        vector<shared_ptr<model<Time> > >,
+        vector<shared_ptr<model<Time> > >,
+        vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
+        vector<shared_ptr<model<Time> > > 
+      >(
+        {new_filter, jt->second}, 
+        {new_filter}, 
+        {{new_filter, jt->second}}, 
+        {jt->second}
+      );
 
     }
   }
@@ -367,8 +384,8 @@ int main(int argc, char* argv[]) {
 
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
-    isCompartment = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
-    if (isCompartment) {
+    is_not_special = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
+    if (is_not_special) {
       enzyme_informations[it->first] = {};
     }
   }
@@ -404,7 +421,22 @@ int main(int argc, char* argv[]) {
     volume        = 5;
     factor        = 1;
 
-    space_models[it->first] = make_atomic_ptr< space<Time, Message>, string, Time, map<string, metabolite_info_t>&, map<string, enzyme_info_t>&, double, double >(it->first, interval_time, metabolites, enzyme_informations[it->first], volume, factor);
+    space_models[it->first] = make_atomic_ptr< 
+      space<Time, Message>, 
+      string, 
+      Time, 
+      map<string, 
+      metabolite_info_t>&, 
+      map<string, enzyme_info_t>&, 
+      double, 
+      double >(
+        it->first, 
+        interval_time, 
+        metabolites, 
+        enzyme_informations[it->first], 
+        volume, 
+        factor
+      );
   }
 
 
@@ -415,17 +447,17 @@ int main(int argc, char* argv[]) {
 
     auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(it->first + "_s");
     compartment_models[it->first] = make_shared<
-            flattened_coupled<Time, Message>,
-            vector<shared_ptr<model<Time> > >,
-            vector<shared_ptr<model<Time> > >,
-            vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time>> > >,
-            vector<shared_ptr<model<Time> > > 
-          >(
-            {new_filter, it->second}, 
-            {new_filter}, 
-            {{new_filter, it->second}}, 
-            {it->second}
-          );
+      flattened_coupled<Time, Message>,
+      vector<shared_ptr<model<Time> > >,
+      vector<shared_ptr<model<Time> > >,
+      vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time>> > >,
+      vector<shared_ptr<model<Time> > > 
+    >(
+      {new_filter, it->second}, 
+      {new_filter}, 
+      {{new_filter, it->second}}, 
+      {it->second}
+    );
   }
 
 
@@ -492,6 +524,54 @@ int main(int argc, char* argv[]) {
     {trans_membrane, outer_membrane, inner_membrane}
   ));
 
+  cout << "Creating organelles coupled models." << endl;
+  vectorOfCoupledModels organelle_models;
+
+  for (coupledModelsMap::iterator it = compartment_models.begin(); it != compartment_models.end(); ++it) {
+
+    is_not_special = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]);
+    
+    if(is_not_special) {
+      
+      auto organelle_filter   = make_atomic_ptr< filter<Time, Message>, string>(it->first);
+      auto organelle_space    = compartment_models.at(it->first);
+      auto organelle_membrane = enzyme_set_models.at(it->first + "_m");
+      auto organelle_inner    = enzyme_set_models.at(it->first + "_i");
+      organelle_models.push_back( 
+        make_shared<
+          flattened_coupled<Time, Message>,
+          vector<shared_ptr<model<Time> > >,
+          vector<shared_ptr<model<Time> > >,
+          vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time>> > >,
+          vector<shared_ptr<model<Time> > > 
+        >(
+          {organelle_filter, organelle_membrane, organelle_space, organelle_inner}, 
+          {organelle_filter}, 
+          {{organelle_filter, organelle_membrane}, {organelle_membrane, organelle_space}, {organelle_space, organelle_inner}, {organelle_inner, organelle_space}, {organelle_space, organelle_membrane}}, 
+          {organelle_membrane}
+        )
+      );
+    }
+  }
+
+  cout << "Creating the cell coupled model." << endl;
+
+  vectorOfModels cell_models = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModels cell_eic = {extra_cellular_model, cytoplasm_model};
+  vectorOfModels cell_eoc = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModelPairs cell_ic{ {extra_cellular_model, periplasm_model}, {periplasm_model, cytoplasm_model}, {cytoplasm_model, periplasm_model}, {periplasm_model, extra_cellular_model} };
+  
+  for (vectorOfCoupledModels::iterator it = organelle_models.begin(); it != organelle_models.end(); ++it) {
+    cell_ic.push_back({cytoplasm_model, *it});
+    cell_ic.push_back({*it, cytoplasm_model});
+  }
+
+  shared_ptr<flattened_coupled<Time, Message>> cell_model(new flattened_coupled<Time, Message>(
+    cell_models,
+    cell_eic,
+    cell_ic,
+    cell_eoc
+  ));
 
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
