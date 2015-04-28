@@ -41,9 +41,10 @@ using namespace boost::simulation::pdevs::basic_models;
 
 typedef double Time;
 typedef chrono::high_resolution_clock hclock;
-typedef vector< shared_ptr< model<Time> > > vectorOfModels;
-typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
+using vectorOfModels = vector< shared_ptr< model<Time> > >;
+using vectorOfModelPairs = vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > >;
 typedef map<string, shared_ptr< model<Time> > > modelsMap;
+typedef vector< shared_ptr< flattened_coupled<Time, Message> > > vectorOfCoupledModels;
 typedef map<string, shared_ptr< flattened_coupled<Time, Message> > > coupledModelsMap;
 
 
@@ -417,7 +418,7 @@ int main(int argc, char* argv[]) {
             flattened_coupled<Time, Message>,
             vector<shared_ptr<model<Time> > >,
             vector<shared_ptr<model<Time> > >,
-            vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
+            vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time>> > >,
             vector<shared_ptr<model<Time> > > 
           >(
             {new_filter, it->second}, 
@@ -428,11 +429,111 @@ int main(int argc, char* argv[]) {
   }
 
 
+  cout << "Creating enzyme set coupled models with filters." << endl;
+  coupledModelsMap  enzyme_set_models;
+  vector<shared_ptr<model<Time> > > models, eic, eoc;
+  vectorOfModelPairs ic;
+
+  for (map<string, coupledModelsMap>::iterator it = enzyme_models.begin(); it != enzyme_models.end(); ++it) {    
+    
+    models.clear();
+    eic.clear();
+    eoc.clear();
+    ic.clear();
+
+    auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(it->first);
+    models.push_back(new_filter);
+    eic.push_back(new_filter);
+    
+    for (coupledModelsMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
+      models.push_back(jt->second);
+      eoc.push_back(jt->second);
+      ic.push_back({new_filter, jt->second});
+    }
+
+    shared_ptr<flattened_coupled<Time, Message>> new_enzyme_set(new flattened_coupled<Time, Message>(models, eic, ic, eoc));
+    enzyme_set_models[it->first] = new_enzyme_set;
+  }
+
+
+  /*****************************************************************************************************/
+  /****************************** Testing enzyme set coupled model *************************************/
+  /*****************************************************************************************************/
+
+
+  cout << "Testing enzyme set coupled models with filters" << endl;
+  //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
+  auto enzyme_set = enzyme_set_models.at("p_i");
+
+  cout << "Creating the model to insert the input from stream" << endl;
+  auto piss = make_shared<istringstream>();
+  string input = "";
+
+  for (double i = 0.001; i < 0.009; i += 0.001) {
+
+    input += to_string(i) + " p_i R_AGM4PCPpp | M_anhgm4p_p 1 \n ";
+    input += to_string(i) + " p_i R_AGM4PCPpp | M_h_p 1 \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
+    [](const string& s, Time& t_next, Message& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    int delimiter;
+    string collector;
+    string thrash;
+    stringstream ss;
+    Message msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    ss >> collector;
+
+    while (collector != "|") {     
+  
+      msg_out.to.push_back(collector);
+      ss >>collector;
+    }
+
+    ss >> msg_out.specie;
+    ss >> msg_out.amount;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+  cout << "Coupling the input to the model" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, enzyme_set}, {}, {{pf, enzyme_set}}, {enzyme_set}});
+
+  cout << "Preparing runner" << endl;
+  Time initial_time{0};
+  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+
+  cout << "Starting simulation until passivate" << endl;
+
+  auto start = hclock::now(); //to measure simulation execution time
+
+  r.runUntilPassivate();
+
+  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+
+  cout << "Simulation took:" << elapsed << "sec" << endl;
+
+
   /*****************************************************************************************************/
   /*************************** Testing compartment coupled model ***************************************/
   /*****************************************************************************************************/
 
-
+/*
   cout << "Testing compartment coupled models" << endl;
   //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
   auto cytoplasm = compartment_models["c"];
@@ -508,7 +609,7 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
 /*
 
-  cout << "Testing spaces atomic models" << endl;
+  cout << "Testing enzyme coupled models" << endl;
   //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
   auto enzyme = enzyme_models.at("p_lm").at("R_F6Pt6_2pp");
 
