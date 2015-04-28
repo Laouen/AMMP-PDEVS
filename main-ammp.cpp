@@ -489,9 +489,9 @@ int main(int argc, char* argv[]) {
 
 
   cout << "Creating cytoplasm bulk solution coupled model." << endl;
-  auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, string>("c");
-  auto cytoplasm_space  = compartment_models.at("c");
-  auto cytoplasm_inner  = enzyme_set_models.at("c_i");
+  auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[2]);
+  auto cytoplasm_space  = compartment_models.at(special_places[2]);
+  auto cytoplasm_inner  = enzyme_set_models.at(special_places[2] + "_i");
   shared_ptr<flattened_coupled<Time, Message>> cytoplasm_model(new flattened_coupled<Time, Message>(
     {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
     {cytoplasm_filter}, 
@@ -500,9 +500,9 @@ int main(int argc, char* argv[]) {
   ));
 
   cout << "Creating extra cellular bulk solution coupled model." << endl;
-  auto extra_cellular_filter = make_atomic_ptr< filter<Time, Message>, string>("e");
-  auto extra_cellular_space  = compartment_models.at("e");
-  auto extra_cellular_inner  = enzyme_set_models.at("e_i");
+  auto extra_cellular_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[0]);
+  auto extra_cellular_space  = compartment_models.at(special_places[0]);
+  auto extra_cellular_inner  = enzyme_set_models.at(special_places[0] + "_i");
   shared_ptr<flattened_coupled<Time, Message>> extra_cellular_model(new flattened_coupled<Time, Message>(
     {extra_cellular_filter, extra_cellular_space, extra_cellular_inner}, 
     {extra_cellular_filter}, 
@@ -511,12 +511,12 @@ int main(int argc, char* argv[]) {
   ));
 
   cout << "Creating periplasm coupled model." << endl;
-  auto periplasm_filter = make_atomic_ptr< filter<Time, Message>, string>("p");
-  auto periplasm_space  = compartment_models.at("p");
-  auto trans_membrane   = enzyme_set_models.at("p_tm");
-  auto outer_membrane   = enzyme_set_models.at("p_um");
-  auto inner_membrane   = enzyme_set_models.at("p_lm");
-  auto periplasm_inner  = enzyme_set_models.at("p_i");
+  auto periplasm_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[1]);
+  auto periplasm_space  = compartment_models.at(special_places[1]);
+  auto trans_membrane   = enzyme_set_models.at(special_places[1] + "_tm");
+  auto outer_membrane   = enzyme_set_models.at(special_places[1] + "_um");
+  auto inner_membrane   = enzyme_set_models.at(special_places[1] + "_lm");
+  auto periplasm_inner  = enzyme_set_models.at(special_places[1] + "_i");
   shared_ptr<flattened_coupled<Time, Message>> periplasm_model(new flattened_coupled<Time, Message>(
     {periplasm_filter, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
     {extra_cellular_filter}, 
