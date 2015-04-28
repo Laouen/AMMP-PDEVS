@@ -407,11 +407,106 @@ int main(int argc, char* argv[]) {
   }
 
 
+  cout << "Creating compartments coupled models" << endl;
+  coupledModelsMap compartment_models;
+   
+  for (modelsMap::iterator it = space_models.begin(); it != space_models.end(); ++it) {
+
+    auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(it->first + "_s");
+    compartment_models[it->first] = make_shared<
+            flattened_coupled<Time, Message>,
+            vector<shared_ptr<model<Time> > >,
+            vector<shared_ptr<model<Time> > >,
+            vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
+            vector<shared_ptr<model<Time> > > 
+          >(
+            {new_filter, it->second}, 
+            {new_filter}, 
+            {{new_filter, it->second}}, 
+            {it->second}
+          );
+  }
+
+
+  /*****************************************************************************************************/
+  /*************************** Testing compartment coupled model ***************************************/
+  /*****************************************************************************************************/
+
+
+  cout << "Testing compartment coupled models" << endl;
+  //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
+  auto cytoplasm = compartment_models["c"];
+
+  cout << "Creating the model to insert the input from stream" << endl;
+  auto piss = make_shared<istringstream>();
+  string input = "";
+
+  for (double i = 0.001; i < 0.109; i += 0.001) {
+
+    input += to_string(i) + "c_s | M_adphep_DASH_DD_c 1 \n ";
+    input += to_string(i) + "c_s | M_acon_DASH_T_c 1 \n ";
+    //input += to_string(i) + " | M_hdcea_c 1 \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
+    [](const string& s, Time& t_next, Message& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    int delimiter;
+    string collector;
+    string thrash;
+    stringstream ss;
+    Message msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    ss >> collector;
+
+    while (collector != "|") {     
+  
+      msg_out.to.push_back(collector);
+      ss >>collector;
+    }
+
+    ss >> msg_out.specie;
+    ss >> msg_out.amount;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+  cout << "Coupling the input to the model" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cytoplasm}, {}, {{pf, cytoplasm}}, {cytoplasm}});
+
+  cout << "Preparing runner" << endl;
+  Time initial_time{0};
+  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+
+  cout << "Starting simulation until passivate" << endl;
+
+  auto start = hclock::now(); //to measure simulation execution time
+
+  r.runUntilPassivate();
+
+  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+
+  cout << "Simulation took:" << elapsed << "sec" << endl;
+
+
 
   /*****************************************************************************************************/
   /**************************** Testing enzyme coupled model *******************************************/
   /*****************************************************************************************************/
-
+/*
 
   cout << "Testing spaces atomic models" << endl;
   //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
