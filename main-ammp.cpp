@@ -456,11 +456,92 @@ int main(int argc, char* argv[]) {
   }
 
 
+  cout << "Creating cytoplasm and extra cellular bulk solution." << endl;
+
+  auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, string>("c");
+  auto cytoplasm_space  = compartment_models.at("c");
+  auto cytoplasm_inner  = enzyme_set_models.at("c_i");
+  shared_ptr<flattened_coupled<Time, Message>> cytoplasm_model(new flattened_coupled<Time, Message>(
+    {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
+    {cytoplasm_filter}, 
+    {{cytoplasm_filter, cytoplasm_space}, {cytoplasm_space, cytoplasm_inner}, {cytoplasm_inner, cytoplasm_space}}, 
+    {cytoplasm_space}
+  ));
+
+  /*****************************************************************************************************/
+  /****************************** Testing cytoplasm coupled model *************************************/
+  /*****************************************************************************************************/
+
+  cout << "Testing cytoplasm coupled model with filter" << endl;
+
+  cout << "Creating the model to insert the input from stream" << endl;
+  auto piss = make_shared<istringstream>();
+  string input = "";
+
+  for (double i = 0.001; i < 0.002; i += 0.001) {
+
+    input += to_string(i) + "c c_s | A 1 \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
+    [](const string& s, Time& t_next, Message& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    int delimiter;
+    string collector;
+    string thrash;
+    stringstream ss;
+    Message msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    ss >> collector;
+
+    while (collector != "|") {     
+  
+      msg_out.to.push_back(collector);
+      ss >>collector;
+    }
+
+    ss >> msg_out.specie;
+    ss >> msg_out.amount;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+  cout << "Coupling the input to the model" << endl;
+  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cytoplasm_model}, {}, {{pf, cytoplasm_model}}, {cytoplasm_model}});
+
+  cout << "Preparing runner" << endl;
+  Time initial_time{0};
+  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+
+  cout << "Starting simulation until passivate" << endl;
+
+  auto start = hclock::now(); //to measure simulation execution time
+
+  r.runUntilPassivate();
+
+  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+
+  cout << "Simulation took:" << elapsed << "sec" << endl;
+
+
   /*****************************************************************************************************/
   /****************************** Testing enzyme set coupled model *************************************/
   /*****************************************************************************************************/
 
-
+/*
   cout << "Testing enzyme set coupled models with filters" << endl;
   //shared_ptr< space<Time, Message> > s = dynamic_pointer_cast< space<Time, Message> >( space_models["c"] );
   auto enzyme_set = enzyme_set_models.at("p_i");
