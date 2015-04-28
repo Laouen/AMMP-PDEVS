@@ -456,8 +456,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cout << "Creating cytoplasm and extra cellular bulk solution." << endl;
-
+  cout << "Creating cytoplasm bulk solution." << endl;
   auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, string>("c");
   auto cytoplasm_space  = compartment_models.at("c");
   auto cytoplasm_inner  = enzyme_set_models.at("c_i");
@@ -468,10 +467,21 @@ int main(int argc, char* argv[]) {
     {cytoplasm_space}
   ));
 
+  cout << "Creating extra cellular bulk solution." << endl;
+  auto extra_cellular_filter = make_atomic_ptr< filter<Time, Message>, string>("e");
+  auto extra_cellular_space  = compartment_models.at("e");
+  auto extra_cellular_inner  = enzyme_set_models.at("e_i");
+  shared_ptr<flattened_coupled<Time, Message>> extra_cellular_model(new flattened_coupled<Time, Message>(
+    {extra_cellular_filter, extra_cellular_space, extra_cellular_inner}, 
+    {extra_cellular_filter}, 
+    {{extra_cellular_filter, extra_cellular_space}, {extra_cellular_space, extra_cellular_inner}, {extra_cellular_inner, extra_cellular_space}}, 
+    {extra_cellular_space}
+  ));
+
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
   /*****************************************************************************************************/
-
+/*
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;
