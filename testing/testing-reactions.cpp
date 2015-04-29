@@ -37,10 +37,10 @@ using namespace std;
 /********* Type definations ************/
 /***************************************/
 
-typedef double Time;
-typedef chrono::high_resolution_clock hclock;
-typedef vector< shared_ptr< model<Time> > > vectorOfModels;
-typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
+typedef double Time_t;
+typedef chrono::high_resolution_clock hclock_t;
+typedef vector< shared_ptr< model<Time_t> > > vectorOfModels_t;
+typedef vector< pair< shared_ptr< model<Time_t> >, shared_ptr< model<Time_t> > > > vectorOfModelPairs_t;
 
 
 
@@ -57,24 +57,24 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 int main () {
 
   srand(time(NULL));
-  SetOfMolecules react_stoichiometry;
-  SetOfMolecules prod_stoichiometry;
+  SetOfMolecules_t react_stoichiometry;
+  SetOfMolecules_t prod_stoichiometry;
   int action, enzymes;
   double rate, interval_time, current_time;
   bool reversible, add;
   bool non_stop = true;
-  map<string, shared_ptr< reaction<Time, Message> > > reactions;
-  map<string, Message> messages;
-  vector<Message> messages_to_send, output;
+  map<string, shared_ptr< reaction<Time_t, Message_t> > > reactions;
+  map<string, Message_t> messages;
+  vector<Message_t> messages_to_send, output;
   string name, reaction_name, trash;
-  Message msg;
+  Message_t msg;
 
   // initial reaction
   react_stoichiometry["A"] = 1;
   react_stoichiometry["B"] = 2;
   prod_stoichiometry["C"] = 3;
   prod_stoichiometry["D"] = 1;
-  reactions["r1"] = make_shared< reaction<Time, Message> > (reaction<Time, Message>("r1", true, 0.3, react_stoichiometry, prod_stoichiometry, 1, 0.5) );
+  reactions["r1"] = make_shared< reaction<Time_t, Message_t> > (reaction<Time_t, Message_t>("r1", true, 0.3, react_stoichiometry, prod_stoichiometry, 1, 0.5) );
 
   // initial menssages
   msg.specie = "A";
@@ -154,7 +154,7 @@ int main () {
         cout << "total enzymes: ";
         cin >> enzymes;
 
-        reactions[reaction_name] = make_shared< reaction<Time, Message> > (reaction<Time, Message>(reaction_name, reversible, rate, react_stoichiometry, prod_stoichiometry, enzymes, interval_time) );
+        reactions[reaction_name] = make_shared< reaction<Time_t, Message_t> > (reaction<Time_t, Message_t>(reaction_name, reversible, rate, react_stoichiometry, prod_stoichiometry, enzymes, interval_time) );
         break;
 
       case 2:
@@ -173,7 +173,7 @@ int main () {
 
       case 3:
         system("clear");
-        for (map<string, Message>::iterator i = messages.begin(); i != messages.end(); ++i) {
+        for (map<string, Message_t>::iterator i = messages.begin(); i != messages.end(); ++i) {
           cout << i->first << ":" << endl;
           cout << i->second << endl;
         }
@@ -184,7 +184,7 @@ int main () {
       
       case 4:
         system("clear");
-        for (map<string, shared_ptr< reaction<Time, Message> > >::iterator i = reactions.begin(); i != reactions.end(); ++i) {
+        for (map<string, shared_ptr< reaction<Time_t, Message_t> > >::iterator i = reactions.begin(); i != reactions.end(); ++i) {
           cout << i->first << ":" << endl;
           i->second->show(cout);
           cout << endl;
@@ -237,7 +237,7 @@ int main () {
 
         output = reactions[reaction_name]->out();
 
-        for (vector<Message>::iterator i = output.begin(); i != output.end(); ++i) {
+        for (vector<Message_t>::iterator i = output.begin(); i != output.end(); ++i) {
           cout << *i << endl;
         }
 

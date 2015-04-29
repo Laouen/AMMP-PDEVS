@@ -1,9 +1,9 @@
 #include "types.hpp"
 
-ostream& operator<<(ostream& os, Address to) {
+ostream& operator<<(ostream& os, Address_t to) {
   
   os << "[";
-  Address::iterator i = to.begin();
+  Address_t::iterator i = to.begin();
   while(i != to.end()){
     os << *i;
     ++i;
@@ -13,7 +13,7 @@ ostream& operator<<(ostream& os, Address to) {
   return os;
 }
 
-ostream& operator<<(ostream& os, Message msg) {
+ostream& operator<<(ostream& os, Message_t msg) {
   os << "To: " << endl << msg.to << endl;
   os << "Specie: " << msg.specie << endl;
   os << "Amount: " << msg.amount << endl;

@@ -58,7 +58,7 @@ map&lt;string, metabolite_info&gt;:       metabolites
 map&lt;string, enzyme_info&gt;:            product_sctry
 double:                                            volume
 double:                                            factor
-SState:                                            s<y:LabelModel>
+SState_t:                                            s<y:LabelModel>
               <y:ErdAttributesNodeLabelModel/>
             </y:LabelModel>
             <y:ModelParameter>

@@ -37,10 +37,10 @@ using namespace std;
 /********* Type definations ************/
 /***************************************/
 
-typedef double Time;
-typedef chrono::high_resolution_clock hclock;
-typedef vector< shared_ptr< model<Time> > > vectorOfModels;
-typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
+typedef double Time_t;
+typedef chrono::high_resolution_clock hclock_t;
+typedef vector< shared_ptr< model<Time_t> > > vectorOfModels_t;
+typedef vector< pair< shared_ptr< model<Time_t> >, shared_ptr< model<Time_t> > > > vectorOfModelPairs_t;
 
 
 
@@ -57,11 +57,11 @@ typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > v
 int main () {
 
   srand(time(NULL));
-  SetOfMolecules react_stoichiometry, prod_stoichiometry;
+  SetOfMolecules_t react_stoichiometry, prod_stoichiometry;
   string reaction_name;
-  vectorOfModels models, eic, eoc, m;
-  vectorOfModelPairs ic;
-  Message msg;
+  vectorOfModels_t models, eic, eoc, m;
+  vectorOfModelPairs_t ic;
+  Message_t msg;
   string specie_names[26] = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
   cout << "Creating the reaction models" << endl;
@@ -75,7 +75,7 @@ int main () {
       prod_stoichiometry[specie_names[((i*2)+2) % 26]]    = 1;
       prod_stoichiometry[specie_names[((i*2)+3) % 26]]    = 1;
 
-      models.push_back( make_atomic_ptr<reaction<Time, Message>, string, bool, Time, SetOfMolecules, SetOfMolecules, int, Time>(reaction_name, false, 0.000001, react_stoichiometry, prod_stoichiometry, 100, 0.000001) );
+      models.push_back( make_atomic_ptr<reaction<Time_t, Message_t>, string, bool, Time_t, SetOfMolecules_t, SetOfMolecules_t, int, Time_t>(reaction_name, false, 0.000001, react_stoichiometry, prod_stoichiometry, 100, 0.000001) );
     }
   }
 
@@ -97,7 +97,7 @@ int main () {
     eoc.push_back(models[i]);
   }
   cout << "Coupling the reaction models" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{models, eic, ic, eoc});
+  shared_ptr< flattened_coupled<Time_t, Message_t> > cell( new flattened_coupled<Time_t, Message_t>{models, eic, ic, eoc});
   
   /*
   //tracing a reaction chain starting with A and B and ending with O and P.
@@ -111,15 +111,15 @@ int main () {
   eic.push_back(models[0]);
   eoc.push_back(models[1900]);
   cout << "Coupling the reaction models" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > cell( new flattened_coupled<Time, Message>{m, eic, ic, eoc});
+  shared_ptr< flattened_coupled<Time_t, Message_t> > cell( new flattened_coupled<Time_t, Message_t>{m, eic, ic, eoc});
   */
   
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   piss->str("1 | A 1 \n 1 | B 1");
   
-  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
-    [](const string& s, Time& t_next, Message& m_next)->void{ 
+  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+    [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
     // Intermediary vars for casting
@@ -128,7 +128,7 @@ int main () {
     string collector;
     string thrash;
     stringstream ss;
-    Message msg_out;
+    Message_t msg_out;
 
     ss.str(s);
     ss >> t_next;
@@ -164,19 +164,19 @@ int main () {
 
 
   cout << "Coupling the input to the model" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cell}, {}, {{pf,cell}}, {cell}});
+  shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{{pf, cell}, {}, {{pf,cell}}, {cell}});
 
   cout << "Preparing runner" << endl;
-  Time initial_time{0};
-  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "specie: " << m.specie << endl << "amount: " << m.amount << endl; });
+  Time_t initial_time{0};
+  runner<Time_t, Message_t> r(root, initial_time, cout, [](ostream& os, Message_t m){  os << "specie: " << m.specie << endl << "amount: " << m.amount << endl; });
 
   cout << "Starting simulation until passivate" << endl;
 
-  auto start = hclock::now(); //to measure simulation execution time
+  auto start = hclock_t::now(); //to measure simulation execution time
 
   r.runUntilPassivate();
 
-  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+  auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
 
   cout << "Simulation took:" << elapsed << "sec" << endl;
 

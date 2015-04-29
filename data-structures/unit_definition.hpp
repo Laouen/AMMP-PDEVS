@@ -7,7 +7,7 @@
 
 using namespace std;
 
-struct Unit {
+struct Unit_t {
   // unit type
   string  kind;
   // unit dimention
@@ -16,7 +16,7 @@ struct Unit {
   double  exponent;
   double  multiplier;
 
-  Unit(string other_kind, double other_exponent, int other_scale, double other_multiplier)
+  Unit_t(string other_kind, double other_exponent, int other_scale, double other_multiplier)
   : kind(other_kind), exponent(other_exponent), scale(other_scale), multiplier(other_multiplier) {}
 
   double convertFrom(double amount) {
@@ -31,13 +31,13 @@ struct Unit {
 
 };
 
-class UnitDefinition {
+class UnitDefinition_t {
   
 public:
 
   // constructors
-  UnitDefinition();
-  UnitDefinition(list<Unit>, string);
+  UnitDefinition_t();
+  UnitDefinition_t(list<Unit_t>, string);
 
   //methods
   double convertTo(double amount) const;
@@ -46,7 +46,7 @@ public:
 
 private:
   string name;
-  list<Unit> list_of_units;
+  list<Unit_t> list_of_units;
   double general_multiplier;
   double general_scale_exponent;
 };

@@ -10,8 +10,8 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // metabolite_info_t, enzyme_info_t, SState, Integer
-#include "../data-structures/randomNumbers.hpp" // IntegerRandom
+#include "../data-structures/types.hpp" // metabolite_info_t, enzyme_info_t, SState_t, Integer_t
+#include "../data-structures/randomNumbers.hpp" // IntegerRandom_t
 
 
 using namespace boost::simulation::pdevs;
@@ -30,11 +30,11 @@ private:
   map<string, enzyme_info_t>        _enzymes;
   double                            _volume;
   double                            _factor;
-  SState                            _s;
+  SState_t                          _s;
   vector<MSG>                       _output;
   // used for uniform random numbers
-  RealRandom<double>                _real_random;
-  IntegerRandom<Integer>            _integer_random;
+  RealRandom_t<double>              _real_random;
+  IntegerRandom_t<Integer_t>        _integer_random;
 
 public:
 
@@ -60,21 +60,21 @@ public:
 
     if (this->thereIsMetabolites()) {
       
-      _s              = SState::SELECTING;
+      _s              = SState_t::SELECTING;
       _next_internal  = _interval_time;
     } else {
       
-      _s              = SState::IDLE;
+      _s              = SState_t::IDLE;
       _next_internal  = atomic<TIME, MSG>::infinity;
     }
   }
 
   void internal() noexcept {
 
-    vector<Integer> distributed_reactants = {};
+    vector<Integer_t> distributed_reactants = {};
     MSG current_message;
     
-    if (_s == SState::SELECTING) {
+    if (_s == SState_t::SELECTING) {
 
       for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
@@ -97,18 +97,18 @@ public:
       }
 
       _next_internal  = TIME(0);
-      _s              = SState::SENDING;
-    } else if (_s == SState::SENDING) {
+      _s              = SState_t::SENDING;
+    } else if (_s == SState_t::SENDING) {
 
       _output.clear();
 
       if (this->thereIsMetabolites()) {
         
-        _s              = SState::SELECTING;
+        _s              = SState_t::SELECTING;
         _next_internal  = _interval_time;
       } else {
         
-        _s              = SState::IDLE;
+        _s              = SState_t::IDLE;
         _next_internal  = atomic<TIME, MSG>::infinity;
       }
     }
@@ -135,7 +135,7 @@ public:
       _next_internal = _next_internal - t;
     } else if (this->thereIsMetabolites()) {
       
-      _s              = SState::SELECTING;
+      _s              = SState_t::SELECTING;
       _next_internal  = _interval_time;
 
     }
@@ -151,7 +151,7 @@ public:
   ********* helper functions *************
   ***************************************/
 
-  void addToMetabolites(string n, Integer a){
+  void addToMetabolites(string n, Integer_t a){
     metabolite_info_t new_metabolite;
 
     if (a > 0) {
@@ -167,8 +167,8 @@ public:
     }
   }
 
-  vector<Address> lookForEnzymes(string n) const {
-    vector<Address> result;
+  vector<Address_t> lookForEnzymes(string n) const {
+    vector<Address_t> result;
 
     for (map<string, enzyme_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
       if (belong(n, it->second.reactants)) {
@@ -191,7 +191,7 @@ public:
     return result;
   }
 
-  bool weightedRandomBool(Integer a) {
+  bool weightedRandomBool(Integer_t a) {
 
     double proportion;
 
@@ -204,14 +204,14 @@ public:
     return (_real_random.drawNumber(0.0, 1.0) < threshold);
   }
 
-  void randomDistribution(vector<Integer>& ds, Integer a) {
-    Integer current_amount;
+  void randomDistribution(vector<Integer_t>& ds, Integer_t a) {
+    Integer_t current_amount;
 
     for (int i = 0; i < ds.size(); ++i) {
       ds[i] = 0;
     }
 
-    for (Integer i = 0; i < a; ++i) {
+    for (Integer_t i = 0; i < a; ++i) {
 
       ds[_integer_random.drawNumber(0, ds.size() - 1)] += 1;
     }

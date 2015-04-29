@@ -34,7 +34,7 @@ public:
   bool loadFile();
 
   // geting information from the current XML file loaded.
-  list<UnitDefinition> getUnitDefinitions();
+  list<UnitDefinition_t> getUnitDefinitions();
   map<string, string> getCompartments();
   map<string, map<string, string> > getSpeciesByCompartment();
   map<string, enzyme_parameter_t > getReactions();

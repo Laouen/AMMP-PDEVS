@@ -38,10 +38,10 @@ using namespace std;
 /********* Type definations ************/
 /***************************************/
 
-typedef double Time;
-typedef chrono::high_resolution_clock hclock;
-typedef vector< shared_ptr< model<Time> > > vectorOfModels;
-typedef vector< pair< shared_ptr< model<Time> >, shared_ptr< model<Time> > > > vectorOfModelPairs;
+typedef double Time_t;
+typedef chrono::high_resolution_clock hclock_t;
+typedef vector< shared_ptr< model<Time_t> > > vectorOfModels_t;
+typedef vector< pair< shared_ptr< model<Time_t> >, shared_ptr< model<Time_t> > > > vectorOfModelPairs_t;
 
 
 
@@ -64,9 +64,9 @@ int main () {
   enzymes["EFGH"] = enzyme_info_t({"Cytoplasm", "EFGH"}, {"E","F","G","H"});;
   enzymes["IJKL"] = enzyme_info_t({"Cytoplasm", "IJKL"}, {"I","J","K","L"});;
   enzymes["A"] = enzyme_info_t({"Cytoplasm", "A"}, {"A"});
-  auto cytoplasm = make_atomic_ptr<space<Time, Message>, Time, map<string, metabolite_info_t>, map<string, enzyme_info_t>, double, double >(0.2, metabolites, enzymes, 250, 1.0);
+  auto cytoplasm = make_atomic_ptr<space<Time_t, Message_t>, Time_t, map<string, metabolite_info_t>, map<string, enzyme_info_t>, double, double >(0.2, metabolites, enzymes, 250, 1.0);
 
-  //shared_ptr<space<Time, Message>> c = dynamic_pointer_cast<space<Time, Message>>(cytoplasm);
+  //shared_ptr<space<Time_t, Message_t>> c = dynamic_pointer_cast<space<Time_t, Message_t>>(cytoplasm);
   //c->weightedRandomBool(1);
 
   cout << "Creating the model to insert the input from stream" << endl;
@@ -94,8 +94,8 @@ int main () {
   input.pop_back();
   piss->str(input);
   
-  auto pf = make_atomic_ptr<external_events<Time, Message, Time, string >, shared_ptr<istringstream>, Time>(piss, Time(0),
-    [](const string& s, Time& t_next, Message& m_next)->void{ 
+  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+    [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
     // Intermediary vars for casting
@@ -104,7 +104,7 @@ int main () {
     string collector;
     string thrash;
     stringstream ss;
-    Message msg_out;
+    Message_t msg_out;
 
     ss.str(s);
     ss >> t_next;
@@ -140,19 +140,19 @@ int main () {
 
 
   cout << "Coupling the input to the model" << endl;
-  shared_ptr< flattened_coupled<Time, Message> > root( new flattened_coupled<Time, Message>{{pf, cytoplasm}, {}, {{pf, cytoplasm}}, {cytoplasm}});
+  shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{{pf, cytoplasm}, {}, {{pf, cytoplasm}}, {cytoplasm}});
 
   cout << "Preparing runner" << endl;
-  Time initial_time{0};
-  runner<Time, Message> r(root, initial_time, cout, [](ostream& os, Message m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+  Time_t initial_time{0};
+  runner<Time_t, Message_t> r(root, initial_time, cout, [](ostream& os, Message_t m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
 
   cout << "Starting simulation until passivate" << endl;
 
-  auto start = hclock::now(); //to measure simulation execution time
+  auto start = hclock_t::now(); //to measure simulation execution time
 
   r.runUntilPassivate();
 
-  auto elapsed = chrono::duration_cast< chrono::duration< Time, ratio<1> > > (hclock::now() - start).count();
+  auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
 
   cout << "Simulation took:" << elapsed << "sec" << endl;
 

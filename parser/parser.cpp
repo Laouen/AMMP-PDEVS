@@ -48,13 +48,13 @@ bool Parser_t::loadFile() {
   return result;
 }
 
-list<UnitDefinition> Parser_t::getUnitDefinitions() {
+list<UnitDefinition_t> Parser_t::getUnitDefinitions() {
 
   string kind, name;
   double exponent, multiplier;
   int scale;
-  list<UnitDefinition> result;
-  list<Unit> list_of_units;
+  list<UnitDefinition_t> result;
+  list<Unit_t> list_of_units;
 
   for (TiXmlElement *current_unit_definition = _models["listOfUnitDefinitions"]->FirstChildElement(); current_unit_definition != NULL; current_unit_definition = current_unit_definition->NextSiblingElement()) {  
     for (TiXmlElement *list_of_sub_units = current_unit_definition->FirstChildElement(); list_of_sub_units != NULL; list_of_sub_units = list_of_sub_units->NextSiblingElement()) {
@@ -72,10 +72,10 @@ list<UnitDefinition> Parser_t::getUnitDefinitions() {
         if (current_sub_unit->Attribute("exponent") != NULL) exponent = stod(current_sub_unit->Attribute("exponent"));
         else exponent = 1;
 
-        list_of_units.push_back(Unit(kind, exponent, scale, multiplier));
+        list_of_units.push_back(Unit_t(kind, exponent, scale, multiplier));
       }
 
-      result.push_back(UnitDefinition(list_of_units, current_unit_definition->Attribute("id")));
+      result.push_back(UnitDefinition_t(list_of_units, current_unit_definition->Attribute("id")));
     }
   }
 

@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 
-#include "../data-structures/types.hpp" /* Address */
+#include "../data-structures/types.hpp" /* Address_t */
 
 
 using namespace boost::simulation::pdevs;
@@ -64,10 +64,10 @@ public:
   ********* helper functions *************
   ***************************************/
 
-  bool isAcceptedInpunt(string a, Address to) {
+  bool isAcceptedInpunt(string a, Address_t to) {
 
     bool result = false;
-    for (Address::iterator i = to.begin(); i != to.end(); ++i) {
+    for (Address_t::iterator i = to.begin(); i != to.end(); ++i) {
       if( a == (*i)) {
         result = true;
         break;
