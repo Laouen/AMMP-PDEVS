@@ -261,7 +261,7 @@ int main(int argc, char* argv[]) {
   string                            special_places[3]  = {"e", "p", "c"};
   string                            place, sub_place;
 
-  cout << "Creating space addresses." << endl;
+  cout << "Creating space addresses for use in the reaction atomic models." << endl;
   shared_ptr< map<string, Address> > species_addresses = make_shared< map<string, Address> >();
   Address new_address;
 
@@ -277,12 +277,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  cout << "Creating enzymes atomic models and ordering them by places." << endl;
+  cout << "Creating reaction atomic models and ordering them by places." << endl;
   map< string, modelsMap >  reaction_models;
   Time                      interval_time, rate;
   Integer                   amount;
   bool                      is_not_special;
 
+  // setting all the existent organelle places in the map
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
     is_not_special = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
@@ -292,15 +293,17 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  reaction_models[special_places[0] + "_i"] = {};
-  reaction_models[special_places[2] + "_i"] = {};
-  reaction_models[special_places[1] + "_i"] = {};
-  reaction_models[special_places[1] + "_lm"] = {};
-  reaction_models[special_places[1] + "_um"] = {};
-  reaction_models[special_places[1] + "_tm"] = {};
+  // setting the special places extra cellular, periplasm and cytoplasm places in the map
+  reaction_models[special_places[0] + "_i"]   = {};
+  reaction_models[special_places[2] + "_i"]   = {};
+  reaction_models[special_places[1] + "_i"]   = {};
+  reaction_models[special_places[1] + "_lm"]  = {};
+  reaction_models[special_places[1] + "_um"]  = {};
+  reaction_models[special_places[1] + "_tm"]  = {};
 
 
 
+  // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
     interval_time   = 0.1;
@@ -311,14 +314,14 @@ int main(int argc, char* argv[]) {
 
     reaction_models.at(place)[it->first] = make_atomic_ptr< 
       reaction<Time, Message>, 
-      string, 
-      shared_ptr< map<string, Address> >, 
-      bool, 
-      Time, 
-      SetOfMolecules&, 
-      SetOfMolecules&, 
-      Integer, 
-      Time >(
+      const string, 
+      const shared_ptr< map<string, Address> >, 
+      const bool, 
+      const Time, 
+      const SetOfMolecules&, 
+      const SetOfMolecules&, 
+      const Integer, 
+      const Time >(
         it->first, 
         species_addresses, 
         it->second.reversible, 
@@ -335,7 +338,7 @@ int main(int argc, char* argv[]) {
   for (map<string, modelsMap>::iterator it = reaction_models.begin(); it != reaction_models.end(); ++it) {    
     for (modelsMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
 
-      auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(jt->first);
+      auto enzyme_filter = make_atomic_ptr< filter<Time, Message>, const string>(jt->first);
       enzyme_models[it->first][jt->first] = make_shared<
         flattened_coupled<Time, Message>,
         vector<shared_ptr<model<Time> > >,
@@ -343,9 +346,9 @@ int main(int argc, char* argv[]) {
         vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time> > > >,
         vector<shared_ptr<model<Time> > > 
       >(
-        {new_filter, jt->second}, 
-        {new_filter}, 
-        {{new_filter, jt->second}}, 
+        {enzyme_filter, jt->second}, 
+        {enzyme_filter}, 
+        {{enzyme_filter, jt->second}}, 
         {jt->second}
       );
 
@@ -354,24 +357,22 @@ int main(int argc, char* argv[]) {
   
 
   cout << "Creating enzyme addresses." << endl;
-  map<string, Address> reaction_addresses;
+  map<string, Address> enzyme_addresses;
 
-  for (map<string, modelsMap>::const_iterator it = reaction_models.cbegin(); it != reaction_models.cend(); ++it) {
+  for (map<string, coupledModelsMap>::const_iterator it = enzyme_models.cbegin(); it != enzyme_models.cend(); ++it) {
     
-
     place       = it->first.substr(0, it->first.find_last_of("_"));
     sub_place   = it->first.substr(it->first.find_last_of("_") + 1);
-
     
     new_address.clear();
     new_address.push_back(place);
     new_address.push_back(it->first);
     if (sub_place == "i") new_address.push_back(place + "_s");
 
-    for (modelsMap::const_iterator jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
+    for (coupledModelsMap::const_iterator jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
 
       new_address.push_back(jt->first);
-      reaction_addresses[jt->first] = new_address;
+      enzyme_addresses[jt->first] = new_address;
       new_address.pop_back();
     }
   }
@@ -382,22 +383,22 @@ int main(int argc, char* argv[]) {
   enzyme_info_t new_enzyme;
   vector<string> compartments_who_use_the_enzyme;
 
+  // setting the organelle places in the map
   for (map<string, string>::iterator it = compartements.begin(); it != compartements.end(); ++it) {
     
     is_not_special = (it->first != special_places[0]) && (it->first != special_places[1]) && (it->first != special_places[2]) ;
-    if (is_not_special) {
-      enzyme_informations[it->first] = {};
-    }
+    if (is_not_special) enzyme_informations[it->first] = {};
   }
 
+  // setting the special places extra cellular, periplasm and cytoplasm places in the map
   enzyme_informations[special_places[0]] = {};
   enzyme_informations[special_places[2]] = {};
   enzyme_informations[special_places[1]] = {};
 
-
+  // saving the enzyme informations in the map
   for (map<string, enzyme_parameter_t >::const_iterator it = reactions.cbegin(); it != reactions.end(); ++it) {
     
-    new_enzyme.location   = reaction_addresses[it->first];
+    new_enzyme.location   = enzyme_addresses[it->first];
     new_enzyme.reactants  = getReactants(it->second); 
 
     compartments_who_use_the_enzyme = getCompartments(it->second, species, compartements, special_places);
@@ -423,13 +424,12 @@ int main(int argc, char* argv[]) {
 
     space_models[it->first] = make_atomic_ptr< 
       space<Time, Message>, 
-      string, 
-      Time, 
-      map<string, 
-      metabolite_info_t>&, 
-      map<string, enzyme_info_t>&, 
-      double, 
-      double >(
+      const string, 
+      const Time,
+      const map<string, metabolite_info_t>&, 
+      const map<string, enzyme_info_t>&, 
+      const double, 
+      const double >(
         it->first, 
         interval_time, 
         metabolites, 
@@ -440,12 +440,12 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cout << "Creating compartments coupled models" << endl;
+  cout << "Creating compartment coupled models" << endl;
   coupledModelsMap compartment_models;
    
   for (modelsMap::iterator it = space_models.begin(); it != space_models.end(); ++it) {
 
-    auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(it->first + "_s");
+    auto compartment_filter = make_atomic_ptr< filter<Time, Message>, const string>(it->first + "_s");
     compartment_models[it->first] = make_shared<
       flattened_coupled<Time, Message>,
       vector<shared_ptr<model<Time> > >,
@@ -453,9 +453,9 @@ int main(int argc, char* argv[]) {
       vector<pair<shared_ptr<model<Time>>, shared_ptr<model<Time>> > >,
       vector<shared_ptr<model<Time> > > 
     >(
-      {new_filter, it->second}, 
-      {new_filter}, 
-      {{new_filter, it->second}}, 
+      {compartment_filter, it->second}, 
+      {compartment_filter}, 
+      {{compartment_filter, it->second}}, 
       {it->second}
     );
   }
@@ -473,14 +473,14 @@ int main(int argc, char* argv[]) {
     eoc.clear();
     ic.clear();
 
-    auto new_filter = make_atomic_ptr< filter<Time, Message>, string>(it->first);
-    models.push_back(new_filter);
-    eic.push_back(new_filter);
+    auto enzyme_set_filter = make_atomic_ptr< filter<Time, Message>, const string>(it->first);
+    models.push_back(enzyme_set_filter);
+    eic.push_back(enzyme_set_filter);
     
     for (coupledModelsMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
       models.push_back(jt->second);
       eoc.push_back(jt->second);
-      ic.push_back({new_filter, jt->second});
+      ic.push_back({enzyme_set_filter, jt->second});
     }
 
     shared_ptr<flattened_coupled<Time, Message>> new_enzyme_set(new flattened_coupled<Time, Message>(models, eic, ic, eoc));
@@ -489,7 +489,7 @@ int main(int argc, char* argv[]) {
 
 
   cout << "Creating cytoplasm bulk solution coupled model." << endl;
-  auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[2]);
+  auto cytoplasm_filter = make_atomic_ptr< filter<Time, Message>, const string>(special_places[2]);
   auto cytoplasm_space  = compartment_models.at(special_places[2]);
   auto cytoplasm_inner  = enzyme_set_models.at(special_places[2] + "_i");
   shared_ptr<flattened_coupled<Time, Message>> cytoplasm_model(new flattened_coupled<Time, Message>(
@@ -500,7 +500,7 @@ int main(int argc, char* argv[]) {
   ));
 
   cout << "Creating extra cellular bulk solution coupled model." << endl;
-  auto extra_cellular_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[0]);
+  auto extra_cellular_filter = make_atomic_ptr< filter<Time, Message>, const string>(special_places[0]);
   auto extra_cellular_space  = compartment_models.at(special_places[0]);
   auto extra_cellular_inner  = enzyme_set_models.at(special_places[0] + "_i");
   shared_ptr<flattened_coupled<Time, Message>> extra_cellular_model(new flattened_coupled<Time, Message>(
@@ -511,7 +511,7 @@ int main(int argc, char* argv[]) {
   ));
 
   cout << "Creating periplasm coupled model." << endl;
-  auto periplasm_filter = make_atomic_ptr< filter<Time, Message>, string>(special_places[1]);
+  auto periplasm_filter = make_atomic_ptr< filter<Time, Message>, const string>(special_places[1]);
   auto periplasm_space  = compartment_models.at(special_places[1]);
   auto trans_membrane   = enzyme_set_models.at(special_places[1] + "_tm");
   auto outer_membrane   = enzyme_set_models.at(special_places[1] + "_um");
@@ -533,7 +533,7 @@ int main(int argc, char* argv[]) {
     
     if(is_not_special) {
       
-      auto organelle_filter   = make_atomic_ptr< filter<Time, Message>, string>(it->first);
+      auto organelle_filter   = make_atomic_ptr< filter<Time, Message>, const string>(it->first);
       auto organelle_space    = compartment_models.at(it->first);
       auto organelle_membrane = enzyme_set_models.at(it->first + "_m");
       auto organelle_inner    = enzyme_set_models.at(it->first + "_i");
@@ -576,7 +576,7 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
   /*****************************************************************************************************/
-/*
+
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;
@@ -585,7 +585,7 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
-    input += to_string(i) + "c c_s | A 1 \n ";
+    input += to_string(i) + "c c_s | M_2mcit_c 1 \n ";
   }
   input.pop_back();
   input.pop_back();
