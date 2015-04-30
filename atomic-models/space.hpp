@@ -188,7 +188,7 @@ public:
         
         new_metabolite.amount   = a;
         new_metabolite.enzymes  = lookForEnzymes(n);
-        _metabolites[n]         = new_metabolite;
+        _metabolites.insert({n, new_metabolite});
       }
     }
   }

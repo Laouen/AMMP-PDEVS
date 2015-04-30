@@ -76,7 +76,7 @@ public:
 
   void internal() noexcept {
     
-    Task_t<TIME> to_reject;
+    Task_t<TIME> selected_to_leave;
     bool already_selected = false;
 
     // Updating time left
@@ -87,10 +87,8 @@ public:
 
       if ((it->task_kind == RState_t::SELECTING) && !already_selected) {
 
-        this->selectFrom(_reactants, to_reject);
-        
-        this->selectFrom(_products, to_reject);
-
+        this->selectFrom(_reactants, selected_to_leave);      
+        this->selectFrom(_products, selected_to_leave);
         this->lookForNewReactions();
 
         already_selected = true;
@@ -102,11 +100,11 @@ public:
     }
 
     // add leaving metabolites to the tasks
-    if (to_reject.rejected.size() > 0) {
+    if (selected_to_leave.rejected.size() > 0) {
 
-      to_reject.time_left = TIME(0);
-      to_reject.task_kind = RState_t::REJECTING;
-      this->innsertTask(to_reject);
+      selected_to_leave.time_left = TIME(0);
+      selected_to_leave.task_kind = RState_t::REJECTING;
+      this->innsertTask(selected_to_leave);
     }
 
     // if there is more metabolites set a new selection tasks in interval time
@@ -303,7 +301,7 @@ public:
       if (t.find(n) != t.end()) {
         t.at(n) += a;
       } else {
-        t[n] = a;
+        t.insert({n, a});
       }
     }
   }
