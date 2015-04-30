@@ -315,7 +315,7 @@ int main(int argc, char* argv[]) {
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 0.0001;
+    interval_time   = 0.1;
     rate            = 0.001;
     amount          = 3;
 
@@ -427,8 +427,8 @@ int main(int argc, char* argv[]) {
 
   for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
     
-    interval_time = 0.5;
-    volume        = 5;
+    interval_time = 0.1;
+    volume        = 0;
     factor        = 1;
 
     space_models[it->first] = make_atomic_ptr< 
@@ -497,7 +497,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cout << "Creating cytoplasm bulk solution coupled model." << endl;
+  cout << "Creating cytoplasm coupled model." << endl;
   auto cytoplasm_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[2]);
   auto cytoplasm_or_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("show_state");
   auto cytoplasm_os_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("sending_output");
@@ -516,15 +516,15 @@ int main(int argc, char* argv[]) {
     {cytoplasm_filter, cytoplasm_or_filter}, 
     {
       {cytoplasm_or_filter, cytoplasm_space}, 
-      {cytoplasm_space, cytoplasm_cos_filter}, 
       {cytoplasm_filter, cytoplasm_space}, 
       {cytoplasm_space, cytoplasm_inner}, 
-      {cytoplasm_inner, cytoplasm_space}
+      {cytoplasm_inner, cytoplasm_space},
+      {cytoplasm_space, cytoplasm_cos_filter} 
     }, 
     {cytoplasm_cos_filter}
   ));
 
-  cout << "Creating extra cellular bulk solution coupled model." << endl;
+  cout << "Creating extra cellular coupled model." << endl;
   auto extra_cellular_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[0]);
   auto extra_cellular_space  = compartment_models.at(special_places[0]);
 
@@ -656,7 +656,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 0.0; i < 500.0; i += 1.0) {
+  for (double i = 1.0; i < 1.1; i += 1.0) {
 
     input += to_string(i) + " \n ";
   }

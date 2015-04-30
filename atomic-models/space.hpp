@@ -73,7 +73,7 @@ public:
   }
 
   void internal() noexcept {
-    // cout << "space internal start" << endl;
+    
     vector<Integer_t> distributed_reactants = {};
     MSG current_message;
 
@@ -95,12 +95,11 @@ public:
             for (int i = 0; i < distributed_reactants.size(); ++i) {
               
               current_message.amount  = distributed_reactants[i];
+              it->second.amount       -= distributed_reactants[i];
               current_message.to      = it->second.enzymes[i];
 
               _output.push_back(current_message);
             }
-
-            it->second.amount = 0;
           }
         }
 
@@ -121,18 +120,18 @@ public:
         }
       }
     }
-    // cout << "space internal ends" << endl;
+    
   }
 
   TIME advance() const noexcept {
-    // cout << "space advance start" << endl;
+    
     TIME result = _show_state ? TIME(0) : _next_internal; 
-    // cout << "space advance ends" << endl;
+    
     return result;
   }
 
   vector<MSG> out() const noexcept {
-    // cout << "space out start" << endl;
+    
     vector<MSG> result;
 
     if(_show_state) {
@@ -144,12 +143,12 @@ public:
 
       result = _output;
     }
-    // cout << "space out ends" << endl;
+    
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    // cout << "space external start" << endl;
+
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
       
       if (isShowRequest(it->to)) _show_state = true;
@@ -164,14 +163,14 @@ public:
       _next_internal  = _interval_time;
 
     }
-    // cout << "space external ends" << endl;
+    
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    // cout << "space confluence start" << endl;
+    
     internal();
     external(mb, TIME(0));
-    // cout << "space confluence ends" << endl;
+    
   }
 
   /***************************************
