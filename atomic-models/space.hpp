@@ -73,7 +73,7 @@ public:
   }
 
   void internal() noexcept {
-
+    // cout << "space internal start" << endl;
     vector<Integer_t> distributed_reactants = {};
     MSG current_message;
 
@@ -81,22 +81,22 @@ public:
     
     _show_state = false;
     } else {
-
       if (_s == SState_t::SELECTING) {
 
         for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
           if (this->weightedRandomBool(it->second.amount)){
+
             distributed_reactants.clear();
             distributed_reactants.resize(it->second.enzymes.size());
             randomDistribution(distributed_reactants, it->second.amount);
             current_message.specie = it->first; 
-            
 
             for (int i = 0; i < distributed_reactants.size(); ++i) {
               
               current_message.amount  = distributed_reactants[i];
               current_message.to      = it->second.enzymes[i];
+
               _output.push_back(current_message);
             }
 
@@ -121,15 +121,18 @@ public:
         }
       }
     }
+    // cout << "space internal ends" << endl;
   }
 
   TIME advance() const noexcept {
-    
-    return _show_state ? TIME(0) : _next_internal;
+    // cout << "space advance start" << endl;
+    TIME result = _show_state ? TIME(0) : _next_internal; 
+    // cout << "space advance ends" << endl;
+    return result;
   }
 
   vector<MSG> out() const noexcept {
-
+    // cout << "space out start" << endl;
     vector<MSG> result;
 
     if(_show_state) {
@@ -141,12 +144,12 @@ public:
 
       result = _output;
     }
-
+    // cout << "space out ends" << endl;
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    
+    // cout << "space external start" << endl;
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
       
       if (isShowRequest(it->to)) _show_state = true;
@@ -161,13 +164,14 @@ public:
       _next_internal  = _interval_time;
 
     }
-
+    // cout << "space external ends" << endl;
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    
+    // cout << "space confluence start" << endl;
     internal();
     external(mb, TIME(0));
+    // cout << "space confluence ends" << endl;
   }
 
   /***************************************
@@ -229,14 +233,17 @@ public:
 
   void randomDistribution(vector<Integer_t>& ds, Integer_t a) {
     Integer_t current_amount;
+    Integer_t reactions_amount = ds.size();
+    
+    if (reactions_amount > 0) {
 
-    for (int i = 0; i < ds.size(); ++i) {
-      ds[i] = 0;
-    }
+      for (int i = 0; i < reactions_amount; ++i) {
+        ds[i] = 0;
+      }
 
-    for (Integer_t i = 0; i < a; ++i) {
-
-      ds[_integer_random.drawNumber(0, ds.size() - 1)] += 1;
+      for (Integer_t i = 0; i < a; ++i) {
+        ds[_integer_random.drawNumber(0, reactions_amount - 1)] += 1;
+      }
     }
   }
 

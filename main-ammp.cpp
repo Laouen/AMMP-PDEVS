@@ -599,14 +599,11 @@ int main(int argc, char* argv[]) {
     cell_eoc
   ));
 
-  for (map<string, Address_t>::iterator i = species_addresses->begin(); i != species_addresses->end(); ++i) {
-    cout << i->first << " " << i->second << endl;
-  }
 
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
   /*****************************************************************************************************/
-/*
+
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;

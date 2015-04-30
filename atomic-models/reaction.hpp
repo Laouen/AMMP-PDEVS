@@ -75,7 +75,7 @@ public:
   }
 
   void internal() noexcept {
-
+    // cout << "reaction internal start" << endl;
     Task_t<TIME> to_reject;
     bool already_selected = false;
 
@@ -111,14 +111,20 @@ public:
 
     // if there is more metabolites set a new selection tasks in interval time
     this->setNextSelection();
+    // cout << "reaction internal ends" << endl;
   }
 
   TIME advance() const noexcept {
-    if (_tasks.size() > 0) return _tasks.front().time_left;
-    else                   return atomic<TIME, MSG>::infinity;
+    // cout << "reaction advance start" << endl;
+    TIME result;
+    if (_tasks.size() > 0) result = _tasks.front().time_left;
+    else                   result = atomic<TIME, MSG>::infinity;
+    // cout << "reaction advance ends" << endl;
+    return result;
   }
 
   vector<MSG> out() const noexcept {
+    // cout << "reaction out start" << endl;
     MSG new_message;
     const SetOfMolecules_t* curr_sctry;
 
@@ -150,12 +156,12 @@ public:
         }
       }
     }
-
+    // cout << "reaction out ends" << endl;
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-
+    // cout << "reaction external start" << endl;
     Task_t<TIME> to_reject, new_selection;
     
     // Updating time left
@@ -177,12 +183,14 @@ public:
 
     // if there is more metabolites set a new selection tasks in interval time
     this->setNextSelection();
+    // cout << "reaction external ends" << endl;
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
-
+    // cout << "reaction confluence start" << endl;
     internal();
     external(mb, TIME(0));
+    // cout << "reaction confluence ends" << endl;
   }
 
   /***************************************
