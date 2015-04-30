@@ -104,7 +104,7 @@ struct Message_t {
   string specie;
   Integer_t amount;
 
-  Message_t(Address_t other_to, string other_specie, Integer_t other_amount)
+  Message_t(const Address_t& other_to, const string& other_specie, const Integer_t& other_amount)
   : to(other_to), specie(other_specie), amount(other_amount) {}
 
   Message_t()

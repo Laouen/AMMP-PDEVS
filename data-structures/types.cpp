@@ -32,4 +32,3 @@ ostream& operator<<(ostream& os, vector<string> m) {
   os << "]";
   return os;
 }
-

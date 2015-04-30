@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="Test">
+    <listOfUnitDefinitions>
+      <unitDefinition id="mmol_per_gDW_per_hr">
+        <listOfUnits>
+          <unit kind="mole" scale="-3"/>
+          <unit kind="gram" exponent="-1"/>
+          <unit kind="second" exponent="-1" multiplier="0.000277777777777778"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="c" name="Cytoplasm"/>
+      <compartment id="e" name="Extracellular"/>
+      <compartment id="p" name="Periplasm"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="A_c" name="A" compartment="c">
+      </species>
+      <species id="B_c" name="B" compartment="c">
+      </species>
+      <species id="C_c" name="C" compartment="c">
+      </species>
+    </listOfSpecies>
+    <listOfReactions>
+      <reaction id="A_to_B_and_C" name="convert one of A in two of B and three of C" reversible="false">
+        <listOfReactants>
+          <speciesReference species="A_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c" stoichiometry="1"/>
+          <speciesReference species="B_c" stoichiometry="2"/>
+          <speciesReference species="C_c" stoichiometry="3"/>
+        </listOfProducts>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

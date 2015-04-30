@@ -46,8 +46,9 @@ public:
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
-      
+    
       if (isAcceptedInpunt(_accepted_input, it->to)) {
+
         _filtered_input.push_back(*it);
       }
     }
@@ -57,7 +58,7 @@ public:
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     internal();
-    external(mb, t);
+    external(mb, TIME(0));
   }
 
   /***************************************

@@ -306,8 +306,8 @@ int main(int argc, char* argv[]) {
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 0.1;
-    rate            = 0.01;
+    interval_time   = 0.0001;
+    rate            = 0.001;
     amount          = 3;
 
     place = getPlace(it->second, species, compartements, special_places);
@@ -418,7 +418,7 @@ int main(int argc, char* argv[]) {
 
   for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
     
-    interval_time = 0.05;
+    interval_time = 0.5;
     volume        = 5;
     factor        = 1;
 
@@ -489,14 +489,30 @@ int main(int argc, char* argv[]) {
 
 
   cout << "Creating cytoplasm bulk solution coupled model." << endl;
-  auto cytoplasm_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[2]);
-  auto cytoplasm_space  = compartment_models.at(special_places[2]);
-  auto cytoplasm_inner  = enzyme_set_models.at(special_places[2] + "_i");
+  auto cytoplasm_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[2]);
+  auto cytoplasm_or_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("show_state");
+  auto cytoplasm_os_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("sending_output");
+  auto cytoplasm_space      = compartment_models.at(special_places[2]);
+  auto cytoplasm_inner      = enzyme_set_models.at(special_places[2] + "_i");
+  
+  shared_ptr<flattened_coupled<Time_t, Message_t>> cytoplasm_cos_filter(new flattened_coupled<Time_t, Message_t>(
+    {cytoplasm_os_filter}, 
+    {cytoplasm_os_filter}, 
+    {}, 
+    {cytoplasm_os_filter}
+  ));
+
   shared_ptr<flattened_coupled<Time_t, Message_t>> cytoplasm_model(new flattened_coupled<Time_t, Message_t>(
-    {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
-    {cytoplasm_filter}, 
-    {{cytoplasm_filter, cytoplasm_space}, {cytoplasm_space, cytoplasm_inner}, {cytoplasm_inner, cytoplasm_space}}, 
-    {cytoplasm_space}
+    {cytoplasm_filter, cytoplasm_or_filter, cytoplasm_cos_filter, cytoplasm_space, cytoplasm_inner}, 
+    {cytoplasm_filter, cytoplasm_or_filter}, 
+    {
+      {cytoplasm_or_filter, cytoplasm_space}, 
+      {cytoplasm_space, cytoplasm_cos_filter}, 
+      {cytoplasm_filter, cytoplasm_space}, 
+      {cytoplasm_space, cytoplasm_inner}, 
+      {cytoplasm_inner, cytoplasm_space}
+    }, 
+    {cytoplasm_cos_filter}
   ));
 
   cout << "Creating extra cellular bulk solution coupled model." << endl;
@@ -585,7 +601,7 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
-    input += to_string(i) + "c c_s | M_2mcit_c 1 \n ";
+    input += to_string(i) + "c c_s | A_c 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -624,8 +640,51 @@ int main(int argc, char* argv[]) {
     if ( 0 != thrash.size()) throw exception();
   });
 
+
+  cout << "Creating the model to show the space state from stream" << endl;
+  piss = make_shared<istringstream>();
+  input = "";
+
+  for (double i = 0.0; i < 500.0; i += 1.0) {
+
+    input += to_string(i) + " \n ";
+  }
+  input.pop_back();
+  input.pop_back();
+  input.pop_back();
+  piss->str(input);
+  
+  //cout << input << endl;
+
+  auto so = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+    [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
+
+    // Parsing function
+    // Intermediary vars for casting
+    string thrash;
+    stringstream ss;
+    Message_t msg_out;
+
+    ss.str(s);
+    ss >> t_next;
+
+    msg_out.to      = {"show_state", "c_s"};
+    msg_out.specie  = "";
+    msg_out.amount  = 0;
+
+    m_next = msg_out;
+    ss >> thrash;
+    if ( 0 != thrash.size()) throw exception();
+  });
+
+
   cout << "Coupling the input to the model" << endl;
-  shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{{pf, cytoplasm_model}, {}, {{pf, cytoplasm_model}}, {cytoplasm_model}});
+  shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
+    {pf, so, cytoplasm_model}, 
+    {}, 
+    {{pf, cytoplasm_model}, {so, cytoplasm_model}}, 
+    {cytoplasm_model}
+  });
 
   cout << "Preparing runner" << endl;
   Time_t initial_time{0};

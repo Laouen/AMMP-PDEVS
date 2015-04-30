@@ -35,6 +35,8 @@ private:
   // used for uniform random numbers
   RealRandom_t<double>              _real_random;
   IntegerRandom_t<Integer_t>        _integer_random;
+  // used to show the states
+  bool                              _show_state;
 
 public:
 
@@ -51,7 +53,8 @@ public:
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume),
-  _factor(other_factor) {
+  _factor(other_factor),
+  _show_state(false) {
 
     random_device real_rd;
     _real_random.seed(real_rd());
@@ -73,62 +76,81 @@ public:
 
     vector<Integer_t> distributed_reactants = {};
     MSG current_message;
+
+    if (_show_state) {
     
-    if (_s == SState_t::SELECTING) {
+    _show_state = false;
+    } else {
 
-      for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+      if (_s == SState_t::SELECTING) {
 
-        if (this->weightedRandomBool(it->second.amount)){
-          distributed_reactants.clear();
-          distributed_reactants.resize(it->second.enzymes.size());
-          randomDistribution(distributed_reactants, it->second.amount);
-          current_message.specie = it->first; 
-          
+        for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
-          for (int i = 0; i < distributed_reactants.size(); ++i) {
+          if (this->weightedRandomBool(it->second.amount)){
+            distributed_reactants.clear();
+            distributed_reactants.resize(it->second.enzymes.size());
+            randomDistribution(distributed_reactants, it->second.amount);
+            current_message.specie = it->first; 
             
-            current_message.amount  = distributed_reactants[i];
-            current_message.to      = it->second.enzymes[i];
-            _output.push_back(current_message);
+
+            for (int i = 0; i < distributed_reactants.size(); ++i) {
+              
+              current_message.amount  = distributed_reactants[i];
+              current_message.to      = it->second.enzymes[i];
+              _output.push_back(current_message);
+            }
+
+            it->second.amount = 0;
           }
-
-          it->second.amount = 0;
         }
-      }
 
-      _next_internal  = TIME(0);
-      _s              = SState_t::SENDING;
-    } else if (_s == SState_t::SENDING) {
+        _next_internal  = TIME(0);
+        _s              = SState_t::SENDING;
+      } else if (_s == SState_t::SENDING) {
 
-      _output.clear();
+        _output.clear();
 
-      if (this->thereIsMetabolites()) {
-        
-        _s              = SState_t::SELECTING;
-        _next_internal  = _interval_time;
-      } else {
-        
-        _s              = SState_t::IDLE;
-        _next_internal  = atomic<TIME, MSG>::infinity;
+        if (this->thereIsMetabolites()) {
+          
+          _s              = SState_t::SELECTING;
+          _next_internal  = _interval_time;
+        } else {
+          
+          _s              = SState_t::IDLE;
+          _next_internal  = atomic<TIME, MSG>::infinity;
+        }
       }
     }
   }
 
   TIME advance() const noexcept {
     
-    return _next_internal;
+    return _show_state ? TIME(0) : _next_internal;
   }
 
   vector<MSG> out() const noexcept {
 
-    return _output;
+    vector<MSG> result;
+
+    if(_show_state) {
+      for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+
+        result.push_back( MSG({"sending_output"}, it->first, it->second.amount) );
+      }
+    } else {
+
+      result = _output;
+    }
+
+    return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
       
-      this->addToMetabolites(it->specie, it->amount);
+      if (isShowRequest(it->to)) _show_state = true;
+      else this->addToMetabolites(it->specie, it->amount);
     }
 
     if (_next_internal != atomic<TIME, MSG>::infinity) {
@@ -139,6 +161,7 @@ public:
       _next_internal  = _interval_time;
 
     }
+
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
@@ -179,7 +202,7 @@ public:
     return result;
   }
 
-  bool belong(string n, const vector<string>& ls) const {
+  bool belong(const string& n, const vector<string>& ls) const {
     bool result = false;
 
     for (vector<string>::const_iterator it = ls.cbegin(); it != ls.cend(); ++it) {
@@ -226,6 +249,21 @@ public:
         break;
       }
     }
+    return result;
+  }
+
+  bool isShowRequest(const Address_t& a) const{
+
+    bool result = false;
+    string show_requested_string = "show_state";
+
+    for (Address_t::const_iterator it = a.cbegin(); it != a.cend(); ++it) {
+      if (*it == show_requested_string) { 
+        result = true;
+        break;
+      }
+    }
+
     return result;
   }
 };
