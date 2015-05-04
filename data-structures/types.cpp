@@ -32,3 +32,16 @@ ostream& operator<<(ostream& os, vector<string> m) {
   os << "]";
   return os;
 }
+
+ostream& operator<<(ostream& os, SetOfMolecules_t m) {
+  
+  os << "[";
+  SetOfMolecules_t::iterator i = m.begin();
+  while(i != m.end()){
+    os << i->second << "-" << i->first;
+    ++i;
+    if (i != m.end()) os << ", ";
+  }
+  os << "]";
+  return os;
+}

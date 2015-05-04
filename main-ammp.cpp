@@ -180,6 +180,9 @@ string getPlace(const enzyme_parameter_t& e, const map<string, map<string, strin
       } else if (compartments[sp[2]] > 0) {
 
         result = sp[1] + "_lm";
+      } else if ((compartments[sp[0]] > 0) && (compartments[sp[2]] > 0)) {
+
+        result = sp[1] + "_tm";
       }
       break;
     case 3:
@@ -409,8 +412,7 @@ int main(int argc, char* argv[]) {
     
     new_enzyme_information.location   = enzyme_addresses[it->first];
     new_enzyme_information.reactants  = getReactants(it->second); 
-
-    compartments_who_use_the_enzyme = getCompartments(it->second, species, compartements, special_places);
+    compartments_who_use_the_enzyme   = getCompartments(it->second, species, compartements, special_places);
 
     for (vector<string>::iterator i = compartments_who_use_the_enzyme.begin(); i != compartments_who_use_the_enzyme.end(); ++i) {
       
@@ -501,57 +503,64 @@ int main(int argc, char* argv[]) {
 
   cout << "Creating cytoplasm coupled model." << endl;
   auto cytoplasm_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[2]);
-  auto cytoplasm_or_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("show_state");
-  auto cytoplasm_os_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("sending_output");
   auto cytoplasm_space      = compartment_models.at(special_places[2]);
   auto cytoplasm_inner      = enzyme_set_models.at(special_places[2] + "_i");
-  
-  shared_ptr<flattened_coupled<Time_t, Message_t>> cytoplasm_cos_filter(new flattened_coupled<Time_t, Message_t>(
-    {cytoplasm_os_filter}, 
-    {cytoplasm_os_filter}, 
-    {}, 
-    {cytoplasm_os_filter}
-  ));
 
   shared_ptr<flattened_coupled<Time_t, Message_t>> cytoplasm_model(new flattened_coupled<Time_t, Message_t>(
-    {cytoplasm_filter, cytoplasm_or_filter, cytoplasm_cos_filter, cytoplasm_space, cytoplasm_inner}, 
-    {cytoplasm_filter, cytoplasm_or_filter}, 
+    {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
+    {cytoplasm_filter}, 
     {
-      {cytoplasm_or_filter, cytoplasm_space}, 
       {cytoplasm_filter, cytoplasm_space}, 
       {cytoplasm_space, cytoplasm_inner}, 
-      {cytoplasm_inner, cytoplasm_space},
-      {cytoplasm_space, cytoplasm_cos_filter} 
+      {cytoplasm_inner, cytoplasm_space}
     }, 
-    {cytoplasm_cos_filter}
+    {cytoplasm_space}
   ));
 
   cout << "Creating extra cellular coupled model." << endl;
   auto extra_cellular_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[0]);
   auto extra_cellular_space  = compartment_models.at(special_places[0]);
-
   auto extra_cellular_inner  = enzyme_set_models.at(special_places[0] + "_i");
+
   shared_ptr<flattened_coupled<Time_t, Message_t>> extra_cellular_model(new flattened_coupled<Time_t, Message_t>(
     {extra_cellular_filter, extra_cellular_space, extra_cellular_inner}, 
     {extra_cellular_filter}, 
-    {{extra_cellular_filter, extra_cellular_space}, {extra_cellular_space, extra_cellular_inner}, {extra_cellular_inner, extra_cellular_space}}, 
+    {
+      {extra_cellular_filter, extra_cellular_space},
+      {extra_cellular_space, extra_cellular_inner},
+      {extra_cellular_inner, extra_cellular_space}
+    }, 
     {extra_cellular_space}
   ));
 
   cout << "Creating periplasm coupled model." << endl;
-  auto periplasm_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1]);
-  auto periplasm_space  = compartment_models.at(special_places[1]);
-  auto trans_membrane   = enzyme_set_models.at(special_places[1] + "_tm");
-  auto outer_membrane   = enzyme_set_models.at(special_places[1] + "_um");
-  auto inner_membrane   = enzyme_set_models.at(special_places[1] + "_lm");
-  auto periplasm_inner  = enzyme_set_models.at(special_places[1] + "_i");
+  auto periplasm_filter        = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1]);
+  auto periplasm_or_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1] + "_or");
+
+  auto periplasm_output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
+  
+  // making a trivial coupled model of periplasm_output_filter in order to solve the bug with coupled to atomic
+  shared_ptr<flattened_coupled<Time_t, Message_t>> periplasm_output_coupled_filter(new flattened_coupled<Time_t, Message_t>(
+    {periplasm_output_filter}, 
+    {periplasm_output_filter}, 
+    {}, 
+    {periplasm_output_filter}
+  ));
+
+  auto periplasm_space      = compartment_models.at(special_places[1]);
+  auto trans_membrane       = enzyme_set_models.at(special_places[1] + "_tm");
+  auto outer_membrane       = enzyme_set_models.at(special_places[1] + "_um");
+  auto inner_membrane       = enzyme_set_models.at(special_places[1] + "_lm");
+  auto periplasm_inner      = enzyme_set_models.at(special_places[1] + "_i");
+
   shared_ptr<flattened_coupled<Time_t, Message_t>> periplasm_model(new flattened_coupled<Time_t, Message_t>(
-    {periplasm_filter, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
-    {extra_cellular_filter}, 
+    {periplasm_filter, periplasm_or_filter, periplasm_output_coupled_filter, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
+    {periplasm_filter, periplasm_or_filter}, 
     {
-      {extra_cellular_filter, trans_membrane}, 
-      {extra_cellular_filter, outer_membrane}, 
-      {extra_cellular_filter, inner_membrane}, 
+      {periplasm_or_filter, periplasm_space},
+      {periplasm_filter, trans_membrane}, 
+      {periplasm_filter, outer_membrane}, 
+      {periplasm_filter, inner_membrane}, 
       {trans_membrane, periplasm_space}, 
       {outer_membrane, periplasm_space}, 
       {inner_membrane, periplasm_space}, 
@@ -559,9 +568,10 @@ int main(int argc, char* argv[]) {
       {periplasm_space, outer_membrane}, 
       {periplasm_space, inner_membrane}, 
       {periplasm_space, periplasm_inner}, 
-      {periplasm_inner, periplasm_space}
+      {periplasm_inner, periplasm_space},
+      {periplasm_space, periplasm_output_coupled_filter}
     }, 
-    {trans_membrane, outer_membrane, inner_membrane}
+    {trans_membrane, outer_membrane, inner_membrane, periplasm_output_coupled_filter}
   ));
 
   cout << "Creating organelles coupled models." << endl;
@@ -601,11 +611,30 @@ int main(int argc, char* argv[]) {
   }
 
   cout << "Creating the cell coupled model." << endl;
+  auto output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
+  
+  // making a trivial coupled model of output_filter in order to solve the bug with coupled to atomic
+  shared_ptr<flattened_coupled<Time_t, Message_t>> output_coupled_filter(new flattened_coupled<Time_t, Message_t>(
+    {output_filter}, 
+    {output_filter}, 
+    {}, 
+    {output_filter}
+  ));
 
-  vectorOfModels_t cell_models = {extra_cellular_model, periplasm_model, cytoplasm_model};
-  vectorOfModels_t cell_eic = {extra_cellular_model, cytoplasm_model};
-  vectorOfModels_t cell_eoc = {extra_cellular_model, periplasm_model, cytoplasm_model};
-  vectorOfModelPairs_t cell_ic{ {extra_cellular_model, periplasm_model}, {periplasm_model, cytoplasm_model}, {cytoplasm_model, periplasm_model}, {periplasm_model, extra_cellular_model} };
+  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, output_coupled_filter};
+  vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModels_t cell_eoc     = {output_coupled_filter};
+  //vectorOfModels_t cell_eoc     = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModelPairs_t cell_ic  = {
+    {extra_cellular_model, periplasm_model},
+    {periplasm_model, cytoplasm_model},
+    {cytoplasm_model, periplasm_model},
+    {periplasm_model, extra_cellular_model},
+    // outputs
+    {extra_cellular_model, output_coupled_filter},
+    {periplasm_model, output_coupled_filter},
+    {cytoplasm_model, output_coupled_filter},
+  };
   
   for (vectorOfCoupledModels_t::iterator it = organelle_models.begin(); it != organelle_models.end(); ++it) {
     cell_ic.push_back({cytoplasm_model, *it});
@@ -627,20 +656,17 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
-    input += to_string(i) + "c c_s | A_c 1 \n ";
+    input += to_string(i) + " " + "e e_s | A_e 1 \n ";
+    input += to_string(i) + " " + "e e_s | B_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
   input.pop_back();
   piss->str(input);
-  
-  //cout << input << endl;
 
   auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
-    // Parsing function
-    // Intermediary vars for casting
     int delimiter;
     string collector;
     string thrash;
@@ -649,7 +675,6 @@ int main(int argc, char* argv[]) {
 
     ss.str(s);
     ss >> t_next;
-
     ss >> collector;
 
     while (collector != "|") {     
@@ -671,7 +696,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 1.0; i < 1.1; i += 1.0) {
+  for (double i = 1.0; i <= 10.0; i += 1.0) {
 
     input += to_string(i) + " \n ";
   }
@@ -679,14 +704,10 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   input.pop_back();
   piss->str(input);
-  
-  //cout << input << endl;
 
   auto so = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
-    // Parsing function
-    // Intermediary vars for casting
     string thrash;
     stringstream ss;
     Message_t msg_out;
@@ -694,9 +715,8 @@ int main(int argc, char* argv[]) {
     ss.str(s);
     ss >> t_next;
 
-    msg_out.to      = {"show_state", "c_s"};
-    msg_out.specie  = "";
-    msg_out.amount  = 0;
+    msg_out.to            = {"e", "e_s", "c", "c_s", "p_or", "p_s"};
+    msg_out.show_request  = true;
 
     m_next = msg_out;
     ss >> thrash;
@@ -706,10 +726,13 @@ int main(int argc, char* argv[]) {
 
   cout << "Coupling the input to the model" << endl;
   shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
-    {pf, so, cytoplasm_model}, 
+    {pf, so, cell_model}, 
     {}, 
-    {{pf, cytoplasm_model}, {so, cytoplasm_model}}, 
-    {cytoplasm_model}
+    {
+      {pf, cell_model},
+      {so, cell_model}
+    }, 
+    {cell_model}
   });
 
   cout << "Preparing runner" << endl;

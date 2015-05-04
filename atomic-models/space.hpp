@@ -97,7 +97,6 @@ public:
               current_message.amount  = distributed_reactants[i];
               it->second.amount       -= distributed_reactants[i];
               current_message.to      = it->second.enzymes[i];
-
               _output.push_back(current_message);
             }
           }
@@ -135,9 +134,9 @@ public:
     vector<MSG> result;
 
     if(_show_state) {
+      if (_id == "p") cout << "showing" << endl;
       for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-
-        result.push_back( MSG({"sending_output"}, it->first, it->second.amount) );
+        result.push_back( MSG({"output"}, it->first, it->second.amount) );
       }
     } else {
 
@@ -150,8 +149,8 @@ public:
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-      
-      if (isShowRequest(it->to)) _show_state = true;
+
+      if (it->show_request) _show_state = true;
       else this->addToMetabolites(it->specie, it->amount);
     }
 
@@ -255,21 +254,6 @@ public:
         break;
       }
     }
-    return result;
-  }
-
-  bool isShowRequest(const Address_t& a) const{
-
-    bool result = false;
-    string show_requested_string = "show_state";
-
-    for (Address_t::const_iterator it = a.cbegin(); it != a.cend(); ++it) {
-      if (*it == show_requested_string) { 
-        result = true;
-        break;
-      }
-    }
-
     return result;
   }
 };

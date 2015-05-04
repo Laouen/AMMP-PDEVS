@@ -103,29 +103,32 @@ struct Message_t {
   Address_t to;
   string specie;
   Integer_t amount;
+  bool show_request;
 
   Message_t(const Address_t& other_to, const string& other_specie, const Integer_t& other_amount)
-  : to(other_to), specie(other_specie), amount(other_amount) {}
+  : to(other_to), specie(other_specie), amount(other_amount), show_request(false) {}
 
   Message_t()
-  :to(), specie(""), amount(0) {}
+  :to(), specie(""), amount(0), show_request(false) {}
 
   Message_t(const Message_t& other)
-  : to(other.to), specie(other.specie), amount(other.amount) {}
+  : to(other.to), specie(other.specie), amount(other.amount), show_request(other.show_request) {}
 
   Message_t(Message_t* other)
-  : to(other->to), specie(other->specie), amount(other->amount) {}
+  : to(other->to), specie(other->specie), amount(other->amount), show_request(other->show_request) {}
 
   void clear() {
     to.clear();
-    specie = "";
-    amount = 0;
+    specie        = "";
+    amount        = 0;
+    show_request  = false;
   }
 };
 
 ostream& operator<<(ostream& os, Message_t msg);
 ostream& operator<<(ostream& os, Address_t to);
 ostream& operator<<(ostream& os, vector<string> m);
+ostream& operator<<(ostream& os, SetOfMolecules_t m);
 
 /*******************************************/
 /************** End Message_t ****************/
