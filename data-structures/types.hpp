@@ -14,8 +14,9 @@ using namespace std;
 /********** Enums and renames *************/
 /******************************************/
 
-enum class RState_t { REJECTING, REACTING, SELECTING };
-enum class SState_t { SENDING, SELECTING, IDLE };
+enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
+enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTION = 2, SELECTING = 3, IDLE = 4 };
+enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2 };
 enum class Way_t { RTP, PTR };
 
 using Integer_t = unsigned long long;
@@ -27,47 +28,50 @@ using SetOfMolecules_t  = map<string, Integer_t>;
 /******** End enums and renames ***********/
 /******************************************/
 
+
+
+
+
+
+
+/*******************************************/
+/**************** RTask_t ******************/
+/*******************************************/
+
 struct enzyme_parameter_t {
   
-  string          name;
-  bool            reversible;
+  string            name;
+  bool              reversible;
   SetOfMolecules_t  reactants_sctry;
   SetOfMolecules_t  products_sctry;
 };
 
 template<class TIME>
-struct Task_t {
-  TIME                time_left;
-  RState_t              task_kind;
-  SetOfMolecules_t      rejected;  
+struct RTask_t {
+  TIME                    time_left;
+  RState_t                task_kind;
+  SetOfMolecules_t        rejected;  
   pair<Way_t, Integer_t>  reaction;
 
-  Task_t() {}
+  RTask_t() {}
 
-  Task_t(const Task_t& other) {
+  RTask_t(const RTask_t& other) {
     time_left = other.time_left;
     task_kind = other.task_kind;
     rejected  = other.rejected;
     reaction  = other.reaction;
   }
 
-  inline bool operator<(const Task_t<TIME>& o) {
+  inline bool operator<(const RTask_t<TIME>& o) {
 
     bool result;
-    if (time_left != o.time_left) {
-      
-      result = (time_left < o.time_left);
-    } else {
-
-      if ((task_kind == RState_t::SELECTING) && (o.task_kind != RState_t::SELECTING)) result = true;
-      else if ((task_kind == RState_t::REJECTING) && (o.task_kind == RState_t::REACTING)) result = true;
-      else result = false;
-    }
+    if (time_left != o.time_left) result = (time_left < o.time_left);
+    else                          result = (task_kind < o.task_kind);
 
     return result;
   }
 
-  inline bool operator==(const Task_t<TIME>& o) {
+  inline bool operator==(const RTask_t<TIME>& o) {
 
     bool result;
 
@@ -88,11 +92,82 @@ struct Task_t {
 };
 
 template<class TIME>
-using TaskQueue = list< Task_t<TIME> >;
+using RTaskQueue_t = list< RTask_t<TIME> >;
+
+/*******************************************/
+/************** End RTask_t ****************/
+/*******************************************/
+
+
+
+
+
+
+
 
 
 /*******************************************/
-/**************** Message_t ******************/
+/**************** STask_t ******************/
+/*******************************************/
+
+
+
+template<class TIME>
+struct STask_t {
+  TIME                    time_left;
+  SState_t                task_kind;
+  SetOfMolecules_t        to_send;
+
+  STask_t() {}
+
+  STask_t(const STask_t& other) {
+    time_left = other.time_left;
+    task_kind = other.task_kind;
+    to_send   = other.to_send;
+  }
+
+  inline bool operator<(const STask_t<TIME>& o) {
+
+    bool result;
+    if (time_left != o.time_left) result = (time_left < o.time_left);
+    else                          result = (task_kind < o.task_kind);
+
+    return result;
+  }
+
+  inline bool operator==(const STask_t<TIME>& o) {
+
+    bool result;
+
+    result = (time_left == o.time_left);
+    result = result && (task_kind == o.task_kind);
+
+    if ((task_kind == SState_t::SENDING_REACTION) || (task_kind == SState_t::SENDING_BIOMAS)) {
+      result = result && (to_send == o.to_send);
+    }  
+
+    return result;
+  }
+
+};
+
+template<class TIME>
+using STaskQueue_t = list< STask_t<TIME> >;
+
+
+/*******************************************/
+/************** End STask_t ****************/
+/*******************************************/
+
+
+
+
+
+
+
+
+/*******************************************/
+/**************** Message_t ****************/
 /*******************************************/
 
 using Address_t = list<string>;
@@ -131,7 +206,17 @@ ostream& operator<<(ostream& os, vector<string> m);
 ostream& operator<<(ostream& os, SetOfMolecules_t m);
 
 /*******************************************/
-/************** End Message_t ****************/
+/************** End Message_t **************/
+/*******************************************/
+
+
+
+
+
+
+
+/*******************************************/
+/************* Data info type **************/
 /*******************************************/
 
 struct metabolite_info_t {
@@ -163,6 +248,14 @@ struct enzyme_info_t {
   enzyme_info_t(const enzyme_info_t& other)
   : location(other.location), reactants(other.reactants) {}
 };
+
+/*******************************************/
+/*********** End Data info type ************/
+/*******************************************/
+
+
+
+
 
 
 /******************************************/

@@ -26,6 +26,7 @@ private:
   string                            _id;
   TIME                              _next_internal;
   TIME                              _interval_time;
+  TIME                              _biomass_request_rate;
   map<string, metabolite_info_t>    _metabolites;
   map<string, enzyme_info_t>        _enzymes;
   double                            _volume;
@@ -43,6 +44,7 @@ public:
   explicit space(
     const string                          other_id,
     const TIME                            other_interval_time,
+    const TIME                            other_biomass_request_rate,
     const map<string, metabolite_info_t>& other_metabolites,
     const map<string, enzyme_info_t>&     other_enzymes,
     const double                          other_volume,
@@ -50,6 +52,7 @@ public:
     ) noexcept :
   _id(other_id),
   _interval_time(other_interval_time),
+  _biomass_request_rate(other_biomass_request_rate),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume),
@@ -148,10 +151,18 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
+    this->updateTaskTimeLefts(t);
+
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-      if (it->show_request) _show_state = true;
-      else this->addToMetabolites(it->specie, it->amount);
+      if (it->show_request) {
+
+      } else if (it->biomass_request) {
+
+      } else {
+        
+        this->addToMetabolites(it->specie, it->amount);
+      }
     }
 
     if (_next_internal != atomic<TIME, MSG>::infinity) {

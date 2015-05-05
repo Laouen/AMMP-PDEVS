@@ -12,7 +12,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // SetOfMolecules_t, Task_t, RState_t, Way_t, TaskQueue
+#include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, RState_t, Way_t, RTaskQueue_t
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace boost::simulation::pdevs;
@@ -36,7 +36,7 @@ private:
   // elements bound
   SetOfMolecules_t                      _reactants;
   SetOfMolecules_t                      _products;
-  TaskQueue<TIME>                       _tasks;
+  RTaskQueue_t<TIME>                       _tasks;
   // used for uniform random number 
   IntegerRandom_t<Integer_t>            _distribution;
 
@@ -76,14 +76,14 @@ public:
 
   void internal() noexcept {
     
-    Task_t<TIME> selected_to_leave;
+    RTask_t<TIME> selected_to_leave;
     bool already_selected = false;
 
     // Updating time left
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // Processing all the tasks with time left == 0 (happening now)
-    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
 
       if ((it->task_kind == RState_t::SELECTING) && !already_selected) {
 
@@ -129,7 +129,7 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    for (typename TaskQueue<TIME>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
+    for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
 
       if (it->task_kind == RState_t::REJECTING) {
         
@@ -160,7 +160,7 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     
-    Task_t<TIME> to_reject, new_selection;
+    RTask_t<TIME> to_reject, new_selection;
     
     // Updating time left
     this->updateTaskTimeLefts(t);
@@ -196,7 +196,7 @@ public:
   ***************************************/
 
   // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
-  void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, Task_t<TIME>& tr) {
+  void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, RTask_t<TIME>& tr) {
     Integer_t free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
     bool is_reactant, is_product;
 
@@ -239,14 +239,14 @@ public:
   // Decrease the time left of all the current tasks in _tasks by the parameter t.
   void updateTaskTimeLefts(TIME t){
 
-    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
       it->time_left -= t;
     }
   }
 
   void lookForNewReactions() {
     Integer_t reactant_ready, product_ready, intersection_range, intersection;
-    Task_t<TIME> rtp, ptr;
+    RTask_t<TIME> rtp, ptr;
 
     reactant_ready      = this->totalReadyFor(Way_t::RTP);
     product_ready       = this->totalReadyFor(Way_t::PTR);
@@ -273,7 +273,7 @@ public:
   }
 
   void setNextSelection() {
-    Task_t<TIME> new_selection;
+    RTask_t<TIME> new_selection;
     
     if ( (!isClean(_reactants) || !isClean(_products)) && !this->thereIsNextSelection() ) {
 
@@ -283,7 +283,7 @@ public:
     }
   }
 
-  void selectFrom(SetOfMolecules_t& m, Task_t<TIME>& t) {
+  void selectFrom(SetOfMolecules_t& m, RTask_t<TIME>& t) {
     Integer_t amount_leaving;
 
     for (SetOfMolecules_t::iterator it = m.begin(); it != m.end(); ++it) {
@@ -320,10 +320,10 @@ public:
     _amount -= r + p;
   }
 
-  // Insert a copy of the parameter t in the TaskQueue in an ordered Way_t.
-  void innsertTask(const Task_t<TIME>& t) {
+  // Insert a copy of the parameter t in the RTaskQueue_t in an ordered Way_t.
+  void innsertTask(const RTask_t<TIME>& t) {
 
-    typename TaskQueue<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
   }
 
@@ -389,7 +389,7 @@ public:
   bool thereIsNextSelection() {
     bool result = false;
 
-    for (typename TaskQueue<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
       if ((it->task_kind == RState_t::SELECTING) && (it->time_left <= _interval_time)) {
         result = true;
         break;
@@ -417,7 +417,7 @@ public:
     return os;
   }
 
-  ostream& show(ostream& os, const Task_t<TIME>& to) {
+  ostream& show(ostream& os, const RTask_t<TIME>& to) {
 
     string kind, w;
     if (to.task_kind == RState_t::SELECTING)        kind = "RState_t::SELECTING";
@@ -440,10 +440,10 @@ public:
     return os;
   }
 
-  ostream& show(ostream& os, const TaskQueue<TIME>& to) {
+  ostream& show(ostream& os, const RTaskQueue_t<TIME>& to) {
 
     os << "Current Tasks in the queue: ";
-    for (typename TaskQueue<TIME>::const_iterator it = to.cbegin(); it != to.cend(); ++it) {
+    for (typename RTaskQueue_t<TIME>::const_iterator it = to.cbegin(); it != to.cend(); ++it) {
       os << endl << endl;
       show(cout, *it);
     }
