@@ -15,7 +15,7 @@ using namespace std;
 /******************************************/
 
 enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
-enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTION = 2, SELECTING = 3, IDLE = 4 };
+enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTION = 2, SELECTING = 3};
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2 };
 enum class Way_t { RTP, PTR };
 

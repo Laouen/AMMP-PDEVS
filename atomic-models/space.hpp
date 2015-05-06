@@ -36,8 +36,8 @@ private:
   // used for uniform random numbers
   RealRandom_t<double>              _real_random;
   IntegerRandom_t<Integer_t>        _integer_random;
-  // used to show the states
-  bool                              _show_state;
+  // task queue
+  STaskQueue_t<TIME>                _tasks;
 
 public:
 
@@ -64,14 +64,15 @@ public:
     random_device integer_rd;
     _integer_random.seed(integer_rd());
 
+    _tasks.clear();
+
     if (this->thereIsMetabolites()) {
       
-      _s              = SState_t::SELECTING;
-      _next_internal  = _interval_time;
-    } else {
-      
-      _s              = SState_t::IDLE;
-      _next_internal  = atomic<TIME, MSG>::infinity;
+      STask_t<TIME> new_task;
+      new_task.time_left = _interval_time;
+      new_task.task_kind = SState_t::SELECTING;
+
+      _tasks.insertTask(new_task)
     }
   }
 
@@ -127,7 +128,9 @@ public:
 
   TIME advance() const noexcept {
     
-    TIME result = _show_state ? TIME(0) : _next_internal; 
+    TIME result;
+    if (_tasks.size() > 0) result = _tasks.front().time_left;
+    else                   result = atomic<TIME, MSG>::infinity;
     
     return result;
   }
@@ -152,27 +155,27 @@ public:
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
     this->updateTaskTimeLefts(t);
+    STask_t<TIME> new_task;
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
       if (it->show_request) {
 
+        new_task.time_left = TIME(0);
+        new_task.task_kind = SState_t::SHOWING;
+        this->insertTask(new_task);
       } else if (it->biomass_request) {
 
+        new_task.time_left = _biomass_request_rate;
+        new_task.task_kind = SState_t::SENDING_BIOMAS;
+        this->insertTask(new_task);
       } else {
         
         this->addToMetabolites(it->specie, it->amount);
       }
     }
 
-    if (_next_internal != atomic<TIME, MSG>::infinity) {
-      _next_internal = _next_internal - t;
-    } else if (this->thereIsMetabolites()) {
-      
-      _s              = SState_t::SELECTING;
-      _next_internal  = _interval_time;
-
-    }
+    this->setNextSelection();
     
   }
 
@@ -267,6 +270,38 @@ public:
     }
     return result;
   }
+
+  void setNextSelection() {
+    STask_t<TIME> new_selection;
+    
+    if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
+
+      new_selection.time_left = _interval_time;
+      new_selection.task_kind = SState_t::SELECTING;
+      this->insertTask(new_selection);
+    }
+  }
+
+  bool thereIsNextSelection() const {
+    bool result = false;
+
+    for (typename STaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+      if ((it->task_kind == SState_t::SELECTING) && (it->time_left <= _interval_time)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+
+  void insertTask(const STask_t<TIME>& t) {
+
+    typename STaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    _tasks.insert(it, t);
+  }
+
 };
   
 

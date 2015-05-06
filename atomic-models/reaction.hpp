@@ -36,7 +36,7 @@ private:
   // elements bound
   SetOfMolecules_t                      _reactants;
   SetOfMolecules_t                      _products;
-  RTaskQueue_t<TIME>                       _tasks;
+  RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
   IntegerRandom_t<Integer_t>            _distribution;
 
@@ -104,7 +104,7 @@ public:
 
       selected_to_leave.time_left = TIME(0);
       selected_to_leave.task_kind = RState_t::REJECTING;
-      this->innsertTask(selected_to_leave);
+      this->insertTask(selected_to_leave);
     }
 
     // if there is more metabolites set a new selection tasks in interval time
@@ -176,7 +176,7 @@ public:
 
       to_reject.time_left = TIME(0);
       to_reject.task_kind = RState_t::REJECTING;
-      this->innsertTask(to_reject);
+      this->insertTask(to_reject);
     }
 
     // if there is more metabolites set a new selection tasks in interval time
@@ -261,14 +261,14 @@ public:
       rtp.time_left = _rate;
       rtp.task_kind = RState_t::REACTING;
       rtp.reaction  = make_pair(Way_t::RTP, reactant_ready);
-      this->innsertTask(rtp);
+      this->insertTask(rtp);
     }
 
     if (product_ready > 0) {
       ptr.time_left = _rate;
       ptr.task_kind = RState_t::REACTING;
       ptr.reaction  = make_pair(Way_t::PTR, product_ready);
-      this->innsertTask(ptr);
+      this->insertTask(ptr);
     }
   }
 
@@ -279,7 +279,7 @@ public:
 
       new_selection.time_left = _interval_time;
       new_selection.task_kind = RState_t::SELECTING;
-      this->innsertTask(new_selection);
+      this->insertTask(new_selection);
     }
   }
 
@@ -321,7 +321,7 @@ public:
   }
 
   // Insert a copy of the parameter t in the RTaskQueue_t in an ordered Way_t.
-  void innsertTask(const RTask_t<TIME>& t) {
+  void insertTask(const RTask_t<TIME>& t) {
 
     typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
