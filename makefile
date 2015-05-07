@@ -8,31 +8,31 @@ STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp dat
 PARSERHEADERS=parser/parser.hpp
 
 all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o data-structures/types.o parser/parser.o
-	$(CC) -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o data-structures/types.o
+	$(CC) -g -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o data-structures/types.o
 
 main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS)
-	$(CC) -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
+	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
 	$(CC) -c tinyXML/tinyxml.cpp -o tinyXML/tinyxml.o
 
 tinyXML/tinyxmlerror.o: tinyXML/tinyxmlerror.cpp $(TINYHEADERS)
-	$(CC) -c tinyXML/tinyxmlerror.cpp -o tinyXML/tinyxmlerror.o
+	$(CC) -g -c tinyXML/tinyxmlerror.cpp -o tinyXML/tinyxmlerror.o
 
 tinyXML/tinyxmlparser.o: tinyXML/tinyxmlparser.cpp $(TINYHEADERS)
-	$(CC) -c tinyXML/tinyxmlparser.cpp -o tinyXML/tinyxmlparser.o
+	$(CC) -g -c tinyXML/tinyxmlparser.cpp -o tinyXML/tinyxmlparser.o
 
 tinyXML/tinystr.o: tinyXML/tinystr.cpp tinyXML/tinystr.h $(TINYHEADERS)
-	$(CC) -c tinyXML/tinystr.cpp -o tinyXML/tinystr.o
+	$(CC) -g -c tinyXML/tinystr.cpp -o tinyXML/tinystr.o
 
 data-structures/unit_definition.o: data-structures/unit_definition.cpp data-structures/unit_definition.hpp
-	$(CC) -c data-structures/unit_definition.cpp -o data-structures/unit_definition.o
+	$(CC) -g -c data-structures/unit_definition.cpp -o data-structures/unit_definition.o
 
 parser/parser.o: parser/parser.cpp parser/parser.hpp $(STRUCTUREHEADERS)
-	$(CC) -c $(CFLAGS) parser/parser.cpp -o parser/parser.o
+	$(CC) -g -c $(CFLAGS) parser/parser.cpp -o parser/parser.o
 
 data-structures/types.o: data-structures/types.cpp data-structures/types.hpp
-	$(CC) -c $(CFLAGS) data-structures/types.cpp -o data-structures/types.o
+	$(CC) -g -c $(CFLAGS) data-structures/types.cpp -o data-structures/types.o
 
 clean:
 	rm -f ammp *.o *~

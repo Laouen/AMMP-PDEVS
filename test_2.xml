@@ -16,6 +16,8 @@
       <compartment id="p" name="Periplasm"/>
     </listOfCompartments>
     <listOfSpecies>
+      <species id="A_e" name="A_e" compartment="e">
+      </species>
       <species id="A_c" name="A_c" compartment="c">
       </species>
       <species id="B_c" name="B_c" compartment="c">

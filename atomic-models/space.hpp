@@ -78,6 +78,7 @@ public:
   }
 
   void internal() noexcept {
+    //if (_id == "e") cout << "internal" << endl;
     
     STask_t<TIME, MSG> sending_reaction, sending_biomass;
     MSG current_message;
@@ -85,7 +86,7 @@ public:
     vector<Integer_t> distributed_reactants = {};
     bool already_selected_for_reaction      = false;
     bool already_selected_for_biomass       = false;
-
+    
     // Updating time left
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
@@ -151,16 +152,18 @@ public:
   }
 
   TIME advance() const noexcept {
-    
+    //if (_id == "e") cout << "advance" << endl;
     TIME result;
     if (_tasks.size() > 0) result = _tasks.front().time_left;
     else                   result = atomic<TIME, MSG>::infinity;
-    
+
     return result;
   }
 
   vector<MSG> out() const noexcept {
     
+    //if (_id == "e") cout << "out" << endl;
+
     vector<MSG> result;
     MSG current_message;
     TIME current_time  = _tasks.front().time_left;
@@ -179,7 +182,7 @@ public:
 
           current_message.specie  = it->first; 
           current_message.amount  = it->second.amount;
-          current_message.to      = {"output"};
+          current_message.to      = {"output" , _id};
           result.push_back(current_message);
         }
       }
@@ -190,7 +193,8 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     STask_t<TIME, MSG> new_task;
-  
+    
+    //if (_id == "e") cout << "external" << endl;
     // Updating
     this->updateTaskTimeLefts(t);
 
@@ -219,6 +223,7 @@ public:
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
     
+    //if (_id == "e") cout << "confluence" << endl;
     internal();
     external(mb, TIME(0));
     

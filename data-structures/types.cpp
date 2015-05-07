@@ -47,3 +47,26 @@ ostream& operator<<(ostream& os, SetOfMolecules_t m) {
   os << "]";
   return os;
 }
+
+ostream& operator<<(ostream& os, SState_t s) {
+
+  switch(s) {
+    case SState_t::SHOWING:
+      os << "SHOWING";
+      break;
+    case SState_t::SENDING_BIOMAS:
+      os << "SENDING_BIOMAS";
+      break;
+    case SState_t::SENDING_REACTIONS:
+      os << "SENDING_REACTIONS";
+      break;
+    case SState_t::SELECTING_FOR_BIOMAS:
+      os << "SELECTING_FOR_BIOMAS";
+      break;
+    case SState_t::SELECTING_FOR_REACTION:
+      os << "SELECTING_FOR_REACTION";
+      break;
+  }
+
+  return os;
+}

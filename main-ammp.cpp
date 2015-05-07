@@ -629,7 +629,7 @@ int main(int argc, char* argv[]) {
 
   vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, output_coupled_filter};
   vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
-  vectorOfModels_t cell_eoc     = {output_coupled_filter};
+  vectorOfModels_t cell_eoc     = {output_coupled_filter, extra_cellular_model};
   //vectorOfModels_t cell_eoc     = {extra_cellular_model, periplasm_model, cytoplasm_model};
   vectorOfModelPairs_t cell_ic  = {
     {extra_cellular_model, periplasm_model},
@@ -663,6 +663,7 @@ int main(int argc, char* argv[]) {
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
     input += to_string(i) + " " + "c c_s | A_c 1 \n ";
+    input += to_string(i) + " " + "e e_s | A_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
