@@ -96,6 +96,7 @@ public:
         output.push_back(curr_message);
       }
     } else if (_s == BState::NOTHING) {
+      
       curr_message.to               = _request_addresses;
       curr_message.specie           = "";
       curr_message.amount           = 0;

@@ -425,24 +425,30 @@ int main(int argc, char* argv[]) {
   modelsMap_t space_models;
   double volume, factor;
   map<string, metabolite_info_t> metabolites;
-
-
+  Time_t biomass_rate;
+  Address_t biomass_address;
   for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
     
-    interval_time = 0.1;
-    volume        = 0;
-    factor        = 1;
+    interval_time   = 0.1;
+    biomass_rate    = 0.00000001;
+    biomass_address = {"biomass"};
+    volume          = 0;
+    factor          = 1;
 
     space_models[it->first] = make_atomic_ptr< 
       space<Time_t, Message_t>, 
       const string, 
       const Time_t,
+      const Time_t,
+      const Address_t&,
       const map<string, metabolite_info_t>&, 
       const map<string, enzyme_info_t>&, 
       const double, 
       const double >(
         it->first, 
-        interval_time, 
+        interval_time,
+        biomass_rate,
+        biomass_address,
         metabolites, 
         enzyme_informations.at(it->first), 
         volume, 
@@ -631,9 +637,9 @@ int main(int argc, char* argv[]) {
     {cytoplasm_model, periplasm_model},
     {periplasm_model, extra_cellular_model},
     // outputs
-    {extra_cellular_model, output_coupled_filter},
-    {periplasm_model, output_coupled_filter},
     {cytoplasm_model, output_coupled_filter},
+    {extra_cellular_model, output_coupled_filter},
+    {periplasm_model, output_coupled_filter}
   };
   
   for (vectorOfCoupledModels_t::iterator it = organelle_models.begin(); it != organelle_models.end(); ++it) {
@@ -656,8 +662,7 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
-    input += to_string(i) + " " + "e e_s | A_e 1 \n ";
-    input += to_string(i) + " " + "e e_s | B_e 1 \n ";
+    input += to_string(i) + " " + "c c_s | A_c 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -696,7 +701,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 1.0; i <= 10.0; i += 1.0) {
+  for (double i = 1.0; i <= 1.0; i += 1.0) {
 
     input += to_string(i) + " \n ";
   }
@@ -737,7 +742,7 @@ int main(int argc, char* argv[]) {
 
   cout << "Preparing runner" << endl;
   Time_t initial_time{0};
-  runner<Time_t, Message_t> r(root, initial_time, cout, [](ostream& os, Message_t m){  os << "To: " << m.to << endl << "specie: " << m.specie << endl << "amount: " << m.amount; });
+  runner<Time_t, Message_t> r(root, initial_time, cout, [](ostream& os, Message_t m){  os << m; });
 
   cout << "Starting simulation until passivate" << endl;
 

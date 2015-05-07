@@ -15,7 +15,7 @@ using namespace std;
 /******************************************/
 
 enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
-enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTION = 2, SELECTING = 3};
+enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTIONS = 2, SELECTING_FOR_BIOMAS = 3, SELECTING_FOR_REACTION = 4};
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2 };
 enum class Way_t { RTP, PTR };
 
@@ -55,7 +55,7 @@ struct RTask_t {
 
   RTask_t() {}
 
-  RTask_t(const RTask_t& other) {
+  RTask_t(const RTask_t<TIME>& other) {
     time_left = other.time_left;
     task_kind = other.task_kind;
     rejected  = other.rejected;
@@ -112,21 +112,21 @@ using RTaskQueue_t = list< RTask_t<TIME> >;
 
 
 
-template<class TIME>
+template<class TIME, class MSG>
 struct STask_t {
-  TIME                    time_left;
-  SState_t                task_kind;
-  SetOfMolecules_t        to_send;
+  TIME          time_left;
+  SState_t      task_kind;
+  vector<MSG>   to_send;
 
   STask_t() {}
 
-  STask_t(const STask_t& other) {
+  STask_t(const STask_t<TIME, MSG>& other) {
     time_left = other.time_left;
     task_kind = other.task_kind;
     to_send   = other.to_send;
   }
 
-  inline bool operator<(const STask_t<TIME>& o) {
+  inline bool operator<(const STask_t<TIME, MSG>& o) {
 
     bool result;
     if (time_left != o.time_left) result = (time_left < o.time_left);
@@ -135,14 +135,14 @@ struct STask_t {
     return result;
   }
 
-  inline bool operator==(const STask_t<TIME>& o) {
+  inline bool operator==(const STask_t<TIME, MSG>& o) {
 
     bool result;
 
     result = (time_left == o.time_left);
     result = result && (task_kind == o.task_kind);
 
-    if ((task_kind == SState_t::SENDING_REACTION) || (task_kind == SState_t::SENDING_BIOMAS)) {
+    if ((task_kind == SState_t::SENDING_REACTIONS) || (task_kind == SState_t::SENDING_BIOMAS)) {
       result = result && (to_send == o.to_send);
     }  
 
@@ -151,8 +151,8 @@ struct STask_t {
 
 };
 
-template<class TIME>
-using STaskQueue_t = list< STask_t<TIME> >;
+template<class TIME, class MSG>
+using STaskQueue_t = list< STask_t<TIME, MSG> >;
 
 
 /*******************************************/
@@ -179,18 +179,19 @@ struct Message_t {
   string specie;
   Integer_t amount;
   bool show_request;
+  bool biomass_request;
 
   Message_t(const Address_t& other_to, const string& other_specie, const Integer_t& other_amount)
-  : to(other_to), specie(other_specie), amount(other_amount), show_request(false) {}
+  : to(other_to), specie(other_specie), amount(other_amount), show_request(false), biomass_request(false) {}
 
   Message_t()
-  :to(), specie(""), amount(0), show_request(false) {}
+  :to(), specie(""), amount(0), show_request(false), biomass_request(false) {}
 
   Message_t(const Message_t& other)
-  : to(other.to), specie(other.specie), amount(other.amount), show_request(other.show_request) {}
+  : to(other.to), specie(other.specie), amount(other.amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
 
   Message_t(Message_t* other)
-  : to(other->to), specie(other->specie), amount(other->amount), show_request(other->show_request) {}
+  : to(other->to), specie(other->specie), amount(other->amount), show_request(other->show_request), biomass_request(other->biomass_request) {}
 
   void clear() {
     to.clear();

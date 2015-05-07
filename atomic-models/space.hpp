@@ -27,17 +27,17 @@ private:
   TIME                              _next_internal;
   TIME                              _interval_time;
   TIME                              _biomass_request_rate;
+  Address_t                         _biomass_address;
   map<string, metabolite_info_t>    _metabolites;
   map<string, enzyme_info_t>        _enzymes;
   double                            _volume;
   double                            _factor;
   SState_t                          _s;
-  vector<MSG>                       _output;
   // used for uniform random numbers
   RealRandom_t<double>              _real_random;
   IntegerRandom_t<Integer_t>        _integer_random;
   // task queue
-  STaskQueue_t<TIME>                _tasks;
+  STaskQueue_t<TIME, MSG>           _tasks;
 
 public:
 
@@ -45,6 +45,7 @@ public:
     const string                          other_id,
     const TIME                            other_interval_time,
     const TIME                            other_biomass_request_rate,
+    const Address_t&                      other_biomass_address,
     const map<string, metabolite_info_t>& other_metabolites,
     const map<string, enzyme_info_t>&     other_enzymes,
     const double                          other_volume,
@@ -53,11 +54,11 @@ public:
   _id(other_id),
   _interval_time(other_interval_time),
   _biomass_request_rate(other_biomass_request_rate),
+  _biomass_address(other_biomass_address),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume),
-  _factor(other_factor),
-  _show_state(false) {
+  _factor(other_factor) {
 
     random_device real_rd;
     _real_random.seed(real_rd());
@@ -68,25 +69,31 @@ public:
 
     if (this->thereIsMetabolites()) {
       
-      STask_t<TIME> new_task;
+      STask_t<TIME, MSG> new_task;
       new_task.time_left = _interval_time;
-      new_task.task_kind = SState_t::SELECTING;
+      new_task.task_kind = SState_t::SELECTING_FOR_REACTION;
 
-      _tasks.insertTask(new_task)
+      this->insertTask(new_task);
     }
   }
 
   void internal() noexcept {
     
-    vector<Integer_t> distributed_reactants = {};
+    STask_t<TIME, MSG> sending_reaction, sending_biomass;
     MSG current_message;
+    vector<MSG> current_output;
+    vector<Integer_t> distributed_reactants = {};
+    bool already_selected_for_reaction      = false;
+    bool already_selected_for_biomass       = false;
 
-    if (_show_state) {
-    
-    _show_state = false;
-    } else {
-      if (_s == SState_t::SELECTING) {
+    // Updating time left
+    this->updateTaskTimeLefts(_tasks.front().time_left);
 
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !already_selected_for_reaction) {
+
+        // look for metabolites to send
         for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
           if (this->weightedRandomBool(it->second.amount)){
@@ -101,29 +108,46 @@ public:
               current_message.amount  = distributed_reactants[i];
               it->second.amount       -= distributed_reactants[i];
               current_message.to      = it->second.enzymes[i];
-              _output.push_back(current_message);
+              current_output.push_back(current_message);
             }
           }
         }
 
-        _next_internal  = TIME(0);
-        _s              = SState_t::SENDING;
-      } else if (_s == SState_t::SENDING) {
+        // set a new task for out() to send the selected metabolites.
+        sending_reaction.time_left  = TIME(0);
+        sending_reaction.task_kind  = SState_t::SENDING_REACTIONS;
+        sending_reaction.to_send    = current_output;
+        
+        // no more than one selection in a given time T;
+        already_selected_for_reaction = true;
+      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !already_selected_for_biomass) {
 
-        _output.clear();
+        // look for metabolites to send
+        for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
-        if (this->thereIsMetabolites()) {
-          
-          _s              = SState_t::SELECTING;
-          _next_internal  = _interval_time;
-        } else {
-          
-          _s              = SState_t::IDLE;
-          _next_internal  = atomic<TIME, MSG>::infinity;
+          current_message.specie  = it->first; 
+          current_message.amount  = it->second.amount;
+          current_message.to      = _biomass_address;
+          current_output.push_back(current_message);
+          it->second.amount       = 0;
         }
+
+        // set a new task for out() to send the selected metabolites.
+        sending_biomass.time_left  = TIME(0);
+        sending_biomass.task_kind  = SState_t::SENDING_BIOMAS;
+        sending_biomass.to_send    = current_output;
+        
+        // no more than one selection in a given time T;
+        already_selected_for_biomass = true;
       }
     }
-    
+
+    // inserting new tasks
+    if (sending_reaction.to_send.size() > 0) this->insertTask(sending_reaction);
+    if (sending_biomass.to_send.size() > 0) this->insertTask(sending_biomass);
+
+    // setting new selection
+    this->setNextSelection();
   }
 
   TIME advance() const noexcept {
@@ -138,45 +162,59 @@ public:
   vector<MSG> out() const noexcept {
     
     vector<MSG> result;
+    MSG current_message;
+    TIME current_time  = _tasks.front().time_left;
 
-    if(_show_state) {
-      if (_id == "p") cout << "showing" << endl;
-      for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-        result.push_back( MSG({"output"}, it->first, it->second.amount) );
+    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
+
+      if ((it->task_kind == SState_t::SENDING_BIOMAS) || (it->task_kind == SState_t::SENDING_REACTIONS)) {
+
+        for (typename vector<MSG>::const_iterator mt = it->to_send.cbegin(); mt != it->to_send.cend(); ++mt) {       
+          result.push_back(*mt);
+        }
+      } else if (it->task_kind == SState_t::SHOWING) {
+
+        // look for metabolites to send
+        for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+
+          current_message.specie  = it->first; 
+          current_message.amount  = it->second.amount;
+          current_message.to      = {"output"};
+          result.push_back(current_message);
+        }
       }
-    } else {
-
-      result = _output;
     }
-    
+
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-
+    STask_t<TIME, MSG> new_task;
+  
+    // Updating
     this->updateTaskTimeLefts(t);
-    STask_t<TIME> new_task;
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
       if (it->show_request) {
-
+        
         new_task.time_left = TIME(0);
         new_task.task_kind = SState_t::SHOWING;
         this->insertTask(new_task);
+
       } else if (it->biomass_request) {
 
         new_task.time_left = _biomass_request_rate;
         new_task.task_kind = SState_t::SENDING_BIOMAS;
         this->insertTask(new_task);
+      
       } else {
-        
+
         this->addToMetabolites(it->specie, it->amount);
       }
     }
 
     this->setNextSelection();
-    
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
@@ -272,12 +310,12 @@ public:
   }
 
   void setNextSelection() {
-    STask_t<TIME> new_selection;
+    STask_t<TIME, MSG> new_selection;
     
     if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
 
       new_selection.time_left = _interval_time;
-      new_selection.task_kind = SState_t::SELECTING;
+      new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
       this->insertTask(new_selection);
     }
   }
@@ -285,8 +323,8 @@ public:
   bool thereIsNextSelection() const {
     bool result = false;
 
-    for (typename STaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      if ((it->task_kind == SState_t::SELECTING) && (it->time_left <= _interval_time)) {
+    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it != _tasks.cend(); ++it) {
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && (it->time_left <= _interval_time)) {
         result = true;
         break;
       }
@@ -295,11 +333,17 @@ public:
     return result;
   }
 
+  void insertTask(const STask_t<TIME, MSG>& t) {
 
-  void insertTask(const STask_t<TIME>& t) {
-
-    typename STaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    typename STaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
+  }
+
+  void updateTaskTimeLefts(TIME t){
+
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+      it->time_left -= t;
+    }
   }
 
 };

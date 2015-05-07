@@ -29,22 +29,26 @@ public:
   }
 
   void internal() noexcept {
-
+    if (_accepted_input == "output")cout << "internal" << endl;
     _filtered_input.clear();
   }
 
   TIME advance() const noexcept {
 
-    return (_filtered_input.size() > 0) ? TIME(0) : atomic<TIME, MSG>::infinity;
+    TIME result = (_filtered_input.size() > 0) ? TIME(0) : atomic<TIME, MSG>::infinity;
+    if (_accepted_input == "output") cout << "advance " << endl;
+
+    return result;
   }
 
   vector<MSG> out() const noexcept {
-
+    
+    if (_accepted_input == "output") cout << "out" << endl;
     return _filtered_input; 
   }
 
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
-
+    if (_accepted_input == "output") cout << "external "  << endl;
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
     
       if (isAcceptedInpunt(_accepted_input, it->to)) {
@@ -52,7 +56,6 @@ public:
         _filtered_input.push_back(*it);
       }
     }
-
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {

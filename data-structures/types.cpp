@@ -14,9 +14,11 @@ ostream& operator<<(ostream& os, Address_t to) {
 }
 
 ostream& operator<<(ostream& os, Message_t msg) {
-  os << "To: " << endl << msg.to << endl;
+  os << "To: " << msg.to << endl;
   os << "Specie: " << msg.specie << endl;
   os << "Amount: " << msg.amount << endl;
+  os << "show request: " << (msg.show_request ? "true" : "false") << endl;
+  os << "send biomass: " << (msg.biomass_request ? "true" : "false");
   return os;
 }
 
