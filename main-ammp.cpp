@@ -4,7 +4,7 @@
 #include <map>
 #include <chrono>
 #include <algorithm>
-#include <utility>
+#include <utility> /* pair */
 #include <vector>
 #include <cmath>
 #include <stdlib.h>
@@ -245,6 +245,8 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
 
 int main(int argc, char* argv[]) {
 
+  string special_places[3]   = {"e", "p", "c"};
+  string biomass_ID          = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
@@ -255,16 +257,15 @@ int main(int argc, char* argv[]) {
       exit(1);
   }
 
-  Parser_t input_doc(argv[1]);
+  Parser_t input_doc(argv[1], biomass_ID);
   input_doc.loadFile();
 
   map<string, string>               compartements       = input_doc.getCompartments();
   map<string, map<string, string> > species             = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter_t >  reactions           = input_doc.getReactions();
-  string                            special_places[3]   = {"e", "p", "c"};
-  string                            place, sub_place;
+  enzyme_parameter_t                biomass             = input_doc.getBiomass();
 
-  cout << "Creating species addresses for use in the reaction atomic models." << endl;
+  cout << "Creating species addresses for use in the reaction atomic models and biomass atomic model." << endl;
   shared_ptr< map<string, Address_t> > species_addresses = make_shared< map<string, Address_t> >();
   Address_t new_address;
 
@@ -313,8 +314,9 @@ int main(int argc, char* argv[]) {
 
 
   cout << "Creating reaction atomic models and ordering them by places." << endl;
-  Time_t                              interval_time, rate;
-  Integer_t                           amount;
+  Time_t    interval_time, rate;
+  Integer_t amount;
+  string    place, sub_place;
 
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
@@ -409,7 +411,7 @@ int main(int argc, char* argv[]) {
 
   // saving the enzyme informations in the map
   for (map<string, enzyme_parameter_t >::const_iterator it = reactions.cbegin(); it != reactions.end(); ++it) {
-    
+
     new_enzyme_information.location   = enzyme_addresses[it->first];
     new_enzyme_information.reactants  = getReactants(it->second); 
     compartments_who_use_the_enzyme   = getCompartments(it->second, species, compartements, special_places);
@@ -616,6 +618,23 @@ int main(int argc, char* argv[]) {
     }
   }
 
+/*
+  cout << "Creating the biomass reaction model" << endl;
+  auto biomass_filter       = make_atomic_ptr< filter<Time_t, Message_t>, const string>(biomass_ID);
+  auto biomass_atomic_model = make_atomic_ptr< biomass<Time_t, Message_t>, 
+    const string,
+    const shared_ptr< map<string, Address_t> >,
+    const SetOfMolecules_t&,
+    const SetOfMolecules_t&,
+    const Address_t,
+    const Time_t,
+    const Time_t
+  >(
+    biomass_ID,
+    species_addresses,
+
+  );
+*/
   cout << "Creating the cell coupled model." << endl;
   auto output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
   
@@ -661,8 +680,8 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.001; i < 0.002; i += 0.001) {
 
-    input += to_string(i) + " " + "c c_s | A_c 1 \n ";
     input += to_string(i) + " " + "e e_s | A_e 1 \n ";
+    input += to_string(i) + " " + "e e_s | B_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -701,7 +720,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 1.0; i <= 1.0; i += 1.0) {
+  for (double i = 1.0; i <= 10.0; i += 1.0) {
 
     input += to_string(i) + " \n ";
   }

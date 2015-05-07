@@ -4,6 +4,7 @@
 // STL
 #include <list>
 #include <map>
+#include <utility> /* pair */
 #include <memory> /* shared_ptr */
 #include <string> /* atof */
 
@@ -21,13 +22,14 @@ class Parser_t {
 
 private:
 	TiXmlDocument               _document;
-  map<string, TiXmlElement*> _models;
+  map<string, TiXmlElement*>  _models;
+  string                      _biomass_ID;
 
 public:
   // Constructors
   Parser_t() = default;
-	Parser_t(const char *filename)
-  : _document(filename) {};
+	Parser_t(const char *filename, const string other_biomass_ID)
+  : _document(filename), _biomass_ID(other_biomass_ID) {};
 	
   // methods to load the XML files in the class
   bool loadFile(const char *filename);
@@ -38,6 +40,7 @@ public:
   map<string, string> getCompartments();
   map<string, map<string, string> > getSpeciesByCompartment();
   map<string, enzyme_parameter_t > getReactions();
+  enzyme_parameter_t getBiomass();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

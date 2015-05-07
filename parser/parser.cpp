@@ -12,6 +12,12 @@ unsigned long long getStoichiometryFrom(double amount) {
   return (unsigned long long)amount;
 }
 
+// is a temporary implemetation
+unsigned long long getBiomassStoichiometryFrom(double amount) {
+
+  return (unsigned long long)10000;
+}
+
 /***************************************************************/
 /******************* END HELPER FUNCTIONS **********************/
 /***************************************************************/
@@ -110,10 +116,13 @@ map<string, enzyme_parameter_t > Parser_t::getReactions() {
   map<string, enzyme_parameter_t > result;
   string specieID, stoichiometry;
   enzyme_parameter_t new_enzyme;
+
   for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    
+
+    if (it->Attribute("id") == _biomass_ID) continue;
+
     result[it->Attribute("id")] = new_enzyme;
-    enzyme_parameter_t *current    = &result[it->Attribute("id")];
+    enzyme_parameter_t *current = &result[it->Attribute("id")];
 
     current->name = it->Attribute("name");
 
@@ -141,6 +150,49 @@ map<string, enzyme_parameter_t > Parser_t::getReactions() {
         } 
       }
     }
+  }
+
+
+  return result;
+}
+
+enzyme_parameter_t Parser_t::getBiomass() {
+  
+  string specieID, stoichiometry;
+  enzyme_parameter_t result;
+
+  for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+
+    if (it->Attribute("id") != _biomass_ID) continue;
+
+    result.name = it->Attribute("name");
+
+    if ( it->Attribute("reversible") == NULL )                result.reversible = true;
+    else if ((string)it->Attribute("reversible") == "false")  result.reversible = false;
+    else                                                      result.reversible = true;
+
+    for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
+      
+      if ((string)jt->Value() == "listOfReactants") {
+
+        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
+          
+          specieID      = lt->Attribute("species");
+          stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
+          result.reactants_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry) );
+        } 
+      } else if ((string)jt->Value() == "listOfProducts") {
+
+        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
+          
+          specieID      = lt->Attribute("species");
+          stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
+          result.products_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry) );
+        } 
+      }
+    }
+
+    break;
   }
 
 

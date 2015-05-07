@@ -90,7 +90,6 @@
           <speciesReference species="D_c"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="F_c" stoichiometry="2"/>
           <speciesReference species="A_c" />
           <speciesReference species="B_c" />
         </listOfProducts>
