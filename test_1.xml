@@ -95,6 +95,16 @@
         </listOfProducts>
       </reaction>
 
+      <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
+        <listOfReactants>
+          <speciesReference species="D_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c" />
+          <speciesReference species="B_c" />
+        </listOfProducts>
+      </reaction>
+
     </listOfReactions>
   </model>
 </sbml>

@@ -164,7 +164,7 @@ enzyme_parameter_t Parser_t::getBiomass() {
   for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
 
     if (it->Attribute("id") != _biomass_ID) continue;
-
+    
     result.name = it->Attribute("name");
 
     if ( it->Attribute("reversible") == NULL )                result.reversible = true;

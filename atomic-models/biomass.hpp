@@ -1,5 +1,5 @@
-#ifndef BOOST_SIMULATION_PDEVS_CONTROLER_H
-#define BOOST_SIMULATION_PDEVS_CONTROLER_H
+#ifndef BOOST_SIMULATION_PDEVS_BIOMASS_H
+#define BOOST_SIMULATION_PDEVS_BIOMASS_H
 #include <string>
 #include <utility>
 #include <map>
@@ -29,7 +29,7 @@ private:
   Address_t                             _request_addresses;
   TIME                                  _interval_time;
   TIME                                  _rate;
-  BState                                _s;
+  BState_t                                _s;
 
 public:
 
@@ -40,7 +40,7 @@ public:
     const SetOfMolecules_t&                     other_products_sctry,
     const Address_t                             other_request_addresses,
     const TIME                                  other_interval_time,
-    const TIME                                  other_rate,
+    const TIME                                  other_rate
     ) noexcept :
   _id(other_id),
   _addresses(other_addresses),
@@ -49,7 +49,7 @@ public:
   _request_addresses(other_request_addresses),
   _interval_time(other_interval_time),
   _rate(other_rate),
-  _s(BState::NOTHING) {
+  _s(BState_t::NOTHING) {
 
     _reactants.clear();
     _rejected.clear();
@@ -60,42 +60,44 @@ public:
   }
 
   void internal() noexcept {
-    
-    _rejected.clear()
+
+    _rejected.clear();
     
     for (SetOfMolecules_t::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
       it->second = 0;
     }
 
-    _s = BState::NOTHING;
+    _s = BState_t::NOTHING;
   }
 
   TIME advance() const noexcept {
 
-    return (_s != BState::NOTHING) ? _rate : _interval_time;
+    return (_s != BState_t::NOTHING) ? _rate : _interval_time;
+
   }
 
   vector<MSG> out() const noexcept {
+
     vector<MSG> output;
     MSG curr_message;
 
-    if (_s == BState::ENOUGH) {
-      for (SetOfMolecules_t::cosnt_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
+    if (_s == BState_t::ENOUGH) {
+      for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
 
         curr_message.to     = _addresses->at(it->first);
         curr_message.specie = it->first;
         curr_message.amount = it->second;
         output.push_back(curr_message);
       }
-    } else if (_s == BState::NOT_ENOUGH) {
-      for (SetOfMolecules_t::cosnt_iterator it = _reactants.cbegin(); it != _reactants.cend(); ++it) {
+    } else if (_s == BState_t::NOT_ENOUGH) {
+      for (SetOfMolecules_t::const_iterator it = _reactants.cbegin(); it != _reactants.cend(); ++it) {
 
         curr_message.to     = _addresses->at(it->first);
         curr_message.specie = it->first;
         curr_message.amount = it->second;
         output.push_back(curr_message);
       }
-    } else if (_s == BState::NOTHING) {
+    } else if (_s == BState_t::NOTHING) {
       
       curr_message.to               = _request_addresses;
       curr_message.specie           = "";
@@ -104,7 +106,7 @@ public:
       output.push_back(curr_message);
     }
 
-    for for (SetOfMolecules_t::cosnt_iterator it = _rejected.cbegin(); it != _rejected.cend(); ++it) {
+    for (SetOfMolecules_t::const_iterator it = _rejected.cbegin(); it != _rejected.cend(); ++it) {
       
       curr_message.to     = _addresses->at(it->first);
       curr_message.specie = it->first;
@@ -113,6 +115,7 @@ public:
     }
 
     return output;
+
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
@@ -121,22 +124,22 @@ public:
     bool is_needed;
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-      is_needed = _stoichiometry.find(it->specie) != _stoichiometry.end();
+      is_needed = _reactants_sctry.find(it->specie) != _reactants_sctry.end();
       
       if (is_needed) {
 
-        needed_amount   = _stoichiometry.at(it->specie) - _reactants.at(it->specie);
-        taked_amount    = min(it->amount, needed_amount)
-        rejected_amount = it-amount - taked_amount;
+        needed_amount   = _reactants_sctry.at(it->specie) - _reactants.at(it->specie);
+        taked_amount    = min(it->amount, needed_amount);
+        rejected_amount = it->amount - taked_amount;
 
         this->addReactant(it->specie, taked_amount);
         this->addRejectedMolecules(it->specie, rejected_amount);
       }
     }
 
-    if (this->thereIsEnoughReactants())     _s = BState::ENOUGH;
-    else if (this->thereIsSomeReactants())  _s = BState::NOT_ENOUGH;
-    else                                    _s = BState::NOTHING;
+    if (this->thereIsEnoughReactants())     _s = BState_t::ENOUGH;
+    else if (this->thereIsSomeReactants())  _s = BState_t::NOT_ENOUGH;
+    else                                    _s = BState_t::NOTHING;
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
@@ -149,11 +152,6 @@ public:
   /***************************************
   ********* helper functions *************
   ***************************************/
-
-  void addReactant(const string& e, const Integer_t& a) {
-
-    _reactants.at(e) += a;
-  }
 
   void addReactant(const string& e, const Integer_t& a) {
 
@@ -190,7 +188,7 @@ public:
 
     return result;
   }
-  
+};
 
-#endif // BOOST_SIMULATION_PDEVS_CONTROLER_H
+#endif // BOOST_SIMULATION_PDEVS_BIOMASS_H
 

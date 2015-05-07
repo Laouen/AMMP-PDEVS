@@ -18,6 +18,7 @@
 #include "atomic-models/filter.hpp"
 #include "atomic-models/reaction.hpp"
 #include "atomic-models/space.hpp"
+#include "atomic-models/biomass.hpp"
 
 // data structure includes
 #include "data-structures/unit_definition.hpp"
@@ -263,7 +264,12 @@ int main(int argc, char* argv[]) {
   map<string, string>               compartements       = input_doc.getCompartments();
   map<string, map<string, string> > species             = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter_t >  reactions           = input_doc.getReactions();
-  enzyme_parameter_t                biomass             = input_doc.getBiomass();
+  enzyme_parameter_t                biomass_info        = input_doc.getBiomass();
+
+  for (map<string, enzyme_parameter_t >::iterator i = reactions.begin(); i != reactions.end(); ++i) {
+    
+    cout << i->first << endl;
+  }
 
   cout << "Creating species addresses for use in the reaction atomic models and biomass atomic model." << endl;
   shared_ptr< map<string, Address_t> > species_addresses = make_shared< map<string, Address_t> >();
@@ -617,23 +623,28 @@ int main(int argc, char* argv[]) {
       );
     }
   }
-
 /*
   cout << "Creating the biomass reaction model" << endl;
+  Address_t request_addresses = {};
+
   auto biomass_filter       = make_atomic_ptr< filter<Time_t, Message_t>, const string>(biomass_ID);
-  auto biomass_atomic_model = make_atomic_ptr< biomass<Time_t, Message_t>, 
+  auto bm = make_atomic_ptr< 
+    biomass<Time_t, Message_t>, 
     const string,
     const shared_ptr< map<string, Address_t> >,
     const SetOfMolecules_t&,
     const SetOfMolecules_t&,
     const Address_t,
     const Time_t,
-    const Time_t
-  >(
-    biomass_ID,
-    species_addresses,
-
-  );
+    const Time_t >(
+      biomass_ID,
+      species_addresses,
+      biomass_info.reactants_sctry,
+      biomass_info.products_sctry,
+      request_addresses, // put all the adresses
+      Time_t(0.2),
+      Time_t(0.00000001)
+    );
 */
   cout << "Creating the cell coupled model." << endl;
   auto output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
@@ -671,7 +682,7 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
   /*****************************************************************************************************/
-
+/*
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;
