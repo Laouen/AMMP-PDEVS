@@ -115,8 +115,8 @@ public:
   TIME advance() const noexcept {
     
     TIME result;
-    if (_tasks.size() > 0) result = _tasks.front().time_left;
-    else                   result = atomic<TIME, MSG>::infinity;
+    if (!_tasks.empty()) result = _tasks.front().time_left;
+    else                 result = atomic<TIME, MSG>::infinity;
     
     return result;
   }

@@ -80,19 +80,19 @@ public:
   void internal() noexcept {
     //if (_id == "e") cout << "internal" << endl;
     
-    STask_t<TIME, MSG> sending_reaction, sending_biomass;
-    MSG current_message;
-    vector<MSG> current_output;
+    STask_t<TIME, MSG> sr, sb;
+    MSG cm;
+    vector<MSG> coutput;
     vector<Integer_t> distributed_reactants = {};
-    bool already_selected_for_reaction      = false;
-    bool already_selected_for_biomass       = false;
-    
+    bool reaction_selected      = false;
+    bool biomass_selected       = false;
     // Updating time left
+
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
 
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !already_selected_for_reaction) {
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !reaction_selected) {
 
         // look for metabolites to send
         for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
@@ -102,50 +102,50 @@ public:
             distributed_reactants.clear();
             distributed_reactants.resize(it->second.enzymes.size());
             randomDistribution(distributed_reactants, it->second.amount);
-            current_message.specie = it->first; 
+            cm.specie = it->first; 
 
             for (int i = 0; i < distributed_reactants.size(); ++i) {
               
-              current_message.amount  = distributed_reactants[i];
+              cm.amount  = distributed_reactants[i];
               it->second.amount       -= distributed_reactants[i];
-              current_message.to      = it->second.enzymes[i];
-              current_output.push_back(current_message);
+              cm.to      = it->second.enzymes[i];
+              coutput.push_back(cm);
             }
           }
         }
 
         // set a new task for out() to send the selected metabolites.
-        sending_reaction.time_left  = TIME(0);
-        sending_reaction.task_kind  = SState_t::SENDING_REACTIONS;
-        sending_reaction.to_send    = current_output;
+        sr.time_left  = TIME(0);
+        sr.task_kind  = SState_t::SENDING_REACTIONS;
+        sr.to_send    = coutput;
         
         // no more than one selection in a given time T;
-        already_selected_for_reaction = true;
-      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !already_selected_for_biomass) {
+        reaction_selected = true;
+      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !biomass_selected) {
 
         // look for metabolites to send
         for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
 
-          current_message.specie  = it->first; 
-          current_message.amount  = it->second.amount;
-          current_message.to      = _biomass_address;
-          current_output.push_back(current_message);
+          cm.specie  = it->first; 
+          cm.amount  = it->second.amount;
+          cm.to      = _biomass_address;
+          coutput.push_back(cm);
           it->second.amount       = 0;
         }
 
         // set a new task for out() to send the selected metabolites.
-        sending_biomass.time_left  = TIME(0);
-        sending_biomass.task_kind  = SState_t::SENDING_BIOMAS;
-        sending_biomass.to_send    = current_output;
+        sb.time_left  = TIME(0);
+        sb.task_kind  = SState_t::SENDING_BIOMAS;
+        sb.to_send    = coutput;
         
         // no more than one selection in a given time T;
-        already_selected_for_biomass = true;
+        biomass_selected = true;
       }
     }
 
     // inserting new tasks
-    if (sending_reaction.to_send.size() > 0) this->insertTask(sending_reaction);
-    if (sending_biomass.to_send.size() > 0) this->insertTask(sending_biomass);
+    if (!sr.to_send.empty()) this->insertTask(sr);
+    if (!sb.to_send.empty()) this->insertTask(sb);
 
     // setting new selection
     this->setNextSelection();
@@ -154,8 +154,8 @@ public:
   TIME advance() const noexcept {
     //if (_id == "e") cout << "advance" << endl;
     TIME result;
-    if (_tasks.size() > 0) result = _tasks.front().time_left;
-    else                   result = atomic<TIME, MSG>::infinity;
+    if (!_tasks.empty()) result = _tasks.front().time_left;
+    else                 result = atomic<TIME, MSG>::infinity;
 
     return result;
   }
@@ -287,17 +287,15 @@ public:
   }
 
   void randomDistribution(vector<Integer_t>& ds, Integer_t a) {
-    Integer_t current_amount;
-    Integer_t reactions_amount = ds.size();
     
-    if (reactions_amount > 0) {
+    if (!ds.empty()) {
 
-      for (int i = 0; i < reactions_amount; ++i) {
+      for (int i = 0; i < ds.size(); ++i) {
         ds[i] = 0;
       }
 
       for (Integer_t i = 0; i < a; ++i) {
-        ds[_integer_random.drawNumber(0, reactions_amount - 1)] += 1;
+        ds[_integer_random.drawNumber(0, ds.size() - 1)] += 1;
       }
     }
   }

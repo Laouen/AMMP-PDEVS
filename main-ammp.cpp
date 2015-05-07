@@ -629,16 +629,15 @@ int main(int argc, char* argv[]) {
 
   vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, output_coupled_filter};
   vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
-  vectorOfModels_t cell_eoc     = {output_coupled_filter, extra_cellular_model};
-  //vectorOfModels_t cell_eoc     = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModels_t cell_eoc     = {output_coupled_filter};
   vectorOfModelPairs_t cell_ic  = {
     {extra_cellular_model, periplasm_model},
     {periplasm_model, cytoplasm_model},
     {cytoplasm_model, periplasm_model},
     {periplasm_model, extra_cellular_model},
     // outputs
-    {cytoplasm_model, output_coupled_filter},
     {extra_cellular_model, output_coupled_filter},
+    {cytoplasm_model, output_coupled_filter},
     {periplasm_model, output_coupled_filter}
   };
   
