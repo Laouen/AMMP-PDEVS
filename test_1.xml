@@ -97,12 +97,11 @@
 
       <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
         <listOfReactants>
-          <speciesReference species="D_c"/>
+          <speciesReference species="C_c" stoichiometry="240" />
+          <speciesReference species="D_c" stoichiometry="100"/>
+          <speciesReference species="E_c" stoichiometry="230"/>
+          <speciesReference species="F_c" stoichiometry="490"/>
         </listOfReactants>
-        <listOfProducts>
-          <speciesReference species="A_c" />
-          <speciesReference species="B_c" />
-        </listOfProducts>
       </reaction>
 
     </listOfReactions>

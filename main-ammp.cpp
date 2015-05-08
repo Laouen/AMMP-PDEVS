@@ -240,19 +240,23 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
   return result;
 }
 
+
 /***************************************/
 /******** End helper functions *********/
 /***************************************/
 
 int main(int argc, char* argv[]) {
 
+
+  
+  
   string special_places[3]   = {"e", "p", "c"};
   string biomass_ID          = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
   /**************************************************************************************************************/
-
+  
   if (argc <= 1){
       cout << "An SBML file is required." << endl;
       exit(1);
@@ -265,11 +269,6 @@ int main(int argc, char* argv[]) {
   map<string, map<string, string> > species             = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter_t >  reactions           = input_doc.getReactions();
   enzyme_parameter_t                biomass_info        = input_doc.getBiomass();
-
-  for (map<string, enzyme_parameter_t >::iterator i = reactions.begin(); i != reactions.end(); ++i) {
-    
-    cout << i->first << endl;
-  }
 
   cout << "Creating species addresses for use in the reaction atomic models and biomass atomic model." << endl;
   shared_ptr< map<string, Address_t> > species_addresses = make_shared< map<string, Address_t> >();
@@ -327,9 +326,9 @@ int main(int argc, char* argv[]) {
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 0.1;
-    rate            = 0.001;
-    amount          = 3;
+    interval_time   = 1.0;
+    rate            = 0.01;
+    amount          = 1;
 
     place = getPlace(it->second, species, compartements, special_places);
 
@@ -437,9 +436,9 @@ int main(int argc, char* argv[]) {
   Address_t biomass_address;
   for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
     
-    interval_time   = 0.1;
-    biomass_rate    = 0.00000001;
-    biomass_address = {"biomass"};
+    interval_time   = 0.01;
+    biomass_rate    = 0.01;
+    biomass_address = {"biomass", biomass_ID};
     volume          = 0;
     factor          = 1;
 
@@ -550,8 +549,10 @@ int main(int argc, char* argv[]) {
   cout << "Creating periplasm coupled model." << endl;
   auto periplasm_filter        = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1]);
   auto periplasm_or_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1] + "_or");
+  auto periplasm_br_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[1] + "_br");
 
-  auto periplasm_output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
+  auto periplasm_output_filter  = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
+  auto periplasm_biomass_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("biomass");
   
   // making a trivial coupled model of periplasm_output_filter in order to solve the bug with coupled to atomic
   shared_ptr<flattened_coupled<Time_t, Message_t>> periplasm_output_coupled_filter(new flattened_coupled<Time_t, Message_t>(
@@ -561,6 +562,14 @@ int main(int argc, char* argv[]) {
     {periplasm_output_filter}
   ));
 
+  // making a trivial coupled model of periplasm_biomass_filter in order to solve the bug with coupled to atomic
+  shared_ptr<flattened_coupled<Time_t, Message_t>> periplasm_biomass_coupled_filter(new flattened_coupled<Time_t, Message_t>(
+    {periplasm_biomass_filter}, 
+    {periplasm_biomass_filter}, 
+    {}, 
+    {periplasm_biomass_filter}
+  ));
+
   auto periplasm_space      = compartment_models.at(special_places[1]);
   auto trans_membrane       = enzyme_set_models.at(special_places[1] + "_tm");
   auto outer_membrane       = enzyme_set_models.at(special_places[1] + "_um");
@@ -568,10 +577,11 @@ int main(int argc, char* argv[]) {
   auto periplasm_inner      = enzyme_set_models.at(special_places[1] + "_i");
 
   shared_ptr<flattened_coupled<Time_t, Message_t>> periplasm_model(new flattened_coupled<Time_t, Message_t>(
-    {periplasm_filter, periplasm_or_filter, periplasm_output_coupled_filter, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
-    {periplasm_filter, periplasm_or_filter}, 
+    {periplasm_filter, periplasm_or_filter, periplasm_br_filter, periplasm_output_coupled_filter, periplasm_biomass_coupled_filter, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
+    {periplasm_filter, periplasm_or_filter, periplasm_br_filter}, 
     {
       {periplasm_or_filter, periplasm_space},
+      {periplasm_br_filter, periplasm_space},
       {periplasm_filter, trans_membrane}, 
       {periplasm_filter, outer_membrane}, 
       {periplasm_filter, inner_membrane}, 
@@ -583,9 +593,10 @@ int main(int argc, char* argv[]) {
       {periplasm_space, inner_membrane}, 
       {periplasm_space, periplasm_inner}, 
       {periplasm_inner, periplasm_space},
-      {periplasm_space, periplasm_output_coupled_filter}
+      {periplasm_space, periplasm_output_coupled_filter},
+      {periplasm_space, periplasm_biomass_coupled_filter}
     }, 
-    {trans_membrane, outer_membrane, inner_membrane, periplasm_output_coupled_filter}
+    {trans_membrane, outer_membrane, inner_membrane, periplasm_output_coupled_filter, periplasm_biomass_coupled_filter}
   ));
 
   cout << "Creating organelles coupled models." << endl;
@@ -623,12 +634,10 @@ int main(int argc, char* argv[]) {
       );
     }
   }
-/*
-  cout << "Creating the biomass reaction model" << endl;
-  Address_t request_addresses = {};
 
-  auto biomass_filter       = make_atomic_ptr< filter<Time_t, Message_t>, const string>(biomass_ID);
-  auto bm = make_atomic_ptr< 
+  cout << "Creating the biomass reaction model" << endl;
+  auto biomass_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>(biomass_ID);
+  auto biomass_atomic = make_atomic_ptr< 
     biomass<Time_t, Message_t>, 
     const string,
     const shared_ptr< map<string, Address_t> >,
@@ -641,11 +650,20 @@ int main(int argc, char* argv[]) {
       species_addresses,
       biomass_info.reactants_sctry,
       biomass_info.products_sctry,
-      request_addresses, // put all the adresses
-      Time_t(0.2),
-      Time_t(0.00000001)
+      {"e", "e_s", "p_br", "p_s", "c", "c_s"}, // put all the adresses
+      Time_t(0.1), // interval time
+      Time_t(0.01) // rate_time
     );
-*/
+
+  shared_ptr<flattened_coupled<Time_t, Message_t>> biomass_model(new flattened_coupled<Time_t, Message_t>(
+    {biomass_filter, biomass_atomic}, 
+    {biomass_filter}, 
+    {
+      {biomass_filter, biomass_atomic}
+    }, 
+    {biomass_atomic}
+  ));
+
   cout << "Creating the cell coupled model." << endl;
   auto output_filter = make_atomic_ptr< filter<Time_t, Message_t>, const string>("output");
   
@@ -657,7 +675,7 @@ int main(int argc, char* argv[]) {
     {output_filter}
   ));
 
-  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, output_coupled_filter};
+  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, biomass_model, output_coupled_filter};
   vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
   vectorOfModels_t cell_eoc     = {output_coupled_filter};
   vectorOfModelPairs_t cell_ic  = {
@@ -665,6 +683,13 @@ int main(int argc, char* argv[]) {
     {periplasm_model, cytoplasm_model},
     {cytoplasm_model, periplasm_model},
     {periplasm_model, extra_cellular_model},
+    // biomass
+    {biomass_model, extra_cellular_model},
+    {biomass_model, periplasm_model},
+    {biomass_model, cytoplasm_model},
+    {extra_cellular_model, biomass_model},
+    {periplasm_model, biomass_model},
+    {cytoplasm_model, biomass_model},
     // outputs
     {extra_cellular_model, output_coupled_filter},
     {cytoplasm_model, output_coupled_filter},
@@ -682,17 +707,17 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /****************************** Testing cytoplasm coupled model *************************************/
   /*****************************************************************************************************/
-/*
+
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   string input = "";
 
-  for (double i = 0.001; i < 0.002; i += 0.001) {
+  for (double i = 0.01; i < 0.02; i += 0.1) {
 
     input += to_string(i) + " " + "e e_s | A_e 1 \n ";
-    input += to_string(i) + " " + "e e_s | B_e 1 \n ";
+    //input += to_string(i) + " " + "e e_s | B_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -731,7 +756,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 1.0; i <= 10.0; i += 1.0) {
+  for (double i = 0.05; i <= 0.5; i += 0.1) {
 
     input += to_string(i) + " \n ";
   }
@@ -778,7 +803,7 @@ int main(int argc, char* argv[]) {
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntilPassivate();
+  r.runUntil(Time_t(0.5));
 
   auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
 

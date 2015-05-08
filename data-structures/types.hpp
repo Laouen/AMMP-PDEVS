@@ -15,8 +15,8 @@ using namespace std;
 /******************************************/
 
 enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
-enum class SState_t { SHOWING = 0, SENDING_BIOMAS = 1, SENDING_REACTIONS = 2, SELECTING_FOR_BIOMAS = 3, SELECTING_FOR_REACTION = 4};
-enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2 };
+enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4};
+enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
 enum class Way_t { RTP, PTR };
 
 using Integer_t = unsigned long long;

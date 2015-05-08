@@ -49,7 +49,7 @@ public:
   _request_addresses(other_request_addresses),
   _interval_time(other_interval_time),
   _rate(other_rate),
-  _s(BState_t::NOTHING) {
+  _s(BState_t::START) {
 
     _reactants.clear();
     _rejected.clear();
@@ -72,7 +72,9 @@ public:
 
   TIME advance() const noexcept {
 
-    return (_s != BState_t::NOTHING) ? _rate : _interval_time;
+    if (_s == BState_t::START) return _interval_time;
+    else if (_s == BState_t::NOTHING) return _interval_time - 2*_rate;
+    else return _rate;
 
   }
 
@@ -101,7 +103,7 @@ public:
       
       curr_message.to               = _request_addresses;
       curr_message.specie           = "";
-      curr_message.amount           = 0;
+      curr_message.amount           = Integer_t(0);
       curr_message.biomass_request  = true;
       output.push_back(curr_message);
     }
@@ -140,6 +142,7 @@ public:
     if (this->thereIsEnoughReactants())     _s = BState_t::ENOUGH;
     else if (this->thereIsSomeReactants())  _s = BState_t::NOT_ENOUGH;
     else                                    _s = BState_t::NOTHING;
+
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
@@ -154,6 +157,11 @@ public:
   ***************************************/
 
   void addReactant(const string& e, const Integer_t& a) {
+
+    _reactants.at(e) += a;
+  }
+
+  void addRejectedMolecules(const string& e, const Integer_t& a) {
 
     if (_rejected.find(e) != _rejected.end())
       _rejected.at(e) += a;

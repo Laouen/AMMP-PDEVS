@@ -15,7 +15,7 @@ unsigned long long getStoichiometryFrom(double amount) {
 // is a temporary implemetation
 unsigned long long getBiomassStoichiometryFrom(double amount) {
 
-  return (unsigned long long)10000;
+  return (unsigned long long)amount;
 }
 
 /***************************************************************/

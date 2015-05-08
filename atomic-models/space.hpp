@@ -78,8 +78,7 @@ public:
   }
 
   void internal() noexcept {
-    //if (_id == "e") cout << "internal" << endl;
-    
+    //cout << _id << " internal" << endl;
     STask_t<TIME, MSG> sr, sb;
     MSG cm;
     vector<MSG> coutput;
@@ -91,7 +90,6 @@ public:
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
-
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !reaction_selected) {
 
         // look for metabolites to send
@@ -106,10 +104,10 @@ public:
 
             for (int i = 0; i < distributed_reactants.size(); ++i) {
               
-              cm.amount  = distributed_reactants[i];
-              it->second.amount       -= distributed_reactants[i];
-              cm.to      = it->second.enzymes[i];
+              cm.amount          = distributed_reactants[i];
+              cm.to              = it->second.enzymes[i];
               coutput.push_back(cm);
+              it->second.amount  -= distributed_reactants[i];
             }
           }
         }
@@ -130,11 +128,12 @@ public:
           cm.amount  = it->second.amount;
           cm.to      = _biomass_address;
           coutput.push_back(cm);
-          it->second.amount       = 0;
+          it->second.amount = 0;
+
         }
 
         // set a new task for out() to send the selected metabolites.
-        sb.time_left  = TIME(0);
+        sb.time_left  = _biomass_request_rate;
         sb.task_kind  = SState_t::SENDING_BIOMAS;
         sb.to_send    = coutput;
         
@@ -142,6 +141,7 @@ public:
         biomass_selected = true;
       }
     }
+
 
     // inserting new tasks
     if (!sr.to_send.empty()) this->insertTask(sr);
@@ -152,7 +152,7 @@ public:
   }
 
   TIME advance() const noexcept {
-    //if (_id == "e") cout << "advance" << endl;
+    //cout << _id << " advance" << endl;
     TIME result;
     if (!_tasks.empty()) result = _tasks.front().time_left;
     else                 result = atomic<TIME, MSG>::infinity;
@@ -161,15 +161,13 @@ public:
   }
 
   vector<MSG> out() const noexcept {
-    
-    //if (_id == "e") cout << "out" << endl;
-
+    //cout << _id << " out" << endl;
     vector<MSG> result;
     MSG current_message;
     TIME current_time  = _tasks.front().time_left;
 
     for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
-
+      //cout << it->task_kind << endl;
       if ((it->task_kind == SState_t::SENDING_BIOMAS) || (it->task_kind == SState_t::SENDING_REACTIONS)) {
 
         for (typename vector<MSG>::const_iterator mt = it->to_send.cbegin(); mt != it->to_send.cend(); ++mt) {       
@@ -180,9 +178,9 @@ public:
         // look for metabolites to send
         for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
 
+          current_message.to  = {"output", _id}; 
           current_message.specie  = it->first; 
           current_message.amount  = it->second.amount;
-          current_message.to      = {"output" , _id};
           result.push_back(current_message);
         }
       }
@@ -192,10 +190,9 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
+    //cout << _id << " external" << endl;
     STask_t<TIME, MSG> new_task;
-    
-    //if (_id == "e") cout << "external" << endl;
-    // Updating
+
     this->updateTaskTimeLefts(t);
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
@@ -208,8 +205,8 @@ public:
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = _biomass_request_rate;
-        new_task.task_kind = SState_t::SENDING_BIOMAS;
+        new_task.time_left = TIME(0);
+        new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
         this->insertTask(new_task);
       
       } else {
@@ -218,12 +215,12 @@ public:
       }
     }
 
+    // setting new selection
     this->setNextSelection();
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    
-    //if (_id == "e") cout << "confluence" << endl;
+    //cout << endl << _id << " confluence" << endl << endl;
     internal();
     external(mb, TIME(0));
     
