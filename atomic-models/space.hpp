@@ -78,7 +78,7 @@ public:
   }
 
   void internal() noexcept {
-    //cout << _id << " internal" << endl;
+
     STask_t<TIME, MSG> sr, sb;
     MSG cm;
     vector<MSG> coutput;
@@ -152,7 +152,7 @@ public:
   }
 
   TIME advance() const noexcept {
-    //cout << _id << " advance" << endl;
+
     TIME result;
     if (!_tasks.empty()) result = _tasks.front().time_left;
     else                 result = atomic<TIME, MSG>::infinity;
@@ -161,13 +161,13 @@ public:
   }
 
   vector<MSG> out() const noexcept {
-    //cout << _id << " out" << endl;
+
     vector<MSG> result;
     MSG current_message;
     TIME current_time  = _tasks.front().time_left;
 
     for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
-      //cout << it->task_kind << endl;
+
       if ((it->task_kind == SState_t::SENDING_BIOMAS) || (it->task_kind == SState_t::SENDING_REACTIONS)) {
 
         for (typename vector<MSG>::const_iterator mt = it->to_send.cbegin(); mt != it->to_send.cend(); ++mt) {       
@@ -190,7 +190,7 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    //cout << _id << " external" << endl;
+
     STask_t<TIME, MSG> new_task;
 
     this->updateTaskTimeLefts(t);
@@ -220,9 +220,9 @@ public:
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    //cout << endl << _id << " confluence" << endl << endl;
+
+    external(mb, t);
     internal();
-    external(mb, TIME(0));
     
   }
 

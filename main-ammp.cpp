@@ -12,6 +12,7 @@
 #include <memory>
 
 // Boost simalator include
+#include <boost/rational.hpp>
 #include <boost/simulation.hpp>
 
 // atomic model includes
@@ -249,14 +250,13 @@ int main(int argc, char* argv[]) {
 
 
   
-  
   string special_places[3]   = {"e", "p", "c"};
   string biomass_ID          = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
   /**************************************************************************************************************/
-  
+
   if (argc <= 1){
       cout << "An SBML file is required." << endl;
       exit(1);
@@ -269,6 +269,26 @@ int main(int argc, char* argv[]) {
   map<string, map<string, string> > species             = input_doc.getSpeciesByCompartment();
   map<string, enzyme_parameter_t >  reactions           = input_doc.getReactions();
   enzyme_parameter_t                biomass_info        = input_doc.getBiomass();
+
+
+
+  /**************************************************************************************************************/
+  /*********************************** End parsing the SBML file ************************************************/
+  /**************************************************************************************************************/
+
+
+
+
+  /**************************************************************************************************************/
+  /******************************* Creating the map of species addresses ****************************************/
+  /**************************************************************************************************************/
+
+  /*
+  Brieff: This map store for each specie, the filter keys to get in the corresponding space where it belong.
+  */
+
+
+
 
   cout << "Creating species addresses for use in the reaction atomic models and biomass atomic model." << endl;
   shared_ptr< map<string, Address_t> > species_addresses = make_shared< map<string, Address_t> >();
@@ -286,7 +306,18 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  cout << "Setting the reaction model map and enzyme model map." << endl;
+
+  /**************************************************************************************************************/
+  /********************************* Setting the reaction and enzyme map ****************************************/
+  /**************************************************************************************************************/
+
+  /* 
+  Brief: setting the places in the maps reaction_models and enzyme_models.
+  */
+
+
+
+  cout << "Setting the reaction and enzyme model map and enzyme model map." << endl;
   map< string, modelsMap_t >          reaction_models;
   map< string, coupledModelsMap_t >   enzyme_models;
   bool                                is_not_special;
@@ -318,6 +349,22 @@ int main(int argc, char* argv[]) {
   enzyme_models.insert({special_places[1] + "_tm", {}});
 
 
+  /**************************************************************************************************************/
+  /******************************* End Setting the reaction and enzyme map **************************************/
+  /**************************************************************************************************************/
+
+
+
+  /**************************************************************************************************************/
+  /********************* Creating the reaction atomic models and enzyme coupled model ***************************/
+  /**************************************************************************************************************/
+
+  /* 
+  brief: all the reaction atomic model are placed in the correct place where they belong to.
+  After that, the enzymes are created by coupling the reaction atomic model with its corresponding filter. 
+  */
+
+
   cout << "Creating reaction atomic models and ordering them by places." << endl;
   Time_t    interval_time, rate;
   Integer_t amount;
@@ -328,7 +375,7 @@ int main(int argc, char* argv[]) {
     
     interval_time   = 1.0;
     rate            = 0.01;
-    amount          = 1;
+    amount          = 40;
 
     place = getPlace(it->second, species, compartements, special_places);
 
@@ -352,6 +399,7 @@ int main(int argc, char* argv[]) {
       );
   }
 
+
   cout << "Creating enzyme coupled models with filters." << endl;
 
   for (map<string, modelsMap_t>::iterator it = reaction_models.begin(); it != reaction_models.end(); ++it) {    
@@ -373,9 +421,22 @@ int main(int argc, char* argv[]) {
 
     }
   }
+
+  /**************************************************************************************************************/
+  /******************* End reating the reaction atomic models and enzyme coupled model **************************/
+  /**************************************************************************************************************/
+
+
+  /**************************************************************************************************************/
+  /****************************** Getting the enzyme coupled models addresses ***********************************/
+  /**************************************************************************************************************/
+
+  /* 
+  Biref: enzyme_addresses store for each ezyme, the filter keys to get to them.
+  */
   
 
-  cout << "Creating enzyme addresses." << endl;
+  cout << "Getting enzyme addresses." << endl;
   map<string, Address_t> enzyme_addresses;
 
   for (map<string, coupledModelsMap_t>::const_iterator it = enzyme_models.cbegin(); it != enzyme_models.cend(); ++it) {
@@ -396,6 +457,18 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  /**************************************************************************************************************/
+  /**************************** End getting the enzyme coupled models addresses *********************************/
+  /**************************************************************************************************************/
+
+
+  /**************************************************************************************************************/
+  /*************************** Getting the space parameters for the atomic model ********************************/
+  /**************************************************************************************************************/
+
+  /* 
+  Brief: The atomic models space need some parameters, this part is responsible to collect those parameters.
+  */
 
   cout << "Getting enzyme information for spaces creation." << endl;
   map<string, map<string, enzyme_info_t> > enzyme_informations;
@@ -427,6 +500,18 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  /**************************************************************************************************************/
+  /*************************** End getting the space parameters for the atomic model ****************************/
+  /**************************************************************************************************************/
+
+  /**************************************************************************************************************/
+  /************************* Creating the space atomic and compartment coupled models ***************************/
+  /**************************************************************************************************************/
+
+  /* 
+  Brief: all the space atomic model are created using the parameters.
+  After that, the compartmen are created by coupling the space atomic model with its corresponding filter. 
+  */
 
   cout << "Creating space atomic models." << endl;
   modelsMap_t space_models;
@@ -487,6 +572,17 @@ int main(int argc, char* argv[]) {
   }
 
 
+  /**************************************************************************************************************/
+  /*********************** End Creating the space atomic and compartment coupled models *************************/
+  /**************************************************************************************************************/
+
+
+  /**************************************************************************************************************/
+  /************************************ Creaatin Enzyme coupled model *******************************************/
+  /**************************************************************************************************************/
+
+
+
   cout << "Creating enzyme set coupled models with filters." << endl;
   coupledModelsMap_t  enzyme_set_models;
   vector<shared_ptr<model<Time_t> > > models, eic, eoc;
@@ -512,6 +608,15 @@ int main(int argc, char* argv[]) {
     shared_ptr<flattened_coupled<Time_t, Message_t>> new_enzyme_set(new flattened_coupled<Time_t, Message_t>(models, eic, ic, eoc));
     enzyme_set_models.insert({it->first, new_enzyme_set});
   }
+
+
+  /**************************************************************************************************************/
+  /********************************** End creaatin Enzyme coupled model *****************************************/
+  /**************************************************************************************************************/
+
+  /**************************************************************************************************************/
+  /**************************************** coupling everything *************************************************/
+  /**************************************************************************************************************/
 
 
   cout << "Creating cytoplasm coupled model." << endl;
@@ -756,7 +861,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 0.05; i <= 0.5; i += 0.1) {
+  for (double i = 0.05; i <= 100; i += 0.1) {
 
     input += to_string(i) + " \n ";
   }
@@ -803,7 +908,7 @@ int main(int argc, char* argv[]) {
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntil(Time_t(0.5));
+  r.runUntil(Time_t(3.0));
 
   auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
 
@@ -813,7 +918,6 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /****************************** Testing enzyme set coupled model *************************************/
   /*****************************************************************************************************/
-
 /*
   cout << "Testing enzyme set coupled models with filters" << endl;
   //shared_ptr< space<Time_t, Message_t> > s = dynamic_pointer_cast< space<Time_t, Message_t> >( space_models["c"] );

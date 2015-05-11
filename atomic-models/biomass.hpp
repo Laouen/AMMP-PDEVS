@@ -72,6 +72,7 @@ public:
 
   TIME advance() const noexcept {
 
+
     if (_s == BState_t::START) return _interval_time;
     else if (_s == BState_t::NOTHING) return _interval_time - 2*_rate;
     else return _rate;
@@ -94,12 +95,15 @@ public:
     } else if (_s == BState_t::NOT_ENOUGH) {
       for (SetOfMolecules_t::const_iterator it = _reactants.cbegin(); it != _reactants.cend(); ++it) {
 
-        curr_message.to     = _addresses->at(it->first);
-        curr_message.specie = it->first;
-        curr_message.amount = it->second;
-        output.push_back(curr_message);
+        if (it->second > 0) {
+
+          curr_message.to     = _addresses->at(it->first);
+          curr_message.specie = it->first;
+          curr_message.amount = it->second;
+          output.push_back(curr_message);
+        }
       }
-    } else if (_s == BState_t::NOTHING) {
+    } else if ((_s == BState_t::START) || (_s == BState_t::NOTHING)) {
       
       curr_message.to               = _request_addresses;
       curr_message.specie           = "";
@@ -114,7 +118,7 @@ public:
       curr_message.specie = it->first;
       curr_message.amount = it->second;
       output.push_back(curr_message);
-    }
+    } 
 
     return output;
 
@@ -132,11 +136,16 @@ public:
 
         needed_amount   = _reactants_sctry.at(it->specie) - _reactants.at(it->specie);
         taked_amount    = min(it->amount, needed_amount);
-        rejected_amount = it->amount - taked_amount;
-
         this->addReactant(it->specie, taked_amount);
-        this->addRejectedMolecules(it->specie, rejected_amount);
+
+        rejected_amount = it->amount - taked_amount;
+      } else {
+        
+        rejected_amount = it->amount;
       }
+
+      if (rejected_amount > 0)
+        this->addRejectedMolecules(it->specie, rejected_amount);
     }
 
     if (this->thereIsEnoughReactants())     _s = BState_t::ENOUGH;
@@ -146,7 +155,7 @@ public:
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    
+
     internal();
     external(mb, TIME(0));
     

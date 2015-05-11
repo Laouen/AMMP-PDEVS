@@ -70,3 +70,23 @@ ostream& operator<<(ostream& os, SState_t s) {
 
   return os;
 }
+
+ostream& operator<<(ostream& os, BState_t s) {
+
+  switch(s) {
+    case BState_t::START:
+      os << "START";
+      break;
+    case BState_t::NOTHING:
+      os << "NOTHING";
+      break;
+    case BState_t::NOT_ENOUGH:
+      os << "NOT_ENOUGH";
+      break;
+    case BState_t::ENOUGH:
+      os << "ENOUGH";
+      break;
+  }
+
+  return os;
+}

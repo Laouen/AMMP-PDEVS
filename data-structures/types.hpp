@@ -212,6 +212,7 @@ ostream& operator<<(ostream& os, Address_t to);
 ostream& operator<<(ostream& os, vector<string> m);
 ostream& operator<<(ostream& os, SetOfMolecules_t m);
 ostream& operator<<(ostream& os, SState_t s);
+ostream& operator<<(ostream& os, BState_t s);
 
 /*******************************************/
 /************** End Message_t **************/
