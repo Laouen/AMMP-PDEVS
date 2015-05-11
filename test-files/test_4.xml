@@ -22,6 +22,8 @@
       </species>
       <species id="B_c" name="B_c" compartment="c">
       </species>
+      <species id="C_c" name="C_c" compartment="c">
+      </species>
     </listOfSpecies>
     <listOfReactions>
 
@@ -34,19 +36,22 @@
         </listOfProducts>
       </reaction>
 
-      <reaction id="A_to_B_A" name="transform one of A to one of B and one of A" reversible="false">
+      <reaction id="A_to_B_2A_2C" name="transform one of A to one of B and one of A" reversible="false">
         <listOfReactants>
           <speciesReference species="A_c"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="A_c" stoichiometry="1"/>
+          <speciesReference species="A_c" stoichiometry="2"/>
           <speciesReference species="B_c" stoichiometry="1"/>
+          <speciesReference species="C_c" stoichiometry="2"/>
         </listOfProducts>
       </reaction>
 
       <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
         <listOfReactants>
           <speciesReference species="B_c" stoichiometry="100" />
+          <speciesReference species="A_c" stoichiometry="100" />
+          <speciesReference species="C_c" stoichiometry="200" />
         </listOfReactants>
       </reaction>
 
