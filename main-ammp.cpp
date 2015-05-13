@@ -780,7 +780,7 @@ int main(int argc, char* argv[]) {
     {output_filter}
   ));
 
-  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, biomass_model, output_coupled_filter};
+  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, /*biomass_model,*/ output_coupled_filter};
   vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
   vectorOfModels_t cell_eoc     = {output_coupled_filter};
   vectorOfModelPairs_t cell_ic  = {
@@ -789,12 +789,12 @@ int main(int argc, char* argv[]) {
     {cytoplasm_model, periplasm_model},
     {periplasm_model, extra_cellular_model},
     // biomass
-    {biomass_model, extra_cellular_model},
+    /*{biomass_model, extra_cellular_model},
     {biomass_model, periplasm_model},
     {biomass_model, cytoplasm_model},
     {extra_cellular_model, biomass_model},
     {periplasm_model, biomass_model},
-    {cytoplasm_model, biomass_model},
+    {cytoplasm_model, biomass_model},*/
     // outputs
     {extra_cellular_model, output_coupled_filter},
     {cytoplasm_model, output_coupled_filter},
@@ -821,15 +821,15 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.01; i < 0.02; i += 0.1) {
 
-    input += to_string(i) + " " + "e e_s | A_e 1 \n ";
-    //input += to_string(i) + " " + "e e_s | B_e 1 \n ";
+    input += to_string(i) + " " + "c c_s | A_c 1 \n ";
+    //input += to_string(i) + " " + "e e_s | A_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
   input.pop_back();
   piss->str(input);
 
-  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     int delimiter;
@@ -861,7 +861,7 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 0.05; i <= 100; i += 0.1) {
+  for (double i = 0.1; i <= 0.1; i += 0.1) {
 
     input += to_string(i) + " \n ";
   }
@@ -870,7 +870,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   piss->str(input);
 
-  auto so = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto so = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     string thrash;
@@ -939,7 +939,7 @@ int main(int argc, char* argv[]) {
   
   //cout << input << endl;
 
-  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
@@ -1013,7 +1013,7 @@ int main(int argc, char* argv[]) {
   
   //cout << input << endl;
 
-  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
@@ -1088,7 +1088,7 @@ int main(int argc, char* argv[]) {
   
   //cout << input << endl;
 
-  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
@@ -1164,7 +1164,7 @@ int main(int argc, char* argv[]) {
   
   //cout << input << endl;
 
-  auto pf = make_atomic_ptr<external_events<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     // Parsing function
