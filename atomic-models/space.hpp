@@ -15,12 +15,13 @@
 
 
 using namespace boost::simulation::pdevs;
+using namespace boost::simulation;
 using namespace std;
 
 long double e = 2.71828182845904523536028747135266249775724709369995L;
 
 template<class TIME, class MSG>
-class space : public atomic<TIME, MSG>
+class space : public pdevs::atomic<TIME, MSG>
 {
 private:
   string                            _id;

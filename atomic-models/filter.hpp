@@ -1,19 +1,21 @@
 #ifndef BOOST_SIMULATION_PDEVS_FILTER_H
 #define BOOST_SIMULATION_PDEVS_FILTER_H
-#include <boost/simulation/pdevs/atomic.hpp>
 #include <string>
 #include <utility>
 #include <map>
 #include <memory>
 
+#include <boost/simulation/pdevs/atomic.hpp>
+
 #include "../data-structures/types.hpp" /* Address_t */
 
 
 using namespace boost::simulation::pdevs;
+using namespace boost::simulation;
 using namespace std;
 
 template<class TIME, class MSG>
-class filter : public atomic<TIME, MSG>
+class filter : public pdevs::atomic<TIME, MSG>
 {
 private:
 

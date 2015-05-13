@@ -14,10 +14,11 @@
 
 
 using namespace boost::simulation::pdevs;
+using namespace boost::simulation;
 using namespace std;
 
 template<class TIME, class MSG>
-class biomass : public atomic<TIME, MSG>
+class biomass : public pdevs::atomic<TIME, MSG>
 {
 private:
   string                                _id;

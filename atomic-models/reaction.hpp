@@ -16,11 +16,12 @@
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace boost::simulation::pdevs;
+using namespace boost::simulation;
 using namespace std;
 
 
 template<class TIME, class MSG>
-class reaction : public atomic<TIME, MSG>
+class reaction : public pdevs::atomic<TIME, MSG>
 {
 
 private:
