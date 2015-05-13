@@ -246,12 +246,18 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
 /******** End helper functions *********/
 /***************************************/
 
+class time_rational {
+  int a, b;
+  bool is_inf;
+};
+
 int main(int argc, char* argv[]) {
 
 
-  
-  string special_places[3]   = {"e", "p", "c"};
-  string biomass_ID          = "R_Ec_biomass_iJO1366_WT_53p95M";
+  long double cell_weight   = 280 * 1e-15;  
+  Integer_t norm_number     = 1;  
+  string special_places[3]  = {"e", "p", "c"};
+  string biomass_ID         = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
@@ -262,7 +268,7 @@ int main(int argc, char* argv[]) {
       exit(1);
   }
 
-  Parser_t input_doc(argv[1], biomass_ID);
+  Parser_t input_doc(argv[1], biomass_ID, cell_weight, norm_number);
   input_doc.loadFile();
 
   map<string, string>               compartements       = input_doc.getCompartments();

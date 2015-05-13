@@ -6,16 +6,19 @@ using namespace std;
 /******************** HELPER FUNCTIONS *************************/
 /***************************************************************/
 
+long double L   = 6.0221413e+23;
+long double MOL = 1e-6;
+
 // is a temporary implemetation
-unsigned long long getStoichiometryFrom(double amount) {
+Integer_t getStoichiometryFrom(long double amount) {
 
   return (unsigned long long)amount;
 }
 
 // is a temporary implemetation
-unsigned long long getBiomassStoichiometryFrom(double amount) {
+Integer_t getBiomassStoichiometryFrom(long double amount, long double cw, Integer_t nm) {
 
-  return (unsigned long long)amount;
+  return (Integer_t) ((amount * MOL * L * cw) / nm);
 }
 
 /***************************************************************/
@@ -179,7 +182,7 @@ enzyme_parameter_t Parser_t::getBiomass() {
           
           specieID      = lt->Attribute("species");
           stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
-          result.reactants_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry) );
+          result.reactants_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry), _cell_weight, _norm_number );
         } 
       } else if ((string)jt->Value() == "listOfProducts") {
 
@@ -187,7 +190,7 @@ enzyme_parameter_t Parser_t::getBiomass() {
           
           specieID      = lt->Attribute("species");
           stoichiometry = (lt->Attribute("stoichiometry") == NULL) ? "1" : lt->Attribute("stoichiometry");
-          result.products_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry) );
+          result.products_sctry[specieID] = getBiomassStoichiometryFrom( stod(stoichiometry), _cell_weight, _norm_number );
         } 
       }
     }

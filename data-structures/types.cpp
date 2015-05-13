@@ -1,19 +1,19 @@
 #include "types.hpp"
 
-ostream& operator<<(ostream& os, Address_t to) {
+ostream& operator<<(ostream& os, const Address_t& to) {
   
   os << "[";
-  Address_t::iterator i = to.begin();
-  while(i != to.end()){
+  Address_t::const_iterator i = to.cbegin();
+  while(i != to.cend()){
     os << *i;
     ++i;
-    if (i != to.end()) os << ", ";
+    if (i != to.cend()) os << ", ";
   }
   os << "]";
   return os;
 }
 
-ostream& operator<<(ostream& os, Message_t msg) {
+ostream& operator<<(ostream& os, const Message_t& msg) {
   os << "To: " << msg.to << endl;
   os << "Specie: " << msg.specie << endl;
   os << "Amount: " << msg.amount << endl;
@@ -22,33 +22,33 @@ ostream& operator<<(ostream& os, Message_t msg) {
   return os;
 }
 
-ostream& operator<<(ostream& os, vector<string> m) {
+ostream& operator<<(ostream& os, const vector<string>& m) {
   
   os << "[";
-  vector<string>::iterator i = m.begin();
-  while(i != m.end()){
+  vector<string>::const_iterator i = m.cbegin();
+  while(i != m.cend()){
     os << *i;
     ++i;
-    if (i != m.end()) os << ", ";
+    if (i != m.cend()) os << ", ";
   }
   os << "]";
   return os;
 }
 
-ostream& operator<<(ostream& os, SetOfMolecules_t m) {
+ostream& operator<<(ostream& os, const SetOfMolecules_t& m) {
   
   os << "[";
-  SetOfMolecules_t::iterator i = m.begin();
-  while(i != m.end()){
+  SetOfMolecules_t::const_iterator i = m.cbegin();
+  while(i != m.cend()){
     os << i->second << "-" << i->first;
     ++i;
-    if (i != m.end()) os << ", ";
+    if (i != m.cend()) os << ", ";
   }
   os << "]";
   return os;
 }
 
-ostream& operator<<(ostream& os, SState_t s) {
+ostream& operator<<(ostream& os, const SState_t& s) {
 
   switch(s) {
     case SState_t::SHOWING:
@@ -71,7 +71,7 @@ ostream& operator<<(ostream& os, SState_t s) {
   return os;
 }
 
-ostream& operator<<(ostream& os, BState_t s) {
+ostream& operator<<(ostream& os, const BState_t& s) {
 
   switch(s) {
     case BState_t::START:

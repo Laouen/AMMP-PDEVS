@@ -68,7 +68,7 @@ struct RTask_t {
     reaction  = other.reaction;
   }
 
-  inline bool operator<(const RTask_t<TIME>& o) {
+  inline bool operator<(const RTask_t<TIME>& o) const {
 
     bool result;
     if (time_left != o.time_left) result = (time_left < o.time_left);
@@ -77,7 +77,7 @@ struct RTask_t {
     return result;
   }
 
-  inline bool operator==(const RTask_t<TIME>& o) {
+  inline bool operator==(const RTask_t<TIME>& o)  const {
 
     bool result;
 
@@ -132,7 +132,7 @@ struct STask_t {
     to_send   = other.to_send;
   }
 
-  inline bool operator<(const STask_t<TIME, MSG>& o) {
+  inline bool operator<(const STask_t<TIME, MSG>& o)  const {
 
     bool result;
     if (time_left != o.time_left) result = (time_left < o.time_left);
@@ -141,7 +141,7 @@ struct STask_t {
     return result;
   }
 
-  inline bool operator==(const STask_t<TIME, MSG>& o) {
+  inline bool operator==(const STask_t<TIME, MSG>& o)  const {
 
     bool result;
 
@@ -207,12 +207,12 @@ struct Message_t {
   }
 };
 
-ostream& operator<<(ostream& os, Message_t msg);
-ostream& operator<<(ostream& os, Address_t to);
-ostream& operator<<(ostream& os, vector<string> m);
-ostream& operator<<(ostream& os, SetOfMolecules_t m);
-ostream& operator<<(ostream& os, SState_t s);
-ostream& operator<<(ostream& os, BState_t s);
+ostream& operator<<(ostream& os, const Message_t& msg);
+ostream& operator<<(ostream& os, const Address_t& to);
+ostream& operator<<(ostream& os, const vector<string>& m);
+ostream& operator<<(ostream& os, const SetOfMolecules_t& m);
+ostream& operator<<(ostream& os, const SState_t& s);
+ostream& operator<<(ostream& os, const BState_t& s);
 
 /*******************************************/
 /************** End Message_t **************/
