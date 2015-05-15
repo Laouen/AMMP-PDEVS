@@ -90,7 +90,7 @@ public:
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == TIME(1, 1, 0, 0); it = _tasks.erase(it)) {
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !reaction_selected) {
 
         // look for metabolites to send
@@ -114,7 +114,7 @@ public:
         }
 
         // set a new task for out() to send the selected metabolites.
-        sr.time_left  = TIME(0);
+        sr.time_left  = TIME(1, 1, 0, 0);
         sr.task_kind  = SState_t::SENDING_REACTIONS;
         sr.to_send    = coutput;
         
@@ -200,13 +200,13 @@ public:
 
       if (it->show_request) {
         
-        new_task.time_left = TIME(0);
+        new_task.time_left = TIME(1, 1, 0, 0);
         new_task.task_kind = SState_t::SHOWING;
         this->insertTask(new_task);
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = TIME(0);
+        new_task.time_left = TIME(1, 1, 0, 0);
         new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
         this->insertTask(new_task);
       
@@ -222,8 +222,8 @@ public:
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
-    external(mb, t);
     internal();
+    external(mb, TIME(1, 1, 0, 0));
     
   }
 

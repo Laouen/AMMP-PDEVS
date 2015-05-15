@@ -38,7 +38,7 @@ public:
   TIME advance() const noexcept {
     if (_accepted_input == "output") cout << "advance " << endl;
 
-    TIME result = (!_filtered_input.empty()) ? TIME(0) : atomic<TIME, MSG>::infinity;
+    TIME result = (!_filtered_input.empty()) ? TIME(1, 1, 0, 0) : atomic<TIME, MSG>::infinity;
     if (_accepted_input == "output")  cout << "advance return: " << result << endl;
     return result;
   }
@@ -66,7 +66,7 @@ public:
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
     if (_accepted_input == "output") cout << "confluence "  << endl;
     internal();
-    external(mb, TIME(0));
+    external(mb, TIME(1, 1, 0, 0));
   }
 
   /***************************************

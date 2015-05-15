@@ -21,6 +21,9 @@
 #include "atomic-models/space.hpp"
 #include "atomic-models/biomass.hpp"
 
+// FDTime include
+#include "vendors/fdtime.h"
+
 // data structure includes
 #include "data-structures/unit_definition.hpp"
 #include "data-structures/types.hpp"
@@ -41,7 +44,7 @@ using namespace boost::simulation::pdevs::basic_models;
 /********* Type definations ************/
 /***************************************/
 
-using Time_t                  = double;
+using Time_t                  = cdpp::FDTime;
 using hclock_t                = chrono::high_resolution_clock;
 using vectorOfModels_t        = vector< shared_ptr< model<Time_t> > >;
 using vectorOfModelPairs_t    = vector< pair< shared_ptr< model<Time_t> >, shared_ptr< model<Time_t> > > >;
@@ -375,8 +378,8 @@ int main(int argc, char* argv[]) {
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 1.0;
-    rate            = 0.01;
+    interval_time   = cdpp::FDTime(1, 1, 1, 0);
+    rate            = cdpp::FDTime(1, 100, 1, 0);
     amount          = 40;
 
     place = getPlace(it->second, species, compartements, special_places);
@@ -523,8 +526,8 @@ int main(int argc, char* argv[]) {
   Address_t biomass_address;
   for (map<string, string>::const_iterator it = compartements.cbegin(); it != compartements.cend(); ++it) {
     
-    interval_time   = 0.01;
-    biomass_rate    = 0.01;
+    interval_time   = cdpp::FDTime(1, 100, 1, 0);
+    biomass_rate    = cdpp::FDTime(1, 100, 1, 0);
     biomass_address = {"biomass", biomass_ID};
     volume          = 0;
     factor          = 1;
@@ -758,8 +761,8 @@ int main(int argc, char* argv[]) {
       biomass_info.reactants_sctry,
       biomass_info.products_sctry,
       {"e", "e_s", "p_br", "p_s", "c", "c_s"}, // put all the adresses
-      Time_t(0.1), // interval time
-      Time_t(0.01) // rate_time
+      Time_t(1, 10, 1, 0), // interval time
+      Time_t(1, 100, 1, 0) // rate_time
     );
 
   shared_ptr<flattened_coupled<Time_t, Message_t>> biomass_model(new flattened_coupled<Time_t, Message_t>(
@@ -823,8 +826,8 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.01; i < 0.02; i += 0.1) {
 
-    input += to_string(i) + " " + "c c_s | A_c 1 \n ";
-    //input += to_string(i) + " " + "e e_s | A_e 1 \n ";
+    input += "1 " + to_string((int)(i*10000)) + " 1 0 " + "c c_s | A_c 1 \n ";
+    //input += "1 " + to_string((int)(i*100)) + " 1 0 "  + "e e_s | A_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -834,14 +837,19 @@ int main(int argc, char* argv[]) {
   auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
-    int delimiter;
+    int delimiter, q_n, q_d, m, e;
     string collector;
     string thrash;
     stringstream ss;
     Message_t msg_out;
 
     ss.str(s);
-    ss >> t_next;
+    ss >> q_n;
+    ss >> q_d;
+    ss >> m;
+    ss >> e;
+    t_next = cdpp::FDTime(q_n, q_d, m, e);
+
     ss >> collector;
 
     while (collector != "|") {     
@@ -865,7 +873,7 @@ int main(int argc, char* argv[]) {
 
   for (double i = 0.1; i <= 0.1; i += 0.1) {
 
-    input += to_string(i) + " \n ";
+    input += "1 " + to_string((int)(i*100)) + " 1 0 " + "\n ";
   }
   input.pop_back();
   input.pop_back();
@@ -875,12 +883,18 @@ int main(int argc, char* argv[]) {
   auto so = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
+    int q_n, q_d, m, e;
     string thrash;
     stringstream ss;
     Message_t msg_out;
 
     ss.str(s);
-    ss >> t_next;
+
+    ss >> q_n;
+    ss >> q_d;
+    ss >> m;
+    ss >> e;
+    t_next = cdpp::FDTime(q_n, q_d, m, e);
 
     msg_out.to            = {"e", "e_s", "c", "c_s", "p_or", "p_s"};
     msg_out.show_request  = true;
@@ -903,18 +917,20 @@ int main(int argc, char* argv[]) {
   });
 
   cout << "Preparing runner" << endl;
-  Time_t initial_time{0};
+
+  Time_t initial_time(1, 1, 0, 0);
+
   runner<Time_t, Message_t> r(root, initial_time, cout, [](ostream& os, Message_t m){  os << m; });
 
   cout << "Starting simulation until passivate" << endl;
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntil(Time_t(3.0));
+  r.runUntil(Time_t(1, 10, 3 ,0));
 
-  auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
+  auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
   cout << "Simulation took:" << elapsed << "sec" << endl;
-
+  /* */
   return 0;
 }

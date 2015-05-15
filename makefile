@@ -6,11 +6,12 @@ MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
 STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp
 PARSERHEADERS=parser/parser.hpp
+VENDORSHEADERS=vendors/fdtime.h
 
 all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o data-structures/types.o parser/parser.o
 	$(CC) -g -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o data-structures/types.o
 
-main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS)
+main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS) $(VENDORSHEADERS)
 	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
