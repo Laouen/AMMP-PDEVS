@@ -84,7 +84,7 @@ public:
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // Processing all the tasks with time left == 0 (happening now)
-    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == TIME(1, 1, 0, 0); it = _tasks.erase(it)) {
+    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
 
       if ((it->task_kind == RState_t::SELECTING) && !already_selected) {
 
@@ -103,7 +103,7 @@ public:
     // add leaving metabolites to the tasks
     if (selected_to_leave.rejected.size() > 0) {
 
-      selected_to_leave.time_left = TIME(1, 1, 0, 0);
+      selected_to_leave.time_left = TIME(0);
       selected_to_leave.task_kind = RState_t::REJECTING;
       this->insertTask(selected_to_leave);
     }
@@ -175,7 +175,7 @@ public:
     // add rejecting surplus to the tasks
     if (to_reject.rejected.size() > 0) {
 
-      to_reject.time_left = TIME(1, 1, 0, 0);
+      to_reject.time_left = TIME(0);
       to_reject.task_kind = RState_t::REJECTING;
       this->insertTask(to_reject);
     }
@@ -188,7 +188,7 @@ public:
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
     
     internal();
-    external(mb, TIME(1, 1, 0, 0));
+    external(mb, TIME(0));
     
   }
 

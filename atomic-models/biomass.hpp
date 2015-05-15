@@ -75,7 +75,7 @@ public:
 
 
     if (_s == BState_t::START) return _interval_time;
-    else if (_s == BState_t::NOTHING) return _interval_time - (_rate + _rate);
+    else if (_s == BState_t::NOTHING) return _interval_time - 2*_rate;
     else return _rate;
 
   }
@@ -158,7 +158,7 @@ public:
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     internal();
-    external(mb, TIME(1, 1, 0, 0));
+    external(mb, TIME(0));
     
   }
 
