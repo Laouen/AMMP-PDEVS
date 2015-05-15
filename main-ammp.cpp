@@ -246,6 +246,10 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
 /******** End helper functions *********/
 /***************************************/
 
+class time_rational {
+  int a, b;
+  bool is_inf;
+};
 
 int main(int argc, char* argv[]) {
 
