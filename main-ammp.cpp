@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <limits>
 #include <memory>
-#include "vendors/fdtime.h"
 
 // Boost simalator include
 #include <boost/rational.hpp>
@@ -55,155 +54,6 @@ using coupledModelsMap_t      = map<string, shared_ptr< flattened_coupled<Time_t
 /***************************************/
 /******** End type definations *********/
 /***************************************/
-template<class intType=int>
-class T_t{
-public:
-  intType h, m, s, ms;
-  bool is_inf;
-  bool is_neg;
-
-  T_t()
-  : h(intType(0)), m(intType(0)), s(intType(0)), ms(intType(0)), is_inf(false), is_neg(false) {}
-  T_t(intType o_h, intType o_m, intType o_s, intType o_ms, bool o_is_neg) 
-  : h(o_h), m(o_m), s(o_s), ms(o_ms), is_inf(false), is_neg(o_is_neg) {
-    assert(o_m >= 0);
-    assert(o_s >= 0);
-    assert(o_ms >= 0);
-  }
-
-  T_t<intType>& operator=(const T_t<intType>& arg) noexcept {
-      this->h       = arg.h;
-      this->m       = arg.m;
-      this->s       = arg.s;
-      this->ms      = arg.ms;
-      this->is_inf  = arg.is_inf;
-      return *this;
-  }
-
-  T_t<intType>& operator+=(const T_t<intType>& arg) noexcept {
-
-    if (this->is_inf) return *this;
-    
-    intType new_ms, new_s, new_m, new_h, e;
-    
-    new_ms  = (this->ms + arg.ms) % 1000;
-    e       = (this->ms + arg.ms) / 1000;
-    new_s   = (this->s + arg.s + e) % 60;
-    e       = (this->s + arg.s + e) / 60;
-    new_m   = (this->m + arg.m + e) % 60;
-    e       = (this->s + arg.s + e) / 60;
-    new_h   = this->h + arg.h + e;
-
-    this->h   = new_h;
-    this->m   = new_m;
-    this->s   = new_s;
-    this->ms  = new_ms;
-
-    // falta ver si sigue siendo
-
-    return *this;
-  }
-
-  T_t<intType>& operator-=(const T_t<intType>& arg) noexcept {
-
-    if (this->is_inf) return *this;
-
-    T_t<intType> biger, smaller;
-    intType factor;
-
-    if (*this < arg) {
-      biger   = arg;
-      smaller = *this;
-    } else {
-      biger   = *this;
-      smaller = arg;
-    }
-
-    *this = substract(biger, smaller);
-
-    return *this;
-  }
-
-  static T_t<intType> infinity() noexcept {
-    T_t<intType> f;
-    f.is_inf=true;
-    return f;
-  }
-
-  void askOneForMs() {
-
-    if (this->s == 0) this->askOneForS();
-    this->s   -= intType(1);
-    this->ms  += intType(1000);
-  }
-
-  void askOneForS() {
-
-    if (this->m == 0) this->askOneForM();
-    this->m -= intType(1);
-    this->s += intType(60);
-  }
-
-  void askOneForM() {
-
-    this->h -= intType(1);
-    this->m += intType(60);
-  }
-
-  T_t substract(T_t<intType> b, T_t<intType> s) {
-    T_t<intType> result;
-
-    if (b.ms < s.ms) b.askOneForMs();
-    if (b.s < s.s) b.askOneForS();
-    if (b.m < s.m) b.askOneForM();
-    
-    result.h  = b.h - s.h;
-    result.m  = b.m - s.m;
-    result.s  = b.s - s.s;
-    result.ms = b.ms - s.ms;
-
-    return result;
-  }
-};
-
-template<class intType=int>
-inline T_t<intType> operator+(T_t<intType> lhs, const T_t<intType>& rhs) noexcept  // first arg by value, second by const ref
-{
-    lhs += rhs; // reuse compound assignment
-    return lhs; // return the result by value
-}
-
-template<class intType=int>
-inline T_t<intType> operator-(T_t<intType> lhs, const T_t<intType>& rhs) noexcept  // first arg by value, second by const ref
-{
-    lhs -= rhs; // reuse compound assignment
-    return lhs; // return the result by value
-}
-
-template<class intType=int>
-inline bool operator==(const T_t<intType>& lhs, const T_t<intType>& rhs) noexcept
-{
-  bool equal_time = (lhs.h == rhs.h) && (lhs.m == rhs.m) && (lhs.s == rhs.s) && (lhs.ms == rhs.ms);
-  return (lhs.is_inf && rhs.is_inf) || (!lhs.is_inf && !rhs.is_inf && equal_time) ;
-}
-
-template<class intType=int>
-inline bool operator<(const T_t<intType>& lhs, const T_t<intType>& rhs) noexcept
-{
-  bool less_time = (lhs.h < rhs.h);
-  less_time = less_time || ((lhs.h == rhs.h) && (lhs.m < rhs.m));
-  less_time = less_time || ((lhs.h == rhs.h) && (lhs.m == rhs.m) && (lhs.s < rhs.s));
-  less_time = less_time || ((lhs.h == rhs.h) && (lhs.m == rhs.m) && (lhs.s == rhs.s) && (lhs.ms < rhs.ms));
-  return !lhs.is_inf && less_time ;
-}
-
-template<class intType=int>
-ostream& operator<<(ostream& os, const T_t<intType>& s) {
-  if (s.is_inf) os << "inf";
-  else os << s.h << ":" << s.m << ":" << s.s << ":" << s.ms;
-}
-
-
 
 /***************************************/
 /********** Helper functions ***********/
@@ -396,29 +246,13 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
 /******** End helper functions *********/
 /***************************************/
 
+class time_rational {
+  int a, b;
+  bool is_inf;
+};
 
 int main(int argc, char* argv[]) {
 
-  T_t<int> one(1,0,50,50);
-  T_t<int> seconds(0,0,2,58);
-  T_t<int> two(2,0,0,0);
-  T_t<int> one1(1,0,50,50);
-  T_t<int> twoAndSeconds(2,0,30,650);
-  T_t<int> inf = T_t<int>::infinity();
-  T_t<int> other = one - seconds;
-  cout << other << endl;
-  cout << (one - seconds) << endl;
-  cout << (other + seconds) << endl;
-  cout << (one - two) << endl;
-  cout << (one - twoAndSeconds) << endl;
-  cout << (one == one1) << endl;
-  cout << (one == two) << endl;
-  cout << (one == one) << endl;
-  cout << inf << endl;
-  cout << (inf + two) << endl;
-  cout << (inf < two) << endl;
-  cout << (inf - two) << endl;
-/*
 
   long double cell_weight   = 280 * 1e-15;  
   Integer_t norm_number     = 1;  
@@ -428,7 +262,7 @@ int main(int argc, char* argv[]) {
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
   /**************************************************************************************************************/
-/*
+
   if (argc <= 1){
       cout << "An SBML file is required." << endl;
       exit(1);
@@ -458,7 +292,7 @@ int main(int argc, char* argv[]) {
   /*
   Brieff: This map store for each specie, the filter keys to get in the corresponding space where it belong.
   */
-/*
+
 
 
 
@@ -486,7 +320,7 @@ int main(int argc, char* argv[]) {
   /* 
   Brief: setting the places in the maps reaction_models and enzyme_models.
   */
-/*
+
 
 
   cout << "Setting the reaction and enzyme model map and enzyme model map." << endl;
@@ -535,7 +369,7 @@ int main(int argc, char* argv[]) {
   brief: all the reaction atomic model are placed in the correct place where they belong to.
   After that, the enzymes are created by coupling the reaction atomic model with its corresponding filter. 
   */
-/*
+
 
   cout << "Creating reaction atomic models and ordering them by places." << endl;
   Time_t    interval_time, rate;
@@ -545,8 +379,8 @@ int main(int argc, char* argv[]) {
   // creating the reactions atomic models
   for (map<string, enzyme_parameter_t >::iterator it = reactions.begin(); it != reactions.end(); ++it) {
     
-    interval_time   = 1.0; // boost::rational<int>(1);
-    rate            = 0.01; // boost::rational<int>(1,100,1,0);
+    interval_time   = 1.0;
+    rate            = 0.01;
     amount          = 40;
 
     place = getPlace(it->second, species, compartements, special_places);
@@ -607,7 +441,7 @@ int main(int argc, char* argv[]) {
   Biref: enzyme_addresses store for each ezyme, the filter keys to get to them.
   */
   
-/*
+
   cout << "Getting enzyme addresses." << endl;
   map<string, Address_t> enzyme_addresses;
 
@@ -641,7 +475,7 @@ int main(int argc, char* argv[]) {
   /* 
   Brief: The atomic models space need some parameters, this part is responsible to collect those parameters.
   */
-/*
+
   cout << "Getting enzyme information for spaces creation." << endl;
   map<string, map<string, enzyme_info_t> > enzyme_informations;
   enzyme_info_t new_enzyme_information;
@@ -684,7 +518,7 @@ int main(int argc, char* argv[]) {
   Brief: all the space atomic model are created using the parameters.
   After that, the compartmen are created by coupling the space atomic model with its corresponding filter. 
   */
-/*
+
   cout << "Creating space atomic models." << endl;
   modelsMap_t space_models;
   double volume, factor;
@@ -753,7 +587,7 @@ int main(int argc, char* argv[]) {
   /************************************ Creaatin Enzyme coupled model *******************************************/
   /**************************************************************************************************************/
 
-/*
+
 
   cout << "Creating enzyme set coupled models with filters." << endl;
   coupledModelsMap_t  enzyme_set_models;
@@ -789,7 +623,7 @@ int main(int argc, char* argv[]) {
   /**************************************************************************************************************/
   /**************************************** coupling everything *************************************************/
   /**************************************************************************************************************/
-/*
+
 
   cout << "Creating cytoplasm coupled model." << endl;
   auto cytoplasm_filter     = make_atomic_ptr< filter<Time_t, Message_t>, const string>(special_places[2]);
@@ -952,8 +786,8 @@ int main(int argc, char* argv[]) {
     {output_filter}
   ));
 
-  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, /*biomass_model,*/ //output_coupled_filter};
-/*  vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
+  vectorOfModels_t cell_models  = {extra_cellular_model, periplasm_model, cytoplasm_model, /*biomass_model,*/ output_coupled_filter};
+  vectorOfModels_t cell_eic     = {extra_cellular_model, periplasm_model, cytoplasm_model};
   vectorOfModels_t cell_eoc     = {output_coupled_filter};
   vectorOfModelPairs_t cell_ic  = {
     {extra_cellular_model, periplasm_model},
@@ -968,7 +802,7 @@ int main(int argc, char* argv[]) {
     {periplasm_model, biomass_model},
     {cytoplasm_model, biomass_model},*/
     // outputs
-  /*  {extra_cellular_model, output_coupled_filter},
+    {extra_cellular_model, output_coupled_filter},
     {cytoplasm_model, output_coupled_filter},
     {periplasm_model, output_coupled_filter}
   };
@@ -984,7 +818,7 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /************************************** Runing Simulation ********************************************/
   /*****************************************************************************************************/
-/*
+
   cout << "Testing cytoplasm coupled model with filter" << endl;
 
   cout << "Creating the model to insert the input from stream" << endl;
@@ -1085,6 +919,6 @@ int main(int argc, char* argv[]) {
   auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
 
   cout << "Simulation took:" << elapsed << "sec" << endl;
-*/
+
   return 0;
 }
