@@ -2,6 +2,7 @@
 #define BRITIME_H
 
 #include <ostream>
+#include <assert.h>
 #include <boost/rational.hpp>
 
 class BRITime {
@@ -21,17 +22,15 @@ public:
 
     BRITime& operator+=(const BRITime& o) noexcept {
         
-        if (!this->_is_inf) {
-            this->_value += o._value;
-        }
+        this->_value += o._value;
+        if (o._is_inf) this->_is_inf = true;
         return *this;
     }
 
     BRITime& operator-=(const BRITime& o) noexcept { 
+        assert(this->_is_inf || !o._is_inf);
 
-        if (!this->_is_inf) {
-            this->_value -= o._value;
-        }
+        this->_value -= o._value;
         return *this;
     }
 
@@ -53,13 +52,12 @@ inline BRITime operator-(BRITime lhs, const BRITime& rhs) noexcept {
 }
 
 inline BRITime operator/(BRITime lhs, const BRITime& rhs) noexcept {
-    
+    assert(rhs._is_inf || (rhs._value != boost::rational<int>()));
+
     if (!lhs._is_inf && !rhs._is_inf) {
         lhs._value /= rhs._value;
     } else if (!lhs._is_inf) {
         lhs = BRITime(0,1);
-    } else if(!rhs._is_inf && (rhs._value == boost::rational<int>(0,1))) {
-        lhs._value /= rhs._value;
     }
     return lhs;
 }
@@ -67,6 +65,7 @@ inline BRITime operator/(BRITime lhs, const BRITime& rhs) noexcept {
 inline bool operator==(const BRITime& lhs, const BRITime& rhs) noexcept {
 
     if (lhs._is_inf && rhs._is_inf) return true;
+    else if (lhs._is_inf || rhs._is_inf) return false;
     return (lhs._value == rhs._value);
 }
 

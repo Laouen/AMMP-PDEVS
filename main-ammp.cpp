@@ -913,7 +913,7 @@ int main(int argc, char* argv[]) {
 
   r.runUntil(Time_t(3, 100));
 
-  auto elapsed = chrono::duration_cast< chrono::duration< Time_t, ratio<1> > > (hclock_t::now() - start).count();
+  auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
   cout << "Simulation took:" << elapsed << "sec" << endl;
 
