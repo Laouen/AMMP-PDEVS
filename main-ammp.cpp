@@ -911,7 +911,7 @@ int main(int argc, char* argv[]) {
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntil(Time_t(3, 100));
+  r.runUntil(Time_t(3, 10));
 
   auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
