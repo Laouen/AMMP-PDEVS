@@ -825,7 +825,7 @@ int main(int argc, char* argv[]) {
   for (double i = 0.01; i < 0.02; i += 0.1) {
 
     input += "1 " + to_string((int)(i*10000)) + " " + "c c_s | A_c 1 \n ";
-    //input += to_string(i) + " " + "e e_s | A_e 1 \n ";
+    //input += "1 " + to_string((int)(i*10000)) + " " + "e e_s | A_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
