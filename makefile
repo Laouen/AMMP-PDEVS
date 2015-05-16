@@ -1,7 +1,7 @@
 CC=g++-4.9
 CFLAGS=-std=c++11
-INCLUDEBOOST=-I /home/lao/boost_1_57_0
-INCLUDEBCDPP=-I /home/lao/Documents/cdboost/include
+INCLUDEBOOST=-I /home/laouen/boost_1_57_0
+INCLUDEBCDPP=-I /home/laouen/cdboost/include
 MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/space.hpp atomic-models/biomass.hpp
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
 STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp

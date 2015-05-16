@@ -55,13 +55,13 @@ inline BRITime operator-(BRITime lhs, const BRITime& rhs) noexcept {
 inline BRITime operator/(BRITime lhs, const BRITime& rhs) noexcept {
     
     if (!lhs._is_inf && !rhs._is_inf) {
-        lhs += rhs;
-        return lhs;
-    } else if (lhs._is_inf) {
-        return lhs;
-    } else {
-        return BRITime(0,1);
+        lhs._value /= rhs._value;
+    } else if (!lhs._is_inf) {
+        lhs = BRITime(0,1);
+    } else if(!rhs._is_inf && (rhs._value == boost::rational<int>(0,1))) {
+        lhs._value /= rhs._value;
     }
+    return lhs;
 }
 
 inline bool operator==(const BRITime& lhs, const BRITime& rhs) noexcept {
