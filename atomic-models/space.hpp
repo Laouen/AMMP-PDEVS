@@ -34,11 +34,13 @@ private:
   double                            _volume;
   double                            _factor;
   SState_t                          _s;
+  // task queue
+  STaskQueue_t<TIME, MSG>           _tasks;
   // used for uniform random numbers
   RealRandom_t<double>              _real_random;
   IntegerRandom_t<Integer_t>        _integer_random;
-  // task queue
-  STaskQueue_t<TIME, MSG>           _tasks;
+  // constant variables
+  TIME                              ZERO;
 
 public:
 
@@ -76,6 +78,8 @@ public:
 
       this->insertTask(new_task);
     }
+
+    ZERO = TIME(0);
   }
 
   void internal() noexcept {
@@ -90,7 +94,7 @@ public:
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == ZERO; it = _tasks.erase(it)) {
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !reaction_selected) {
 
         // look for metabolites to send
@@ -114,7 +118,7 @@ public:
         }
 
         // set a new task for out() to send the selected metabolites.
-        sr.time_left  = TIME(0);
+        sr.time_left  = ZERO;
         sr.task_kind  = SState_t::SENDING_REACTIONS;
         sr.to_send    = coutput;
         
@@ -200,13 +204,13 @@ public:
 
       if (it->show_request) {
         
-        new_task.time_left = TIME(0);
+        new_task.time_left = ZERO;
         new_task.task_kind = SState_t::SHOWING;
         this->insertTask(new_task);
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = TIME(0);
+        new_task.time_left = ZERO;
         new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
         this->insertTask(new_task);
       

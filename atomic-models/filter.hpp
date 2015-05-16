@@ -22,12 +22,18 @@ private:
   string      _accepted_input;
   vector<MSG> _filtered_input;
 
+  // constant values
+  TIME ZERO;
+
 public:
 
   explicit filter(const string other_accepted_input) noexcept :
   _accepted_input(other_accepted_input) {
 
     _filtered_input.clear();
+
+    // Constant values;
+    ZERO = TIME(0);
   }
 
   void internal() noexcept {
@@ -38,13 +44,12 @@ public:
   TIME advance() const noexcept {
     if (_accepted_input == "output") cout << "advance " << endl;
 
-    TIME result = (!_filtered_input.empty()) ? TIME(0) : atomic<TIME, MSG>::infinity;
+    TIME result = (!_filtered_input.empty()) ? ZERO : atomic<TIME, MSG>::infinity;
     if (_accepted_input == "output")  cout << "advance return: " << result << endl;
     return result;
   }
 
   vector<MSG> out() const noexcept {
-    
     if (_accepted_input == "output") cout << "out" << endl;
     return _filtered_input; 
   }
@@ -66,7 +71,7 @@ public:
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
     if (_accepted_input == "output") cout << "confluence "  << endl;
     internal();
-    external(mb, TIME(0));
+    external(mb, ZERO);
   }
 
   /***************************************

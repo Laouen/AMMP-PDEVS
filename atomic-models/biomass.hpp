@@ -17,6 +17,7 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
+
 template<class TIME, class MSG>
 class biomass : public pdevs::atomic<TIME, MSG>
 {
@@ -30,7 +31,10 @@ private:
   Address_t                             _request_addresses;
   TIME                                  _interval_time;
   TIME                                  _rate;
-  BState_t                                _s;
+  BState_t                              _s;
+
+  // constant values
+  TIME                                  ZERO;
 
 public:
 
@@ -58,6 +62,9 @@ public:
     for (SetOfMolecules_t::const_iterator it = _reactants_sctry.cbegin(); it != _reactants_sctry.cend(); ++it) {
       _reactants.insert({it->first, 0});
     }
+
+    // Constant values;
+    ZERO = TIME(0);
   }
 
   void internal() noexcept {
@@ -75,7 +82,7 @@ public:
 
 
     if (_s == BState_t::START) return _interval_time;
-    else if (_s == BState_t::NOTHING) return _interval_time - 2*_rate;
+    else if (_s == BState_t::NOTHING) return _interval_time - (_rate + _rate);
     else return _rate;
 
   }
@@ -158,7 +165,7 @@ public:
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     internal();
-    external(mb, TIME(0));
+    external(mb, ZERO);
     
   }
 

@@ -41,6 +41,9 @@ private:
   // used for uniform random number 
   IntegerRandom_t<Integer_t>            _distribution;
 
+  // constant values
+  TIME                                  ZERO;
+
 
 public:
 
@@ -73,6 +76,9 @@ public:
     for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
       _products[it->first] = 0;
     }
+
+    // Constant values;
+    ZERO = TIME(0);
   }
 
   void internal() noexcept {
@@ -84,7 +90,7 @@ public:
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // Processing all the tasks with time left == 0 (happening now)
-    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == 0; it = _tasks.erase(it)) {
+    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == ZERO; it = _tasks.erase(it)) {
 
       if ((it->task_kind == RState_t::SELECTING) && !already_selected) {
 
@@ -101,9 +107,9 @@ public:
     }
 
     // add leaving metabolites to the tasks
-    if (selected_to_leave.rejected.size() > 0) {
+    if (selected_to_leave.rejected.size() > 0) { // TODO CHANGE FOR EMPTY
 
-      selected_to_leave.time_left = TIME(0);
+      selected_to_leave.time_left = ZERO;
       selected_to_leave.task_kind = RState_t::REJECTING;
       this->insertTask(selected_to_leave);
     }
@@ -160,7 +166,6 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    
     RTask_t<TIME> to_reject, new_selection;
     
     // Updating time left
@@ -173,9 +178,9 @@ public:
     this->lookForNewReactions();
 
     // add rejecting surplus to the tasks
-    if (to_reject.rejected.size() > 0) {
+    if (to_reject.rejected.size() > 0) { // TODO CHANGE FOR NOT EMPTY
 
-      to_reject.time_left = TIME(0);
+      to_reject.time_left = ZERO;
       to_reject.task_kind = RState_t::REJECTING;
       this->insertTask(to_reject);
     }
@@ -188,7 +193,7 @@ public:
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
     
     internal();
-    external(mb, TIME(0));
+    external(mb, ZERO);
     
   }
 
