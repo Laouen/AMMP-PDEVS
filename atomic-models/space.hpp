@@ -160,7 +160,7 @@ public:
 
     TIME result;
     if (!_tasks.empty()) result = _tasks.front().time_left;
-    else                 result = atomic<TIME, MSG>::infinity;
+    else                 result = pdevs::atomic<TIME, MSG>::infinity;
 
     return result;
   }

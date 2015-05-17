@@ -18,6 +18,7 @@ public:
     BRITime& operator=(const BRITime& o) noexcept { 
         this->_value = o._value;
         this->_is_inf = o._is_inf;
+	return *this;
     }
 
     BRITime& operator+=(const BRITime& o) noexcept {

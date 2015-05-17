@@ -832,7 +832,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   piss->str(input);
 
-  auto pf = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     int delimiter;
@@ -873,7 +873,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   piss->str(input);
 
-  auto so = make_atomic_ptr<input_istream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto so = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     string thrash;
