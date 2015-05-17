@@ -44,7 +44,7 @@ public:
   TIME advance() const noexcept {
     if (_accepted_input == "output") cout << "advance " << endl;
 
-    TIME result = (!_filtered_input.empty()) ? ZERO : atomic<TIME, MSG>::infinity;
+    TIME result = (!_filtered_input.empty()) ? ZERO : pdevs::atomic<TIME, MSG>::infinity;
     if (_accepted_input == "output")  cout << "advance return: " << result << endl;
     return result;
   }
