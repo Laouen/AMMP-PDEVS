@@ -64,7 +64,7 @@ using coupledModelsMap_t      = map<string, shared_ptr< flattened_coupled<Time_t
 /********** Helper functions ***********/
 /***************************************/
 
-vector<string> getReactants(const enzyme_parameter_t& e) {
+vector<string> getReactants_m(const enzyme_parameter_t& e) {
   vector<string> result;
 
   for (SetOfMolecules_t::const_iterator it = e.reactants_sctry.cbegin(); it != e.reactants_sctry.cend(); ++it) {
@@ -79,7 +79,7 @@ vector<string> getReactants(const enzyme_parameter_t& e) {
   return result;
 }
 
-string compartmentOfReactants(const map<string, int>& c) {
+string compartmentOfReactants_m(const map<string, int>& c) {
 
   string result;
 
@@ -94,7 +94,7 @@ string compartmentOfReactants(const map<string, int>& c) {
   return result;
 }
 
-string organelleOfReactants(const map<string, int>& c, string* sp) {
+string compartmentOfReactants_m(const map<string, int>& c, string* sp) {
 
   string result;
   bool is_not_special;
@@ -112,7 +112,7 @@ string organelleOfReactants(const map<string, int>& c, string* sp) {
   return result;
 }
 
-bool thereAreOrganelleInvolved(const map<string, int>& c, string* sp) {
+bool thereAreOrganelleInvolved_m(const map<string, int>& c, string* sp) {
 
   bool result = false;
   bool is_not_special;
@@ -130,7 +130,7 @@ bool thereAreOrganelleInvolved(const map<string, int>& c, string* sp) {
   return result;
 }
 
-string getPlace(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
+string getPlace_m(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
 
   string result;
   int amount_compartments;
@@ -174,12 +174,12 @@ string getPlace(const enzyme_parameter_t& e, const map<string, map<string, strin
   switch(amount_compartments) {
     case 1:
 
-      result = compartmentOfReactants(compartments) + "_i";
+      result = compartmentOfReactants_m(compartments) + "_i";
       break;
     case 2:
 
-      if (thereAreOrganelleInvolved(compartments, sp)) {
-        result = organelleOfReactants(compartments, sp) + "_m";
+      if (thereAreOrganelleInvolved_m(compartments, sp)) {
+        result = compartmentOfReactants_m(compartments, sp) + "_m";
       
       } else if (compartments[sp[0]] > 0){
 
@@ -201,7 +201,7 @@ string getPlace(const enzyme_parameter_t& e, const map<string, map<string, strin
   return result;
 }
 
-vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
+vector<string> getCompartments_m(const enzyme_parameter_t& e, const map<string, map<string, string> >& s, const map<string, string>& c, string* sp) {
 
   vector<string> result;
   string curr_space;
@@ -270,9 +270,17 @@ int main(int argc, char* argv[]) {
   
   m.createEnzymeAddresses();
 
-  vector<string> orgIDs = m.getOrganelleIds();
+  // adding the organelles compartments
+  for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
+    if (m.isNotSpecial(i->first)) m.addCompartment(i->first);
+  }
 
-  m.addCompartment("mitochondria");
+  // creating the enzymes models
+  m._comment_mode = false;
+  for (map<string, enzyme_parameter_t >::const_iterator i = m._reactions.begin(); i != m._reactions.end(); ++i) {
+      m.addEnzymeModel(i->first, BRITime(1), BRITime(1,100), Integer_t(40));
+  }
+  m._comment_mode = true;
 
   
   return 0;
@@ -406,7 +414,7 @@ int main(int argc, char* argv[]) {
     rate            = BRITime(1,100);
     amount          = 40;
 
-    place = getPlace(it->second, species, compartements, special_places);
+    place = getPlace_m(it->second, species, compartements, special_places);
 
     reaction_models.at(place)[it->first] = make_atomic_ptr< 
       reaction<Time_t, Message_t>, 
@@ -520,8 +528,8 @@ int main(int argc, char* argv[]) {
   for (map<string, enzyme_parameter_t >::const_iterator it = reactions.cbegin(); it != reactions.end(); ++it) {
 
     new_enzyme_information.location   = enzyme_addresses[it->first];
-    new_enzyme_information.reactants  = getReactants(it->second); 
-    compartments_who_use_the_enzyme   = getCompartments(it->second, species, compartements, special_places);
+    new_enzyme_information.reactants  = getReactants_m(it->second); 
+    compartments_who_use_the_enzyme   = getCompartments_m(it->second, species, compartements, special_places);
 
     for (vector<string>::iterator i = compartments_who_use_the_enzyme.begin(); i != compartments_who_use_the_enzyme.end(); ++i) {
       

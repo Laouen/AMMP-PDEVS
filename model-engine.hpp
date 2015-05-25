@@ -68,6 +68,14 @@ public:
     // Initializing the shared ptr for the addresses
     _species_addresses = make_shared< map<string, Address_t> >();
     _enzyme_addresses  = make_shared< map<string, Address_t> >();
+
+    // initializing the special compartment extra cellular, periplasm and cytoplasm
+    _enzyme_models.insert({_e + "_i", {}});
+    _enzyme_models.insert({_c + "_i", {}});
+    _enzyme_models.insert({_p + "_i", {}});
+    _enzyme_models.insert({_p + "_lm", {}});
+    _enzyme_models.insert({_p + "_um", {}});
+    _enzyme_models.insert({_p + "_tm", {}});
   }
 
   void createEnzymeAddresses() {
@@ -102,99 +110,198 @@ public:
     return result;
   }
 
-  void addEnzymeModel(string id, TIME it, TIME r, Integer_t a) {
+  void addEnzymeModel(const string& id, TIME it, TIME r, Integer_t a) {
+    assert(_reactions.find(id) != _reactions.end());
+    
+    if (_comment_mode) cout << "[Model engine] Adding new enzyme model: " << id << endl;
+
     string place, sub_place;
     enzyme_parameter_t params = _reactions[id];
 
-    place = getPlace(params);
-
-    auto reactio = make_atomic_ptr< 
-      reaction<TIME, MSG>, 
-      const string, 
-      const shared_ptr< map<string, Address_t> >, 
-      const bool, 
-      const TIME, 
-      const SetOfMolecules_t&, 
-      const SetOfMolecules_t&, 
-      const Integer_t, 
-      const TIME >(
-        id, 
-        _species_addresses, 
-        params.reversible, 
-        r, 
-        params.reactants_sctry, 
-        params.products_sctry, 
-        a, 
-        it
-      );
+    // reaction atomic model
+    auto ereaction = make_atomic_ptr< 
+    reaction<TIME, MSG>, 
+    const string, 
+    const shared_ptr< map<string, Address_t> >, 
+    const bool, 
+    const TIME, 
+    const SetOfMolecules_t&, 
+    const SetOfMolecules_t&, 
+    const Integer_t, 
+    const TIME >(
+      id, 
+      _species_addresses, 
+      params.reversible, 
+      r, 
+      params.reactants_sctry, 
+      params.products_sctry, 
+      a, 
+      it
+    );
+    // filter atomic model
+    auto efilter = make_atomic_ptr< filter<TIME, MSG>, const string>(id);
+    
+    // enzyme coupled model
+    place = getPlace(params.reactants_sctry, params.products_sctry);
+    _enzyme_models.at(place)[id] = make_shared<
+      flattened_coupled<TIME, MSG>,
+      vector<shared_ptr<model<TIME> > >,
+      vector<shared_ptr<model<TIME> > >,
+      vector<pair<shared_ptr<model<TIME>>, shared_ptr<model<TIME> > > >,
+      vector<shared_ptr<model<TIME> > > 
+    >(
+      {efilter, ereaction}, 
+      {efilter}, 
+      {{efilter, ereaction}}, 
+      {ereaction}
+    );
   }
 
 
   /******************* helpers *************************/
 
-  bool isNotSpecial(string id) const {
+  bool isNotSpecial(const string& id) const {
     return (id != _e) && (id != _p) && (id != _c);
   }
 
-  string compartmentsOf(string id) {
+  bool belong(string id, const map<string, string>& s) const {
+    bool result = false;
 
-    // TODO 
-  }
-
-  string getPlace(const enzyme_parameter_t& e) {
-
-  string result;
-  int amount_compartments;
-  string curr_space;
-  map<string, int> compartments;
-
-  for (map<string, string>::const_iterator i = _compartments.cbegin(); i != _compartments.cend(); ++i) {
-    compartments[i->first] = 0;
-  }
-
-  for (SetOfMolecules_t::const_iterator jt = e.reactants_sctry.cbegin(); jt != e.reactants_sctry.cend(); ++jt) {
-    compartments[compartmentsOf(jt->first)] += 1;
-  }
-
-  for (SetOfMolecules_t::const_iterator jt = e.products_sctry.cbegin(); jt != e.products_sctry.cend(); ++jt) {  
-    compartments[compartmentsOf(jt->first)] += 1;
-  }
-
-
-  ac = 0;
-  for (map<string, int>::iterator i = compartments.begin(); i != compartments.end(); ++i) {   
-    if (i->second > 0) ++ac;
-  }
-
-  switch(ac) {
-    case 1:
-
-      result = compartmentOfReactants(compartments) + "_i";
-      break;
-    case 2:
-
-      if (thereAreOrganelleInvolved(compartments, sp)) {
-        result = organelleOfReactants(compartments, sp) + "_m";
-      
-      } else if (compartments[_e] > 0){
-
-        result = _p + "_um";
-      } else if (compartments[_c] > 0) {
-
-        result = _p + "_lm";
-      } else if ((compartments[_e] > 0) && (compartments[_c] > 0)) {
-
-        result = _p + "_tm";
+    for (map<string, string>::const_iterator i = s.begin(); i != s.end(); ++i) {
+      if (id == i->first) {
+        result = true;
+        break;
       }
-      break;
-    case 3:
+    }
 
-      result = _p + "_tm";
-      break;
+    return result;
   }
 
-  return result;
-}
+  string compartmentsOf(string id) const {
+    string result;
+    bool comp_found = false;
+
+    for (map<string, map<string, string>>::const_iterator i = _species.begin(); i != _species.end(); ++i) {
+      if (belong(id, i->second)) {
+        result = i->first;
+        comp_found = true;
+        break;
+      }
+    }
+
+    if (!comp_found) assert(comp_found && "some stoichiometry species does not belong to any compartments.");
+
+    return result;
+  }
+
+  string getPlace(const SetOfMolecules_t& r, const SetOfMolecules_t& p) const {
+
+    string result;
+    int ac = 0;
+    map<string, int> comps;
+
+    for (map<string, string>::const_iterator i = _compartments.cbegin(); i != _compartments.cend(); ++i) {
+      comps.insert({i->first, 0});
+    }
+
+    for (SetOfMolecules_t::const_iterator jt = r.cbegin(); jt != r.cend(); ++jt) {
+      comps[this->compartmentsOf(jt->first)] += 1;
+    }
+
+    for (SetOfMolecules_t::const_iterator jt = p.cbegin(); jt != p.cend(); ++jt) {  
+      comps[this->compartmentsOf(jt->first)] += 1;
+    }
+
+    for (map<string, int>::iterator i = comps.begin(); i != comps.end(); ++i) {   
+      if (i->second > 0) ++ac;
+    }
+
+    switch(ac) {
+      case 1:
+
+        result = compOfReactant(comps) + "_i";
+        break;
+      case 2:
+
+        if (isOrganelleTransport(comps)) {
+          result = organelleOfReactant(comps) + "_m";
+        
+        } else if (comps[_e] > 0){
+
+          result = _p + "_um";
+        } else if (comps[_c] > 0) {
+
+          result = _p + "_lm";
+        } else if ((comps[_e] > 0) && (comps[_c] > 0)) {
+
+          result = _p + "_tm";
+        } else {
+
+          assert(false && "The specie stoichiometry belong to a wrong conbination of 2 compartments.");
+        }
+        break;
+      case 3:
+        if ((comps[_e] > 0) && (comps[_p] > 0) && (comps[_c] > 0))
+          result = _p + "_tm";
+        else
+          assert(false && "The specie stoichiometry belong to a wrong conbination of 3 compartments.");
+        break;
+    }
+
+    return result;
+  }
+
+  string compOfReactant(const map<string, int>& c) const {
+
+    string result;
+
+    for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+      
+      if (i->second > 0) {
+        result = i->first;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  bool isOrganelleTransport(const map<string, int>& c) const {
+
+    bool result = false;
+    bool not_special;
+
+    for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+      
+      not_special = (i->first != _e) && (i->first != _p) && (i->first != _c);
+      
+      if (not_special && (i->second > 0)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  string organelleOfReactant(const map<string, int>& c) const {
+
+    string result;
+    bool not_special;
+
+    for (map<string, int>::const_iterator i = c.cbegin(); i != c.cend(); ++i) {
+      
+      not_special = (i->first != _e) && (i->first != _p) && (i->first != _c);
+      
+      if (not_special && (i->second > 0)) {
+        result = i->first;
+        break;
+      }
+    }
+
+    return result;
+  }
+
 };
 
 #endif // BOOST_SIMULATION_PDEVS_MODEL_ENGINE_H
