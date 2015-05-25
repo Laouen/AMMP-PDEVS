@@ -11,6 +11,9 @@
 #include <limits>
 #include <memory>
 
+//vendors
+#include "vendors/britime.hpp"
+
 // Boost simalator include
 #include <boost/simulation.hpp>
 
@@ -28,8 +31,8 @@
 // tinyXML parser
 #include "parser/parser.hpp"
 
-//vendors
-#include "vendors/britime.hpp"
+// model engine
+#include "model-engine.hpp"
 
 #define TIXML_USE_STL
 
@@ -250,19 +253,42 @@ vector<string> getCompartments(const enzyme_parameter_t& e, const map<string, ma
 
 int main(int argc, char* argv[]) {
 
+  if (argc <= 1){
+    cout << "An SBML file is required." << endl;
+    exit(1);
+  }
 
   long double cell_weight   = 280 * 1e-15;  
   Integer_t norm_number     = 1;  
-  string special_places[3]  = {"e", "p", "c"};
+  string e                  = "e";
+  string c                  = "c";
+  string p                  = "p";
   string biomass_ID         = "R_Ec_biomass_iJO1366_WT_53p95M";
+
+  ModelEngine<Time_t, Message_t> m(cell_weight, argv[1], e, c, p, biomass_ID, norm_number);
+  m._comment_mode = true;
+  
+  m.createEnzymeAddresses();
+
+  vector<string> orgIDs = m.getOrganelleIds();
+
+  m.addCompartment("mitochondria");
+
+  
+  return 0;
+
+  //long double cell_weight   = 280 * 1e-15;  
+  //Integer_t norm_number     = 1;  
+  string special_places[3]  = {"e", "p", "c"};
+  //string biomass_ID         = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   /**************************************************************************************************************/
   /************************************* Parsing the SBML file **************************************************/
   /**************************************************************************************************************/
 
   if (argc <= 1){
-      cout << "An SBML file is required." << endl;
-      exit(1);
+    cout << "An SBML file is required." << endl;
+    exit(1);
   }
 
   Parser_t input_doc(argv[1], biomass_ID, cell_weight, norm_number);
@@ -832,7 +858,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   piss->str(input);
 
-  auto pf = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto pf = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, Message_t >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     int delimiter;
@@ -873,7 +899,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   piss->str(input);
 
-  auto so = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, string >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
+  auto so = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, Message_t >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
     string thrash;
