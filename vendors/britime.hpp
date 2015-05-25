@@ -1,9 +1,12 @@
 #ifndef BRITIME_H
 #define BRITIME_H
 
-#include <ostream>
+#include <iostream>
+#include <string>
 #include <assert.h>
 #include <boost/rational.hpp>
+
+using namespace std;
 
 class BRITime {
 
