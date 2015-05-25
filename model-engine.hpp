@@ -28,7 +28,7 @@ class ModelEngine {
 public:
 	bool   _model_ready, _comment_mode;
 	long double _cell_weight;
-	string _e, _c, _p, _b;
+	string _e, _c, _p, _biomass_ID;
 	Parser_t _doc;
 
   // Parser information
@@ -56,7 +56,7 @@ public:
 
   // Constructors
 	explicit ModelEngine(const long double cw, const char* fl, const string e, const string c, const string p, const string b, const Integer_t n) 
-  : _model_ready(false), _comment_mode(false), _cell_weight(cw), _doc(fl, b, cw, n), _e(e), _c(c), _p(p), _b(b) {
+  : _model_ready(false), _comment_mode(false), _cell_weight(cw), _doc(fl, b, cw, n), _e(e), _c(c), _p(p), _biomass_ID(b) {
 
     // Parsing the SBML file
     _doc.loadFile();
@@ -94,7 +94,7 @@ public:
     }
   }
 
-  void addCompartment(string c) {
+  void addCompartmentForEnzyme(const string& c) {
     if (_comment_mode) cout << "[Model engine] Adding new compartment: " << c << endl;
     _enzyme_models.insert({c + "_i", {}});
     _enzyme_models.insert({c + "_m", {}});
@@ -184,18 +184,112 @@ public:
     }
   }
 
+  void addCompartmentModel(const string& c, TIME it, TIME br, double v, double f) {
+    if (_comment_mode) cout << "[Model engine] adding compartment: " + c << endl;
 
-  /******************* helpers *************************/
+    map<string, enzyme_info_t> eis;
+    enzyme_info_t ei;
 
-  bool isNotSpecial(const string& id) const {
-    return (id != _e) && (id != _p) && (id != _c);
+    for (map<string, enzyme_parameter_t>::const_iterator i = _reactions.cbegin(); i != _reactions.end(); ++i) {
+
+      if (belong(c, getCompartments(i->second))) {
+
+        ei.location   = _enzyme_addresses->at(i->first);
+        ei.reactants  = getReactants(i->second);
+        eis.insert({i->first, ei});
+      }
+    }
+
+    // creating filter and space atomic models
+    auto cfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(c + "_s");
+    auto sm = make_atomic_ptr< 
+      space<TIME, MSG>, 
+      const string, 
+      const TIME,
+      const TIME,
+      const Address_t&,
+      const map<string, metabolite_info_t>&, 
+      const map<string, enzyme_info_t>&, 
+      const double, 
+      const double >(
+        c, 
+        it,
+        br,
+        {"biomass", _biomass_ID}, // biomass address
+        {}, // metabolites start as an empty map 
+        eis, 
+        v, 
+        f
+      );
+
+    // creating compartment coupled model;
+    _compartment_models[c] = make_shared<
+      flattened_coupled<TIME, MSG>,
+      vector<shared_ptr<model<TIME> > >,
+      vector<shared_ptr<model<TIME> > >,
+      vector<pair<shared_ptr<model<TIME>>, shared_ptr<model<TIME>> > >,
+      vector<shared_ptr<model<TIME> > > 
+    >(
+      {cfilter, sm}, 
+      {cfilter}, 
+      {{cfilter, sm}}, 
+      {sm}
+    );
   }
 
-  bool belong(string id, const map<string, string>& s) const {
+
+  /******************* helpers *************************/
+  vector<string> getReactants(const enzyme_parameter_t& e) const {
+    vector<string> result;
+
+    for (SetOfMolecules_t::const_iterator i = e.reactants_sctry.cbegin(); i != e.reactants_sctry.cend(); ++i) {
+      result.push_back(i->first);
+    }
+
+    if (e.reversible) {
+      for (SetOfMolecules_t::const_iterator i = e.products_sctry.cbegin(); i != e.products_sctry.cend(); ++i) {
+        result.push_back(i->first);
+      }
+    }
+    return result;
+  }
+
+  vector<string> getCompartments(const enzyme_parameter_t& e) {
+
+    vector<string> result;
+    map<string, int> comps;
+    string cs;
+
+    for (map<string, string>::const_iterator i = _compartments.cbegin(); i != _compartments.cend(); ++i) {
+      comps.insert({i->first, 0});
+    }
+
+    for (SetOfMolecules_t::const_iterator i = e.reactants_sctry.cbegin(); i != e.reactants_sctry.cend(); ++i) {
+      
+      comps[this->compartmentsOf(i->first)] += 1;
+    }
+
+    if (e.reversible) {
+
+      for (SetOfMolecules_t::const_iterator i = e.products_sctry.cbegin(); i != e.products_sctry.cend(); ++i) {
+        
+        comps[this->compartmentsOf(i->first)] += 1;
+      }
+    }
+
+    for (map<string, int>::iterator i = comps.begin(); i != comps.end(); ++i) {   
+      
+      if (i->second > 0) result.push_back(i->first);
+    }
+
+    return result;
+  }
+
+  bool belong(const string& c, const vector<string>& comps) {
     bool result = false;
 
-    for (map<string, string>::const_iterator i = s.begin(); i != s.end(); ++i) {
-      if (id == i->first) {
+    for (vector<string>::const_iterator i = comps.begin(); i != comps.end(); ++i) {
+      if (c == *i) {
         result = true;
         break;
       }
@@ -204,12 +298,16 @@ public:
     return result;
   }
 
+  bool isNotSpecial(const string& id) const {
+    return (id != _e) && (id != _p) && (id != _c);
+  }
+
   string compartmentsOf(string id) const {
     string result;
     bool comp_found = false;
 
     for (map<string, map<string, string>>::const_iterator i = _species.begin(); i != _species.end(); ++i) {
-      if (belong(id, i->second)) {
+      if (i->second.find(id) != i->second.cend()) {
         result = i->first;
         comp_found = true;
         break;

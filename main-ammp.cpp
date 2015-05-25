@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
 
   // adding the organelles compartments
   for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
-    if (m.isNotSpecial(i->first)) m.addCompartment(i->first);
+    if (m.isNotSpecial(i->first)) m.addCompartmentForEnzyme(i->first);
   }
 
   // creating the enzymes models
@@ -284,10 +284,11 @@ int main(int argc, char* argv[]) {
 
   m.createEnzymeAddresses();
 
-  for (map<string, Address_t>::iterator i = m._enzyme_addresses->begin(); i != m._enzyme_addresses->end(); ++i){
-    cout << i->first << ": " << i->second << endl;
+  // create compartments models
+  for (map<string, string>::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
+    m.addCompartmentModel(i->first, BRITime(1,100), BRITime(1,100), 0, 1);
   }
-  
+
   return 0;
 
   //long double cell_weight   = 280 * 1e-15;  
@@ -620,7 +621,7 @@ int main(int argc, char* argv[]) {
 
 
   /**************************************************************************************************************/
-  /************************************ Creaatin Enzyme coupled model *******************************************/
+  /********************************** Creaatin Enzyme set coupled model *****************************************/
   /**************************************************************************************************************/
 
 
@@ -653,7 +654,7 @@ int main(int argc, char* argv[]) {
 
 
   /**************************************************************************************************************/
-  /********************************** End creaatin Enzyme coupled model *****************************************/
+  /******************************** End creaatin Enzyme set coupled model ***************************************/
   /**************************************************************************************************************/
 
   /**************************************************************************************************************/

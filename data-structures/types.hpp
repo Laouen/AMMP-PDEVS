@@ -245,7 +245,7 @@ struct metabolite_info_t {
 
 struct enzyme_info_t {
 
-  Address_t          location;
+  Address_t       location;
   vector<string>  reactants;
 
   enzyme_info_t()
