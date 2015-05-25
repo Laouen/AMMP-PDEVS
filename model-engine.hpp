@@ -78,8 +78,8 @@ public:
     _enzyme_models.insert({_p + "_tm", {}});
   }
 
-  void createEnzymeAddresses() {
-    if (this->_comment_mode) cout << "[Model engine] Creating the enzyme addresses." << endl;
+  void createSpeciesAddresses() {
+    if (this->_comment_mode) cout << "[Model engine] Creating the specie addresses." << endl;
 
     Address_t na;
 
@@ -155,6 +155,33 @@ public:
       {{efilter, ereaction}}, 
       {ereaction}
     );
+  }
+
+  void createEnzymeAddresses() {
+    if (_comment_mode) cout << "[Model engine] Creating the enzyme addresses." << endl;
+    Address_t na;
+    string place;
+    //string sub_place;
+
+    _enzyme_addresses->clear();
+    
+    for (typename map< string, cmm_t<TIME, MSG>>::const_iterator i = _enzyme_models.cbegin(); i != _enzyme_models.cend(); ++i) {
+      
+      place       = i->first.substr(0, i->first.find_last_of("_"));
+      //sub_place   = i->first.substr(i->first.find_last_of("_") + 1);
+      
+      na.clear();
+      na.push_back(place);
+      na.push_back(i->first);
+      //if (sub_place == "i") na.push_back(place + "_s");
+
+      for (typename cmm_t<TIME, MSG>::const_iterator j = i->second.cbegin(); j != i->second.cend(); ++j) {
+
+        na.push_back(j->first);
+        _enzyme_addresses->insert({j->first, na});
+        na.pop_back();
+      }
+    }
   }
 
 

@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
   ModelEngine<Time_t, Message_t> m(cell_weight, argv[1], e, c, p, biomass_ID, norm_number);
   m._comment_mode = true;
   
-  m.createEnzymeAddresses();
+  m.createSpeciesAddresses();
 
   // adding the organelles compartments
   for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
@@ -282,6 +282,11 @@ int main(int argc, char* argv[]) {
   }
   m._comment_mode = true;
 
+  m.createEnzymeAddresses();
+
+  for (map<string, Address_t>::iterator i = m._enzyme_addresses->begin(); i != m._enzyme_addresses->end(); ++i){
+    cout << i->first << ": " << i->second << endl;
+  }
   
   return 0;
 
