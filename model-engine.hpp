@@ -454,6 +454,47 @@ public:
     )});
   }
 
+  void createCellModel() {
+    if (_comment_mode) cout << "[Model engine] creating the cell final model." << endl;
+
+    auto output_filter = make_atomic_ptr< filter<TIME, MSG>, const string>("output");
+    // making a trivial coupled model of output_filter in order to solve the bug with coupled to atomic
+    shared_ptr<flattened_coupled<TIME, MSG>> ocf(new flattened_coupled<TIME, MSG>(
+      {output_filter}, {output_filter}, {}, {output_filter}));
+
+    vm_t<TIME> models  = {_extra_cellular_model, _periplasm_model, _cytoplasm_model, /*_biomass_model,*/ ocf};
+    vm_t<TIME> eic     = {_extra_cellular_model, _periplasm_model, _cytoplasm_model};
+    for (typename cmm_t<TIME, MSG>::iterator i = _organelle_models.begin(); i != _organelle_models.end(); ++i) {
+      eic.push_back(i->second);
+    }
+    vm_t<TIME> eoc  = {ocf};
+    vmp_t<TIME> ic  = {
+      {_extra_cellular_model, _periplasm_model},
+      {_periplasm_model, _cytoplasm_model},
+      {_cytoplasm_model, _periplasm_model},
+      {_periplasm_model, _extra_cellular_model},
+      // biomass
+      /*{_biomass_model, _extra_cellular_model},
+      {_biomass_model, _periplasm_model},
+      {_biomass_model, _cytoplasm_model},
+      {_extra_cellular_model, _biomass_model},
+      {_periplasm_model, _biomass_model},
+      {_cytoplasm_model, _biomass_model},*/
+      // outputs
+      {_extra_cellular_model, ocf},
+      {_cytoplasm_model, ocf},
+      {_periplasm_model, ocf}
+    };
+
+    for (typename cmm_t<TIME, MSG>::const_iterator i = _organelle_models.begin(); i != _organelle_models.end(); ++i) {
+      ic.push_back({_cytoplasm_model, i->second});
+      ic.push_back({i->second, _cytoplasm_model});
+    }
+
+    shared_ptr<flattened_coupled<TIME, MSG>> cm(new flattened_coupled<TIME, MSG>(models, eic, ic, eoc));
+    _cell_model = cm;
+  }
+
 
   /******************* helpers *************************/
   vector<string> getReactants(const enzyme_parameter_t& e) const {

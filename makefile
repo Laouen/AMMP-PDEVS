@@ -4,14 +4,15 @@ INCLUDEBOOST=-I /home/lao/boost_1_57_0
 INCLUDEBCDPP=-I /home/lao/cdboost/include
 MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/space.hpp atomic-models/biomass.hpp
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
-STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp model-engine.hpp
+STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp data-structures/britime.hpp
+ME=model-engine.hpp
 PARSERHEADERS=parser/parser.hpp
-VENDORHEADERS=vendors/britime.hpp
+VENDORHEADERS=vendors/pdevs_tools.hpp
 
 all: main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o data-structures/types.o parser/parser.o
 	$(CC) -g -o ammp main-ammp.o tinyXML/tinyxml.o tinyXML/tinyxmlerror.o tinyXML/tinyxmlparser.o tinyXML/tinystr.o data-structures/unit_definition.o parser/parser.o data-structures/types.o
 
-main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS) $(VENDORHEADERS)
+main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $(PARSERHEADERS) $(VENDORHEADERS) $(ME)
 	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
