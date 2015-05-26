@@ -21,21 +21,21 @@
 using namespace std;
 
 template<class TIME>
-using vm_t  = vector< shared_ptr< model<TIME> > >;
+using vm_t  = vector<shared_ptr< model<TIME>>>;
 template<class TIME>
-using vmp_t = vector< pair< shared_ptr< model<TIME> >, shared_ptr< model<TIME> > > >;
+using vmp_t = vector<pair< shared_ptr< model<TIME>>, shared_ptr< model<TIME>>>>;
 template<class TIME>
-using mm_t  = map<string, shared_ptr< model<TIME> > >;
+using mm_t  = map<string, shared_ptr< model<TIME>>>;
 template<class TIME,class MSG>
-using vcm_t = vector< shared_ptr< flattened_coupled<TIME, MSG> > >;
+using vcm_t = vector< shared_ptr<flattened_coupled<TIME, MSG>>>;
 template<class TIME,class MSG>
-using cmm_t = map<string, shared_ptr< flattened_coupled<TIME, MSG> > >;
+using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
 
 template<class TIME,class MSG>
 class ModelEngine {
 
 public:
-	bool   _model_ready, _comment_mode;
+	bool   _model_ready, _comment_mode, _eca;
 	long double _cell_weight;
 	string _e, _c, _p, _biomass_ID;
 	Parser_t _doc;
@@ -55,7 +55,7 @@ public:
 	map< string, cmm_t<TIME, MSG>> 	           _enzyme_models;
 	cmm_t<TIME, MSG> 					                 _compartment_models;
 	cmm_t<TIME, MSG>                           _enzyme_set_models;
-	vcm_t<TIME, MSG>                           _organelle_models;
+	cmm_t<TIME, MSG>                           _organelle_models;
 	shared_ptr<flattened_coupled<TIME, MSG>>   _extra_cellular_model;
 	shared_ptr<flattened_coupled<TIME, MSG>>   _periplasm_model;
 	shared_ptr<flattened_coupled<TIME, MSG>>   _cytoplasm_model;
@@ -65,7 +65,7 @@ public:
 
   // Constructors
 	explicit ModelEngine(const long double cw, const char* fl, const string e, const string c, const string p, const string b, const Integer_t n) 
-  : _model_ready(false), _comment_mode(false), _cell_weight(cw), _doc(fl, b, cw, n), _e(e), _c(c), _p(p), _biomass_ID(b) {
+  : _model_ready(false), _comment_mode(false), _eca(true), _cell_weight(cw), _doc(fl, b, cw, n), _e(e), _c(c), _p(p), _biomass_ID(b) {
 
     // Parsing the SBML file
     _doc.loadFile();
@@ -123,6 +123,7 @@ public:
 
   void addEnzymeModel(const string& id, TIME it, TIME r, Integer_t a) {
     assert(_reactions.find(id) != _reactions.end());
+    assert(_eca && "the enzyme creation is closed.");
     
     if (_comment_mode) cout << "[Model engine] Adding new enzyme model: " << id << endl;
 
@@ -195,91 +196,98 @@ public:
     }
   }
 
-  void addCompartmentModel(const string& c, TIME it, TIME br, double v, double f) {
-    if (_comment_mode) cout << "[Model engine] adding compartment: " + c << endl;
+  shared_ptr<flattened_coupled<TIME, MSG>> createCompartmentModel(const string& c, TIME it, TIME br, double v, double f) {
+    if (_comment_mode) cout << "[Model engine] creating compartment: " + c << endl;
 
-    map<string, enzyme_info_t> eis;
-    enzyme_info_t ei;
+    if (_compartment_models.find(c) == _compartment_models.end()){
 
-    for (map<string, enzyme_parameter_t>::const_iterator i = _reactions.cbegin(); i != _reactions.end(); ++i) {
+      map<string, enzyme_info_t> eis;
+      enzyme_info_t ei;
 
-      if (belong(c, getCompartments(i->second))) {
+      for (map<string, enzyme_parameter_t>::const_iterator i = _reactions.cbegin(); i != _reactions.end(); ++i) {
 
-        ei.location   = _enzyme_addresses->at(i->first);
-        ei.reactants  = getReactants(i->second);
-        eis.insert({i->first, ei});
+        if (belong(c, getCompartments(i->second))) {
+
+          ei.location   = _enzyme_addresses->at(i->first);
+          ei.reactants  = getReactants(i->second);
+          eis.insert({i->first, ei});
+        }
       }
+
+      // creating filter and space atomic models
+      auto cfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(c + "_s");
+      auto sm = make_atomic_ptr< 
+        space<TIME, MSG>, 
+        const string, 
+        const TIME,
+        const TIME,
+        const Address_t&,
+        const map<string, metabolite_info_t>&, 
+        const map<string, enzyme_info_t>&, 
+        const double, 
+        const double >(
+          c, 
+          it,
+          br,
+          {"biomass", _biomass_ID}, // biomass address
+          {}, // metabolites start as an empty map 
+          eis, 
+          v, 
+          f
+        );
+
+      // creating compartment coupled model;
+      _compartment_models.insert({c, make_shared<
+        flattened_coupled<TIME, MSG>,
+        vector<shared_ptr<model<TIME> > >,
+        vector<shared_ptr<model<TIME> > >,
+        vector<pair<shared_ptr<model<TIME>>, shared_ptr<model<TIME>> > >,
+        vector<shared_ptr<model<TIME> > > 
+      >(
+        {cfilter, sm}, 
+        {cfilter}, 
+        {{cfilter, sm}}, 
+        {sm}
+      )});
     }
 
-    // creating filter and space atomic models
-    auto cfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(c + "_s");
-    auto sm = make_atomic_ptr< 
-      space<TIME, MSG>, 
-      const string, 
-      const TIME,
-      const TIME,
-      const Address_t&,
-      const map<string, metabolite_info_t>&, 
-      const map<string, enzyme_info_t>&, 
-      const double, 
-      const double >(
-        c, 
-        it,
-        br,
-        {"biomass", _biomass_ID}, // biomass address
-        {}, // metabolites start as an empty map 
-        eis, 
-        v, 
-        f
-      );
-
-    // creating compartment coupled model;
-    _compartment_models[c] = make_shared<
-      flattened_coupled<TIME, MSG>,
-      vector<shared_ptr<model<TIME> > >,
-      vector<shared_ptr<model<TIME> > >,
-      vector<pair<shared_ptr<model<TIME>>, shared_ptr<model<TIME>> > >,
-      vector<shared_ptr<model<TIME> > > 
-    >(
-      {cfilter, sm}, 
-      {cfilter}, 
-      {{cfilter, sm}}, 
-      {sm}
-    );
+    return _compartment_models.at(c);
   }
 
-  void createEnzymeSetModels() {
-    if (_comment_mode) cout << "[Model engine] creating enzyme set models." << endl;
+  shared_ptr<flattened_coupled<TIME, MSG>> createEnzymeSetModel(const string& es) {
+    if (_comment_mode) cout << "[Model engine] creating enzyme set models: " << es << endl;
+
     vector<shared_ptr<model<TIME>>> models, eic, eoc;
     vmp_t<TIME> ic;
 
-    for (typename map<string, cmm_t<TIME, MSG>>::const_iterator i = _enzyme_models.begin(); i != _enzyme_models.end(); ++i) {    
-      
-      models.clear();
-      eic.clear();
-      eoc.clear();
-      ic.clear();
+    if (_enzyme_set_models.find(es) == _enzyme_set_models.end()) {
 
-      auto esfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(i->first);
+      cmm_t<TIME, MSG> ensymes = _enzyme_models.at(es);
+
+      auto esfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(es);
       models.push_back(esfilter);
       eic.push_back(esfilter);
       
-      for (typename cmm_t<TIME, MSG>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
+      for (typename cmm_t<TIME, MSG>::const_iterator j = ensymes.begin(); j != ensymes.end(); ++j) {
         models.push_back(j->second);
         eoc.push_back(j->second);
         ic.push_back({esfilter, j->second});
       }
 
       shared_ptr<flattened_coupled<TIME, MSG>> esm(new flattened_coupled<TIME, MSG>(models, eic, ic, eoc));
-      _enzyme_set_models.insert({i->first, esm});
+      _enzyme_set_models.insert({es, esm});
     }
+
+    return _enzyme_set_models.at(es);
+
   }
 
-  void createCytoplasmModel() {
+  void createCytoplasmModel(TIME it, TIME br, double v, double f) {
     if (_comment_mode) cout << "[Model engine] creating cytoplasm model." << endl;
+    
     auto cytoplasm_filter     = make_atomic_ptr< filter<TIME, MSG>, const string>(_c);
-    auto cytoplasm_space      = _compartment_models.at(_c);
-    auto cytoplasm_inner      = _enzyme_set_models.at(_c + "_i");
+    auto cytoplasm_space      = this->createCompartmentModel(_c, it, br, v, f);
+    auto cytoplasm_inner      = this->createEnzymeSetModel(_c + "_i");
 
     shared_ptr<flattened_coupled<TIME, MSG>> cm(new flattened_coupled<TIME, MSG>(
       {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
@@ -295,12 +303,13 @@ public:
     _cytoplasm_model = cm;
   }
   
-  void createPeriplasmModel() {
+  void createPeriplasmModel(TIME it, TIME br, double v, double f) {
     if (_comment_mode) cout << "[Model engine] creating periplasm model." << endl;
 
     // periplasm filter
     auto periplasm_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p);
     // periplasm request filters
+    auto init_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p + "_init");
     auto out_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p + "_or");
     auto bio_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p + "_br");
     // periplasm output filters
@@ -317,18 +326,19 @@ public:
       {pbf}, {pbf}, {}, {pbf}
     ));
 
-    auto periplasm_space      = _compartment_models.at(_p);
-    auto trans_membrane       = _enzyme_set_models.at(_p + "_tm");
-    auto outer_membrane       = _enzyme_set_models.at(_p + "_um");
-    auto inner_membrane       = _enzyme_set_models.at(_p + "_lm");
-    auto periplasm_inner      = _enzyme_set_models.at(_p + "_i");
+    auto periplasm_space      = this->createCompartmentModel(_p, it, br, v, f);
+    auto trans_membrane       = this->createEnzymeSetModel(_p + "_tm");
+    auto outer_membrane       = this->createEnzymeSetModel(_p + "_um");
+    auto inner_membrane       = this->createEnzymeSetModel(_p + "_lm");
+    auto periplasm_inner      = this->createEnzymeSetModel(_p + "_i");
 
-    shared_ptr<flattened_coupled<TIME, MSG>> periplasm_model(new flattened_coupled<TIME, MSG>(
-      {periplasm_filter, out_filter, bio_filter, pocf, pbcf, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
-      {periplasm_filter, out_filter, bio_filter}, 
+    shared_ptr<flattened_coupled<TIME, MSG>> pm(new flattened_coupled<TIME, MSG>(
+      {periplasm_filter, out_filter, bio_filter, init_filter, pocf, pbcf, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
+      {periplasm_filter, out_filter, bio_filter, init_filter}, 
       {
         {out_filter, periplasm_space},
         {bio_filter, periplasm_space},
+        {init_filter, periplasm_space},
         {periplasm_filter, trans_membrane}, 
         {periplasm_filter, outer_membrane}, 
         {periplasm_filter, inner_membrane}, 
@@ -345,14 +355,16 @@ public:
       }, 
       {trans_membrane, outer_membrane, inner_membrane, pocf, pbcf}
     ));
+
+    _periplasm_model = pm;
   }
   
-  void createExtraCellularModel() {
+  void createExtraCellularModel(TIME it, TIME br, double v, double f) {
     if (_comment_mode) cout << "[Model engine] creating extra cellular model." << endl;
 
     auto extra_cellular_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_e);
-    auto extra_cellular_space  = _compartment_models.at(_e);
-    auto extra_cellular_inner  = _enzyme_set_models.at(_e + "_i");
+    auto extra_cellular_space  = this->createCompartmentModel(_e, it, br, v, f);
+    auto extra_cellular_inner  = this->createEnzymeSetModel(_e + "_i");
 
     shared_ptr<flattened_coupled<TIME, MSG>> ecm(new flattened_coupled<TIME, MSG>(
       {extra_cellular_filter, extra_cellular_space, extra_cellular_inner}, 
@@ -400,7 +412,7 @@ public:
         r
       );
 
-    shared_ptr<flattened_coupled<TIME, MSG>> biomass_model(new flattened_coupled<TIME, MSG>(
+    shared_ptr<flattened_coupled<TIME, MSG>> bm(new flattened_coupled<TIME, MSG>(
       {biofilter, biomass_a}, 
       {biofilter}, 
       {
@@ -408,6 +420,38 @@ public:
       }, 
       {biomass_a}
     ));
+
+    _biomass_model = bm;
+  }
+
+  void addOrganelleModel(const string& o, TIME it, TIME br, double v, double f) {
+    if (_comment_mode) cout << "[Model engine] adding organelle model" << endl;
+    assert(isNotSpecial(o) && "The organelle id can not be a special compartment.");
+        
+    auto init_filter        = make_atomic_ptr< filter<TIME, MSG>, const string>(o + "_init");
+    auto organelle_filter   = make_atomic_ptr< filter<TIME, MSG>, const string>(o);
+    auto organelle_space    = this->createCompartmentModel(o, it, br, v, f);
+    auto organelle_membrane = this->createEnzymeSetModel(o + "_m");
+    auto organelle_inner    = this->createEnzymeSetModel(o + "_i");
+    _organelle_models.insert({o, make_shared<
+      flattened_coupled<TIME, MSG>,
+      vector<shared_ptr<model<TIME> > >,
+      vector<shared_ptr<model<TIME> > >,
+      vector<pair<shared_ptr<model<TIME>>, shared_ptr<model<TIME>> > >,
+      vector<shared_ptr<model<TIME> > > 
+    >(
+      {organelle_filter, init_filter, organelle_membrane, organelle_space, organelle_inner}, 
+      {organelle_filter, init_filter}, 
+      {
+        {init_filter, organelle_space},
+        {organelle_filter, organelle_membrane},
+        {organelle_membrane, organelle_space},
+        {organelle_space, organelle_inner},
+        {organelle_inner, organelle_space},
+        {organelle_space, organelle_membrane}
+      }, 
+      {organelle_membrane}
+    )});
   }
 
 

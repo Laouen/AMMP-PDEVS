@@ -284,18 +284,18 @@ int main(int argc, char* argv[]) {
 
   m.createEnzymeAddresses();
 
-  // create compartments models
-  for (map<string, string>::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
-    m.addCompartmentModel(i->first, BRITime(1,100), BRITime(1,100), 0, 1);
-  }
+  m.createCytoplasmModel(BRITime(1,100), BRITime(1,100), 0, 1);
 
-  m.createEnzymeSetModels();
-
-  m.createCytoplasmModel();
-
-  m.createExtraCellularModel();
+  m.createExtraCellularModel(BRITime(1,100), BRITime(1,100), 0, 1);
   
-  m.createPeriplasmModel();
+  m.createPeriplasmModel(BRITime(1,100), BRITime(1,100), 0, 1);
+
+  m.createBiomassModel(BRITime(1,10), BRITime(1,100));
+
+  // creating the organelles
+  for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
+    if (m.isNotSpecial(i->first)) m.addOrganelleModel(i->first, BRITime(1,100), BRITime(1,100), 0, 1);
+  }
 
   return 0;
 
@@ -756,7 +756,7 @@ int main(int argc, char* argv[]) {
   ));
 
   cout << "Creating organelles coupled models." << endl;
-  vectorOfCoupledModels_t organelle_models;
+vectorOfCoupledModels_t organelle_models;
 
   for (coupledModelsMap_t::iterator it = compartment_models.begin(); it != compartment_models.end(); ++it) {
 
