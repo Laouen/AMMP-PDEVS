@@ -15,6 +15,9 @@
 // model engine
 #include "model-engine.hpp"
 
+// include vendors
+#include "vendors/pdevs_tools.hpp"
+
 #define TIXML_USE_STL
 
 using namespace std;
@@ -22,11 +25,13 @@ using namespace boost::simulation;
 using namespace boost::simulation::pdevs;
 using namespace boost::simulation::pdevs::basic_models;
 
-using Time_t                  = BRITime;
-using hclock_t                = chrono::high_resolution_clock;
+using Time_t   = BRITime;
+using hclock_t = chrono::high_resolution_clock;
 
 
 int main(int argc, char* argv[]) {
+
+  bool comment_mode = true;
 
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
@@ -41,7 +46,7 @@ int main(int argc, char* argv[]) {
   string biomass_ID         = "R_Ec_biomass_iJO1366_WT_53p95M";
 
   ModelEngine<Time_t, Message_t> m(cell_weight, argv[1], e, c, p, biomass_ID, norm_number);
-  m._comment_mode = true;
+  m._comment_mode = comment_mode;
   
   m.createSpeciesAddresses();
 
@@ -55,7 +60,7 @@ int main(int argc, char* argv[]) {
   for (map<string, enzyme_parameter_t >::const_iterator i = m._reactions.begin(); i != m._reactions.end(); ++i) {
       m.addEnzymeModel(i->first, BRITime(1), BRITime(1,100), Integer_t(40));
   }
-  m._comment_mode = true;
+  m._comment_mode = comment_mode;
 
   m.createEnzymeAddresses();
 
@@ -79,9 +84,7 @@ int main(int argc, char* argv[]) {
   /************************************** Runing Simulation ********************************************/
   /*****************************************************************************************************/
 
-  cout << "Testing cytoplasm coupled model with filter" << endl;
-
-  cout << "Creating the model to insert the input from stream" << endl;
+  if (comment_mode) cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   string input = "";
 
@@ -123,7 +126,7 @@ int main(int argc, char* argv[]) {
   });
 
 
-  cout << "Creating the model to show the space state from stream" << endl;
+  if (comment_mode) cout << "Creating the model to show the space state from stream" << endl;
   piss = make_shared<istringstream>();
   input = "";
 
@@ -155,7 +158,7 @@ int main(int argc, char* argv[]) {
   });
 
 
-  cout << "Coupling the input to the model" << endl;
+  if (comment_mode) cout << "Coupling the input to the model" << endl;
   shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
     {pf, so, m._cell_model}, 
     {}, 
@@ -166,10 +169,14 @@ int main(int argc, char* argv[]) {
     {m._cell_model}
   });
 
-  cout << "Preparing runner" << endl;
+  //pdevs_tools::pdevs_coupling_diagram<Time_t, Message_t> pd{*root};
+  //string puml_result = pd.get_plant_uml();
+  //cout << puml_result;
+
+  if (comment_mode) cout << "Preparing runner" << endl;
   runner<Time_t, Message_t> r(root, Time_t(0), cout, [](ostream& os, Message_t m){  os << m; });
 
-  cout << "Starting simulation until passivate" << endl;
+  if (comment_mode) cout << "Starting simulation until passivate" << endl;
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
@@ -177,7 +184,7 @@ int main(int argc, char* argv[]) {
 
   auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
-  cout << "Simulation took:" << elapsed << "sec" << endl;
+  if (comment_mode) cout << "Simulation took:" << elapsed << "sec" << endl;
 
   return 0;
 }
