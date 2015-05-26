@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 #include <map>
+#include <vector>
+#include <assert.h>
 
 #include "parser/parser.hpp"
 #include "data-structures/types.hpp"
@@ -19,17 +21,9 @@
 #include "atomic-models/biomass.hpp"
 
 using namespace std;
-
-template<class TIME>
-using vm_t  = vector<shared_ptr< model<TIME>>>;
-template<class TIME>
-using vmp_t = vector<pair< shared_ptr< model<TIME>>, shared_ptr< model<TIME>>>>;
-template<class TIME>
-using mm_t  = map<string, shared_ptr< model<TIME>>>;
-template<class TIME,class MSG>
-using vcm_t = vector< shared_ptr<flattened_coupled<TIME, MSG>>>;
-template<class TIME,class MSG>
-using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
+using namespace boost::simulation;
+using namespace boost::simulation::pdevs;
+using namespace boost::simulation::pdevs::basic_models;
 
 template<class TIME,class MSG>
 class ModelEngine {

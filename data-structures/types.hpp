@@ -7,8 +7,13 @@
 #include <vector>
 #include <map>
 
+#include <boost/simulation.hpp>
+
 
 using namespace std;
+using namespace boost::simulation;
+using namespace boost::simulation::pdevs;
+using namespace boost::simulation::pdevs::basic_models;
 
 /******************************************/
 /********** Enums and renames *************/
@@ -28,6 +33,24 @@ using SetOfMolecules_t  = map<string, Integer_t>;
 /******** End enums and renames ***********/
 /******************************************/
 
+/******************************************/
+/************** models type ***************/
+/******************************************/
+
+template<class TIME>
+using vm_t  = vector<shared_ptr< model<TIME>>>;
+template<class TIME>
+using vmp_t = vector<pair< shared_ptr< model<TIME>>, shared_ptr< model<TIME>>>>;
+template<class TIME>
+using mm_t  = map<string, shared_ptr< model<TIME>>>;
+template<class TIME,class MSG>
+using vcm_t = vector< shared_ptr<flattened_coupled<TIME, MSG>>>;
+template<class TIME,class MSG>
+using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
+
+/******************************************/
+/************ End models type *************/
+/******************************************/
 
 /******************************************/
 /************ Parser types ****************/

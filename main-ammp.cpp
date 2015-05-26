@@ -3,19 +3,14 @@
 #include <string>
 #include <map>
 #include <chrono>
-#include <algorithm>
-#include <cmath>
-#include <stdlib.h>
 #include <memory>
 
-// Time type
+// data structures
 #include "data-structures/britime.hpp"
+#include "data-structures/types.hpp"
 
 // Boost simalator include
 #include <boost/simulation.hpp>
-
-// tinyXML parser
-#include "parser/parser.hpp"
 
 // model engine
 #include "model-engine.hpp"

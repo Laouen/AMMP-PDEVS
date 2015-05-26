@@ -7,7 +7,6 @@
 #include <utility> // pair
 #include <algorithm> // min, max, lowe_bound
 #include <memory> // shared_ptr
-#include <random> // rand
 #include <limits> // numeric_limits
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include

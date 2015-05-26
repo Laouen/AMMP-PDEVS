@@ -28,13 +28,13 @@ tinyXML/tinystr.o: tinyXML/tinystr.cpp tinyXML/tinystr.h $(TINYHEADERS)
 	$(CC) -g -c tinyXML/tinystr.cpp -o tinyXML/tinystr.o
 
 data-structures/unit_definition.o: data-structures/unit_definition.cpp data-structures/unit_definition.hpp
-	$(CC) -g -c data-structures/unit_definition.cpp -o data-structures/unit_definition.o
+	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) data-structures/unit_definition.cpp -o data-structures/unit_definition.o
 
 parser/parser.o: parser/parser.cpp parser/parser.hpp $(STRUCTUREHEADERS)
-	$(CC) -g -c $(CFLAGS) parser/parser.cpp -o parser/parser.o
+	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) parser/parser.cpp -o parser/parser.o
 
 data-structures/types.o: data-structures/types.cpp data-structures/types.hpp
-	$(CC) -g -c $(CFLAGS) data-structures/types.cpp -o data-structures/types.o
+	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) data-structures/types.cpp -o data-structures/types.o
 
 clean:
 	rm -f ammp *.o *~
