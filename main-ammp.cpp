@@ -291,6 +291,12 @@ int main(int argc, char* argv[]) {
 
   m.createEnzymeSetModels();
 
+  m.createCytoplasmModel();
+
+  m.createExtraCellularModel();
+  
+  m.createPeriplasmModel();
+
   return 0;
 
   //long double cell_weight   = 280 * 1e-15;  

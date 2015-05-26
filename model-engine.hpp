@@ -9,6 +9,15 @@
 #include "parser/parser.hpp"
 #include "data-structures/types.hpp"
 
+// Boost simalator include
+#include <boost/simulation.hpp>
+
+// atomic model includes
+#include "atomic-models/filter.hpp"
+#include "atomic-models/reaction.hpp"
+#include "atomic-models/space.hpp"
+#include "atomic-models/biomass.hpp"
+
 using namespace std;
 
 template<class TIME>
@@ -264,6 +273,99 @@ public:
     }
   }
 
+  void createCytoplasmModel() {
+    if (_comment_mode) cout << "[Model engine] creating cytoplasm model." << endl;
+    auto cytoplasm_filter     = make_atomic_ptr< filter<TIME, MSG>, const string>(_c);
+    auto cytoplasm_space      = _compartment_models.at(_c);
+    auto cytoplasm_inner      = _enzyme_set_models.at(_c + "_i");
+
+    shared_ptr<flattened_coupled<TIME, MSG>> cm(new flattened_coupled<TIME, MSG>(
+      {cytoplasm_filter, cytoplasm_space, cytoplasm_inner}, 
+      {cytoplasm_filter}, 
+      {
+        {cytoplasm_filter, cytoplasm_space}, 
+        {cytoplasm_space, cytoplasm_inner}, 
+        {cytoplasm_inner, cytoplasm_space}
+      }, 
+      {cytoplasm_space}
+    ));
+
+    _cytoplasm_model = cm;
+  }
+  
+  void createPeriplasmModel() {
+    if (_comment_mode) cout << "[Model engine] creating periplasm model." << endl;
+
+    // periplasm filter
+    auto periplasm_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p);
+    // periplasm request filters
+    auto out_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p + "_or");
+    auto bio_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_p + "_br");
+    // periplasm output filters
+    auto pof = make_atomic_ptr< filter<TIME, MSG>, const string>("output");
+    auto pbf = make_atomic_ptr< filter<TIME, MSG>, const string>("biomass");
+    
+    // making a trivial coupled model of pof in order to solve the bug with coupled to atomic
+    shared_ptr<flattened_coupled<TIME, MSG>> pocf(new flattened_coupled<TIME, MSG>(
+      {pof}, {pof}, {}, {pof}
+    ));
+
+    // making a trivial coupled model of pbf in order to solve the bug with coupled to atomic
+    shared_ptr<flattened_coupled<TIME, MSG>> pbcf(new flattened_coupled<TIME, MSG>(
+      {pbf}, {pbf}, {}, {pbf}
+    ));
+
+    auto periplasm_space      = _compartment_models.at(_p);
+    auto trans_membrane       = _enzyme_set_models.at(_p + "_tm");
+    auto outer_membrane       = _enzyme_set_models.at(_p + "_um");
+    auto inner_membrane       = _enzyme_set_models.at(_p + "_lm");
+    auto periplasm_inner      = _enzyme_set_models.at(_p + "_i");
+
+    shared_ptr<flattened_coupled<TIME, MSG>> periplasm_model(new flattened_coupled<TIME, MSG>(
+      {periplasm_filter, out_filter, bio_filter, pocf, pbcf, periplasm_space, trans_membrane, outer_membrane, inner_membrane, periplasm_inner}, 
+      {periplasm_filter, out_filter, bio_filter}, 
+      {
+        {out_filter, periplasm_space},
+        {bio_filter, periplasm_space},
+        {periplasm_filter, trans_membrane}, 
+        {periplasm_filter, outer_membrane}, 
+        {periplasm_filter, inner_membrane}, 
+        {trans_membrane, periplasm_space}, 
+        {outer_membrane, periplasm_space}, 
+        {inner_membrane, periplasm_space}, 
+        {periplasm_space, trans_membrane}, 
+        {periplasm_space, outer_membrane}, 
+        {periplasm_space, inner_membrane}, 
+        {periplasm_space, periplasm_inner}, 
+        {periplasm_inner, periplasm_space},
+        {periplasm_space, pocf},
+        {periplasm_space, pbcf}
+      }, 
+      {trans_membrane, outer_membrane, inner_membrane, pocf, pbcf}
+    ));
+  }
+  
+  void createExtraCellularModel() {
+    if (_comment_mode) cout << "[Model engine] creating extra cellular model." << endl;
+
+    auto extra_cellular_filter = make_atomic_ptr< filter<TIME, MSG>, const string>(_e);
+    auto extra_cellular_space  = _compartment_models.at(_e);
+    auto extra_cellular_inner  = _enzyme_set_models.at(_e + "_i");
+
+    shared_ptr<flattened_coupled<TIME, MSG>> ecm(new flattened_coupled<TIME, MSG>(
+      {extra_cellular_filter, extra_cellular_space, extra_cellular_inner}, 
+      {extra_cellular_filter}, 
+      {
+        {extra_cellular_filter, extra_cellular_space},
+        {extra_cellular_space, extra_cellular_inner},
+        {extra_cellular_inner, extra_cellular_space}
+      }, 
+      {extra_cellular_space}
+    ));
+
+    _extra_cellular_model = ecm;
+  }
+
 
   /******************* helpers *************************/
   vector<string> getReactants(const enzyme_parameter_t& e) const {
@@ -326,6 +428,7 @@ public:
   }
 
   bool isNotSpecial(const string& id) const {
+    
     return (id != _e) && (id != _p) && (id != _c);
   }
 
