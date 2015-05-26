@@ -289,6 +289,8 @@ int main(int argc, char* argv[]) {
     m.addCompartmentModel(i->first, BRITime(1,100), BRITime(1,100), 0, 1);
   }
 
+  m.createEnzymeSetModels();
+
   return 0;
 
   //long double cell_weight   = 280 * 1e-15;  

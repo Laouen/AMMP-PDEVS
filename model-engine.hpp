@@ -237,6 +237,33 @@ public:
     );
   }
 
+  void createEnzymeSetModels() {
+    if (_comment_mode) cout << "[Model engine] creating enzyme set models." << endl;
+    vector<shared_ptr<model<TIME>>> models, eic, eoc;
+    vmp_t<TIME> ic;
+
+    for (typename map<string, cmm_t<TIME, MSG>>::const_iterator i = _enzyme_models.begin(); i != _enzyme_models.end(); ++i) {    
+      
+      models.clear();
+      eic.clear();
+      eoc.clear();
+      ic.clear();
+
+      auto esfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(i->first);
+      models.push_back(esfilter);
+      eic.push_back(esfilter);
+      
+      for (typename cmm_t<TIME, MSG>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
+        models.push_back(j->second);
+        eoc.push_back(j->second);
+        ic.push_back({esfilter, j->second});
+      }
+
+      shared_ptr<flattened_coupled<TIME, MSG>> esm(new flattened_coupled<TIME, MSG>(models, eic, ic, eoc));
+      _enzyme_set_models.insert({i->first, esm});
+    }
+  }
+
 
   /******************* helpers *************************/
   vector<string> getReactants(const enzyme_parameter_t& e) const {
