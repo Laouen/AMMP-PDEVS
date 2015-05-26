@@ -1,0 +1,82 @@
+@startuml
+class top::in <<(I, green) >>
+class top::out <<(O, orange) >>
+class boost::simulation::pdevs::basic_models::input_stream_0x15b3c30<BRITime, Message_t, BRITime, Message_t><<(A, yellow) >>
+class boost::simulation::pdevs::basic_models::input_stream_0x15b43e0<BRITime, Message_t, BRITime, Message_t><<(A, yellow) >>
+class filter_0x15acae0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15acd00<BRITime, Message_t><<(A, yellow) >>
+class space_0x15acd60<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15ac9b0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15af8f0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15af9b0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15afa10<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15af950<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15afaa0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15afb30<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15afe40<BRITime, Message_t><<(A, yellow) >>
+class space_0x15afef0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15b2830<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15b29f0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15b2ba0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15b2d50<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15a9b00<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15a9c80<BRITime, Message_t><<(A, yellow) >>
+class space_0x15a9ce0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15a9ba0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15a9770<BRITime, Message_t><<(A, yellow) >>
+class reaction_0x15a80a0<BRITime, Message_t><<(A, yellow) >>
+class filter_0x15b3790<BRITime, Message_t><<(A, yellow) >>
+"filter_0x15b3790" --> top::out
+"filter_0x15acd00" --|> "space_0x15acd60"
+"filter_0x15acae0" --|> "filter_0x15acd00"
+"space_0x15acd60" --|> "filter_0x15ac9b0"
+"filter_0x15afe40" --|> "space_0x15afef0"
+"filter_0x15af9b0" --|> "filter_0x15afe40"
+"filter_0x15afa10" --|> "filter_0x15afe40"
+"filter_0x15af950" --|> "filter_0x15afe40"
+"filter_0x15af8f0" --|> "filter_0x15b2830"
+"filter_0x15af8f0" --|> "filter_0x15b29f0"
+"filter_0x15af8f0" --|> "filter_0x15b2ba0"
+"space_0x15afef0" --|> "filter_0x15b2830"
+"space_0x15afef0" --|> "filter_0x15b29f0"
+"space_0x15afef0" --|> "filter_0x15b2ba0"
+"space_0x15afef0" --|> "filter_0x15b2d50"
+"space_0x15afef0" --|> "filter_0x15afaa0"
+"space_0x15afef0" --|> "filter_0x15afb30"
+"filter_0x15a9c80" --|> "space_0x15a9ce0"
+"filter_0x15a9770" --|> "reaction_0x15a80a0"
+"filter_0x15a9ba0" --|> "filter_0x15a9770"
+"filter_0x15a9b00" --|> "filter_0x15a9c80"
+"space_0x15a9ce0" --|> "filter_0x15a9ba0"
+"reaction_0x15a80a0" --|> "filter_0x15a9c80"
+"space_0x15acd60" --|> "filter_0x15af8f0"
+"space_0x15acd60" --|> "filter_0x15af9b0"
+"space_0x15acd60" --|> "filter_0x15afa10"
+"space_0x15acd60" --|> "filter_0x15af950"
+"filter_0x15afaa0" --|> "filter_0x15a9b00"
+"filter_0x15afb30" --|> "filter_0x15a9b00"
+"space_0x15a9ce0" --|> "filter_0x15af8f0"
+"space_0x15a9ce0" --|> "filter_0x15af9b0"
+"space_0x15a9ce0" --|> "filter_0x15afa10"
+"space_0x15a9ce0" --|> "filter_0x15af950"
+"filter_0x15afaa0" --|> "filter_0x15acae0"
+"filter_0x15afb30" --|> "filter_0x15acae0"
+"space_0x15acd60" --|> "filter_0x15b3790"
+"space_0x15a9ce0" --|> "filter_0x15b3790"
+"filter_0x15afaa0" --|> "filter_0x15b3790"
+"filter_0x15afb30" --|> "filter_0x15b3790"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15acae0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15af8f0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15af9b0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15afa10"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15af950"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b3c30" --|> "filter_0x15a9b00"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15acae0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15af8f0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15af9b0"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15afa10"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15af950"
+"boost::simulation::pdevs::basic_models::input_stream_0x15b43e0" --|> "filter_0x15a9b00"
+hide empty fields
+hide empty methods
+@enduml

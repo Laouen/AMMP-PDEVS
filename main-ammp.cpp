@@ -31,7 +31,7 @@ using hclock_t = chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
 
-  bool comment_mode = true;
+  bool comment_mode = false;
 
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
   }
 
   // creating the enzymes models
-  m._comment_mode = false;
+  m._comment_mode = true;
   for (map<string, enzyme_parameter_t >::const_iterator i = m._reactions.begin(); i != m._reactions.end(); ++i) {
       m.addEnzymeModel(i->first, BRITime(1), BRITime(1,100), Integer_t(40));
   }
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
   for (double i = 0.01; i < 0.02; i += 0.1) {
 
     input += "1 " + to_string((int)(i*10000)) + " " + "c c_s | A_c 1 \n ";
-    //input += "1 " + to_string((int)(i*10000)) + " " + "e e_s | A_e 1 \n ";
+    input += "1 " + to_string((int)(i*10000)) + " " + "e e_s | A_e 1 \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -172,7 +172,8 @@ int main(int argc, char* argv[]) {
   //pdevs_tools::pdevs_coupling_diagram<Time_t, Message_t> pd{*root};
   //string puml_result = pd.get_plant_uml();
   //cout << puml_result;
-
+  //return 0;
+  
   if (comment_mode) cout << "Preparing runner" << endl;
   runner<Time_t, Message_t> r(root, Time_t(0), cout, [](ostream& os, Message_t m){  os << m; });
 

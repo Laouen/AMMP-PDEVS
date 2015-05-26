@@ -147,7 +147,7 @@ public:
     // filter atomic model
     auto efilter = make_atomic_ptr< filter<TIME, MSG>, const string>(id);
     
-    // enzyme coupled model
+    // enzyme flattened_coupled model
     place = getPlace(params.reactants_sctry, params.products_sctry);
     _enzyme_models.at(place)[id] = make_shared<
       flattened_coupled<TIME, MSG>,
@@ -230,7 +230,7 @@ public:
           f
         );
 
-      // creating compartment coupled model;
+      // creating compartment flattened_coupled model;
       _compartment_models.insert({c, make_shared<
         flattened_coupled<TIME, MSG>,
         vector<shared_ptr<model<TIME> > >,
@@ -310,12 +310,12 @@ public:
     auto pof = make_atomic_ptr< filter<TIME, MSG>, const string>("output");
     auto pbf = make_atomic_ptr< filter<TIME, MSG>, const string>("biomass");
     
-    // making a trivial coupled model of pof in order to solve the bug with coupled to atomic
+    // making a trivial flattened_coupled model of pof in order to solve the bug with flattened_coupled to atomic
     shared_ptr<flattened_coupled<TIME, MSG>> pocf(new flattened_coupled<TIME, MSG>(
       {pof}, {pof}, {}, {pof}
     ));
 
-    // making a trivial coupled model of pbf in order to solve the bug with coupled to atomic
+    // making a trivial flattened_coupled model of pbf in order to solve the bug with flattened_coupled to atomic
     shared_ptr<flattened_coupled<TIME, MSG>> pbcf(new flattened_coupled<TIME, MSG>(
       {pbf}, {pbf}, {}, {pbf}
     ));
@@ -452,7 +452,7 @@ public:
     if (_comment_mode) cout << "[Model engine] creating the cell final model." << endl;
 
     auto output_filter = make_atomic_ptr< filter<TIME, MSG>, const string>("output");
-    // making a trivial coupled model of output_filter in order to solve the bug with coupled to atomic
+    // making a trivial flattened_coupled model of output_filter in order to solve the bug with flattened_coupled to atomic
     shared_ptr<flattened_coupled<TIME, MSG>> ocf(new flattened_coupled<TIME, MSG>(
       {output_filter}, {output_filter}, {}, {output_filter}));
 
