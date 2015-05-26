@@ -105,6 +105,8 @@ public:
 
   void addCompartmentForEnzyme(const string& c) {
     if (_comment_mode) cout << "[Model engine] Adding new compartment: " << c << endl;
+    assert(_compartments.find(c) != _compartments.end());
+
     _enzyme_models.insert({c + "_i", {}});
     _enzyme_models.insert({c + "_m", {}});
   }
@@ -364,6 +366,48 @@ public:
     ));
 
     _extra_cellular_model = ecm;
+  }
+
+  void createBiomassModel(TIME it, TIME r) {
+    if (_comment_mode) cout << "[Model engine] creating biomass model." << endl;
+
+    auto biofilter = make_atomic_ptr< filter<TIME, MSG>, const string>(_biomass_ID);
+    Address_t requeted_models = {_e, _e + "_s", _c, _c + "_s", _p + "_br", _p + "_s"};
+
+    // looking all the organelles to send the request;
+    for (map<string, string>::iterator i = _compartments.begin(); i != _compartments.end(); ++i) {
+      if (isNotSpecial(i->first)) {
+        requeted_models.push_back(i->first + "_br");
+        requeted_models.push_back(i->first + "_s");
+      }
+    }
+
+    auto biomass_a = make_atomic_ptr< 
+      biomass<TIME, MSG>, 
+      const string,
+      const shared_ptr< map<string, Address_t> >,
+      const SetOfMolecules_t&,
+      const SetOfMolecules_t&,
+      const Address_t,
+      const TIME,
+      const TIME >(
+        _biomass_ID,
+        _species_addresses,
+        _biomass_info.reactants_sctry,
+        _biomass_info.products_sctry,
+        requeted_models,
+        it,
+        r
+      );
+
+    shared_ptr<flattened_coupled<TIME, MSG>> biomass_model(new flattened_coupled<TIME, MSG>(
+      {biofilter, biomass_a}, 
+      {biofilter}, 
+      {
+        {biofilter, biomass_a}
+      }, 
+      {biomass_a}
+    ));
   }
 
 
