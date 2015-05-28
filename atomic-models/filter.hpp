@@ -37,39 +37,39 @@ public:
   }
 
   void internal() noexcept {
-    if (_accepted_input == "output")cout << "internal" << endl;
+    //if (_accepted_input == "output") cout << "internal" << endl;
     _filtered_input.clear();
   }
 
   TIME advance() const noexcept {
-    if (_accepted_input == "output") cout << "advance " << endl;
+    //if (_accepted_input == "output") cout << "advance " << endl;
 
     TIME result = (!_filtered_input.empty()) ? ZERO : pdevs::atomic<TIME, MSG>::infinity;
-    if (_accepted_input == "output")  cout << "advance return: " << result << endl;
+    //if (_accepted_input == "output")  cout << "advance return: " << result << endl;
     return result;
   }
 
   vector<MSG> out() const noexcept {
-    if (_accepted_input == "output") cout << "out" << endl;
+    //if (_accepted_input == "output") cout << "out" << endl;
     return _filtered_input; 
   }
 
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    if (_accepted_input == "output") cout << "external "  << endl;
+    //if (_accepted_input == "output") cout << "external "  << endl;
     
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
-      if (_accepted_input == "output")  cout << "input " << it->to << endl;
+      //if (_accepted_input == "output")  cout << "input " << it->to << endl;
       if (isAcceptedInpunt(_accepted_input, it->to)) {
 
         _filtered_input.push_back(*it);
       }
     }
 
-    if (_accepted_input == "output") cout << "end external" << endl;
+    //if (_accepted_input == "output") cout << "end external" << endl;
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    if (_accepted_input == "output") cout << "confluence "  << endl;
+    //if (_accepted_input == "output") cout << "confluence "  << endl;
     internal();
     external(mb, ZERO);
   }

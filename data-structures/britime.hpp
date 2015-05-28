@@ -38,6 +38,10 @@ public:
         return *this;
     }
 
+    string toString() {
+        return to_string(_value.numerator()) + "/" + to_string(_value.denominator());  
+    }
+
     static BRITime infinity() noexcept {
         BRITime f;
         f._is_inf=true;
@@ -100,8 +104,8 @@ inline std::istream& operator>> (std::istream& is, BRITime& rhs) noexcept {
     is >> a;
     if (a == "inf") rhs = BRITime::infinity();
     else {
-        n = std::stoi(a);
-        is >> d;
+        n = std::stoi(a.substr(0, a.find_last_of("/")));
+        d = std::stoi(a.substr(a.find_last_of("/")+1));
         rhs = BRITime(n,d);
     }
     return is;

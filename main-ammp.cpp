@@ -31,7 +31,7 @@ using hclock_t = chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
 
-  bool comment_mode = false;
+  bool comment_mode = true;
 
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
@@ -56,19 +56,19 @@ int main(int argc, char* argv[]) {
   }
 
   // creating the enzymes models
-  m._comment_mode = true;
+  m._comment_mode = false;
   for (map<string, enzyme_parameter_t >::const_iterator i = m._reactions.begin(); i != m._reactions.end(); ++i) {
-      m.addEnzymeModel(i->first, BRITime(1), BRITime(1,100), Integer_t(40));
+      m.addEnzymeModel(i->first, BRITime(1,10), BRITime(1,100), Integer_t(100));
   }
   m._comment_mode = comment_mode;
 
   m.createEnzymeAddresses();
 
-  m.createCytoplasmModel(BRITime(1,100), BRITime(1,100), 0, 1);
+  m.createCytoplasmModel(BRITime(1,100), BRITime(1,100), 250, 1);
 
   m.createExtraCellularModel(BRITime(1,100), BRITime(1,100), 0, 1);
   
-  m.createPeriplasmModel(BRITime(1,100), BRITime(1,100), 0, 1);
+  m.createPeriplasmModel(BRITime(1,100), BRITime(1,100), 15, 1);
 
   m.createBiomassModel(BRITime(1,10), BRITime(1,100));
 
@@ -86,12 +86,20 @@ int main(int argc, char* argv[]) {
 
   if (comment_mode) cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
+  string partial_input = "";
   string input = "";
+  string cp;
+  for (Time_t t(1,100); t < Time_t(1,50); t += Time_t(1,100)) {
 
-  for (double i = 0.01; i < 0.02; i += 0.1) {
-
-    input += "1 " + to_string((int)(i*10000)) + " " + "c c_s | A_c 1 \n ";
-    input += "1 " + to_string((int)(i*10000)) + " " + "e e_s | A_e 1 \n ";
+    for (map<string, map<string, string>>::const_iterator i = m._species.begin(); i != m._species.end(); ++i){
+      if (i->first == "p") cp = "p_init";
+      else cp = i->first;
+      partial_input = t.toString() + " " + cp + " " + i->first + "_s | ";
+      
+      for (map<string,string>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
+        input += partial_input + j->first + " 100000 \n ";
+      }
+    }
   }
   input.pop_back();
   input.pop_back();
@@ -130,9 +138,9 @@ int main(int argc, char* argv[]) {
   piss = make_shared<istringstream>();
   input = "";
 
-  for (double i = 0.1; i <= 0.1; i += 0.1) {
+  for (Time_t i(1,1000); i <= Time_t(300); i += Time_t(1,1000)) {
 
-    input += "1 " + to_string((int)(i*100)) + " \n ";
+    input += i.toString() + " \n ";
   }
   input.pop_back();
   input.pop_back();
@@ -157,7 +165,6 @@ int main(int argc, char* argv[]) {
     if ( 0 != thrash.size()) throw exception();
   });
 
-
   if (comment_mode) cout << "Coupling the input to the model" << endl;
   shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
     {pf, so, m._cell_model}, 
@@ -181,7 +188,7 @@ int main(int argc, char* argv[]) {
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntil(Time_t(3, 10));
+  r.runUntil(Time_t(300000, 1));
 
   auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
