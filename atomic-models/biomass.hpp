@@ -8,7 +8,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // metabolite_info_t, enzyme_info_t, SState_t, Integer_t
+#include "../data-structures/types.hpp"
 
 
 using namespace boost::simulation::pdevs;

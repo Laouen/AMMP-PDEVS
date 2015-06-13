@@ -192,9 +192,6 @@ using STaskQueue_t = list< STask_t<TIME, MSG> >;
 
 
 
-
-
-
 /*******************************************/
 /**************** Message_t ****************/
 /*******************************************/
@@ -205,8 +202,8 @@ using Address_t = list<string>;
 struct Message_t {
   
   Address_t to;
-  string specie;
-  Integer_t amount;
+  SetOfMolecules_t metabolites;
+  Way_t react_direction;
   bool show_request;
   bool biomass_request;
 
@@ -266,6 +263,7 @@ struct metabolite_info_t {
   : amount(other.amount), enzymes(other.enzymes) {}
 };
 
+// TODO this type must be removed after the new implementation.
 struct enzyme_info_t {
 
   Address_t       location;

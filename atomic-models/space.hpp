@@ -22,62 +22,87 @@ template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
 {
 private:
-  string                            _id;
-  TIME                              _next_internal;
-  TIME                              _interval_time;
-  TIME                              _biomass_request_rate;
-  Address_t                         _biomass_address;
-  map<string, metabolite_info_t>    _metabolites;
-  map<string, enzyme_info_t>        _enzymes;
-  double                            _volume;
-  double                            _factor;
-  SState_t                          _s;
+  string                 _id;
+  TIME                   _it;
+  TIME                   _biomass_request_rate;
+  Address_t              _biomass_address;
+  SetOfMolecules_t       _metabolites;
+  vector<enzyme_info_t>  _enzymes;
+  double                 _volume;
+
   // task queue
-  STaskQueue_t<TIME, MSG>           _tasks;
+  STaskQueue_t<TIME, MSG> _tasks;
+
   // used for uniform random numbers
-  RealRandom_t<double>              _real_random;
-  IntegerRandom_t<Integer_t>        _integer_random;
+  RealRandom_t<double>       _real_random;
+  IntegerRandom_t<Integer_t> _integer_random;
+
   // constant variables
-  TIME                              ZERO;
+  TIME ZERO;
 
 public:
 
+  // This constructor start a new space without any metabolite, so, there isn't programed tasks when the space start.
   explicit space(
-    const string                          other_id,
-    const TIME                            other_interval_time,
-    const TIME                            other_biomass_request_rate,
-    const Address_t&                      other_biomass_address,
-    const map<string, metabolite_info_t>& other_metabolites,
-    const map<string, enzyme_info_t>&     other_enzymes,
-    const double                          other_volume,
-    const double                          other_factor
+    const string                 other_id,
+    const TIME                   other_it,
+    const TIME                   other_biomass_request_rate,
+    const Address_t&             other_biomass_address,
+    const vector<enzyme_info_t>& other_enzymes,
+    const double                 other_volume,
     ) noexcept :
   _id(other_id),
-  _interval_time(other_interval_time),
+  _it(other_it),
+  _biomass_request_rate(other_biomass_request_rate),
+  _biomass_address(other_biomass_address),
+  _enzymes(other_enzymes),
+  _volume(other_volume),
+  ZERO(0) {
+
+    // The random atributes must be initilized with a random generator
+    random_device real_rd; // Random generator variable
+    _real_random.seed(real_rd());
+    random_device integer_rd;
+    _integer_random.seed(integer_rd());
+
+    // just to confirm, the space and metabolites start empty.
+    _tasks.clear();
+    _metabolites.clear();
+  }
+
+  // This constructor start a new space with metabolites, the SetOfMolecules_t must have elements, is a precondition.
+  // because of this, the space start with a selection task
+  explicit space(
+    const string                 other_id,
+    const TIME                   other_it,
+    const TIME                   other_biomass_request_rate,
+    const Address_t&             other_biomass_address,
+    const SetOfMolecules_t&      other_metabolites,
+    const vector<enzyme_info_t>& other_enzymes,
+    const double                 other_volume,
+    ) noexcept :
+  _id(other_id),
+  _it(other_it),
   _biomass_request_rate(other_biomass_request_rate),
   _biomass_address(other_biomass_address),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume),
-  _factor(other_factor) {
+  ZERO(0) {
+    assert((_metabolites.size() > 0) && "This constructor require a non empty map of metabolites.");
 
-    random_device real_rd;
+    // The random atributes must be initilized with a random generator
+    random_device real_rd; // Random generator variable
     _real_random.seed(real_rd());
     random_device integer_rd;
     _integer_random.seed(integer_rd());
 
+    // Becouse it start already with metabolites in the space, a selection task is programed.
     _tasks.clear();
-
-    if (this->thereIsMetabolites()) {
-      
-      STask_t<TIME, MSG> new_task;
-      new_task.time_left = _interval_time;
-      new_task.task_kind = SState_t::SELECTING_FOR_REACTION;
-
-      this->insertTask(new_task);
-    }
-
-    ZERO = TIME(0);
+    STask_t<TIME, MSG> new_task;
+    new_task.time_left = _it;
+    new_task.task_kind = SState_t::SELECTING_FOR_REACTION;
+    this->insertTask(new_task);
   }
 
   void internal() noexcept {
@@ -208,7 +233,7 @@ public:
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = ZERO;
+        new_task.time_left = _biomass_request_rate; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
         new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
         this->insertTask(new_task);
       
@@ -218,15 +243,14 @@ public:
       }
     }
 
-    // setting new selection
+    // if some metabolites have just arrived, a selection task must be programed.
     this->setNextSelection();
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
 
     external(mb, t);
-    internal();
-    
+    internal(); 
   }
 
   /***************************************
@@ -234,17 +258,12 @@ public:
   ***************************************/
 
   void addToMetabolites(string n, Integer_t a){
-    metabolite_info_t new_metabolite;
 
     if (a > 0) {
       if (_metabolites.find(n) != _metabolites.end()) {
-
-        _metabolites.at(n).amount += a;
+        _metabolites.at(n) += a;
       } else {
-        
-        new_metabolite.amount   = a;
-        new_metabolite.enzymes  = lookForEnzymes(n);
-        _metabolites.insert({n, new_metabolite});
+        _metabolites.insert({n, a});
       }
     }
   }
@@ -299,35 +318,35 @@ public:
       }
     }
   }
-
+  // this function tells if there is or not metabolites in the space.
   bool thereIsMetabolites() const {
 
     bool result = false;
-    for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-      if (it->second.amount > 0) {
+    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+      if (it->second > 0) {
         result = true;
         break;
       }
     }
     return result;
   }
-
+  // this function look if there is metabolites to send and in this case, if the space have not alreafy programed a selection task to send metabolites, it will program one.
   void setNextSelection() {
     STask_t<TIME, MSG> new_selection;
     
     if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
 
-      new_selection.time_left = _interval_time;
+      new_selection.time_left = _it;
       new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
       this->insertTask(new_selection);
     }
   }
-
+  // this function looks if there is a selection task already programed.
   bool thereIsNextSelection() const {
     bool result = false;
 
     for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it != _tasks.cend(); ++it) {
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && (it->time_left <= _interval_time)) {
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && (it->time_left <= _it)) {
         result = true;
         break;
       }
@@ -348,7 +367,6 @@ public:
       it->time_left -= t;
     }
   }
-
 };
   
 
