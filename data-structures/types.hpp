@@ -22,7 +22,7 @@ using namespace boost::simulation::pdevs::basic_models;
 enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
 enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4};
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
-enum class Way_t { RTP, PTR };
+enum class Way_t { STP, PTS };
 
 using Integer_t = unsigned long long;
 using SetOfMolecules_t  = map<string, Integer_t>;
@@ -145,14 +145,14 @@ template<class TIME, class MSG>
 struct STask_t {
   TIME          time_left;
   SState_t      task_kind;
-  vector<MSG>   to_send;
+  vector<MSG>   msgs;
 
   STask_t() {}
 
   STask_t(const STask_t<TIME, MSG>& other) {
     time_left = other.time_left;
     task_kind = other.task_kind;
-    to_send   = other.to_send;
+    msgs   = other.msgs;
   }
 
   inline bool operator<(const STask_t<TIME, MSG>& o)  const {
@@ -172,7 +172,7 @@ struct STask_t {
     result = result && (task_kind == o.task_kind);
 
     if ((task_kind == SState_t::SENDING_REACTIONS) || (task_kind == SState_t::SENDING_BIOMAS)) {
-      result = result && (to_send == o.to_send);
+      result = result && (msgs == o.msgs);
     }  
 
     return result;
@@ -198,7 +198,6 @@ using STaskQueue_t = list< STask_t<TIME, MSG> >;
 
 using Address_t = list<string>;
 
-
 struct Message_t {
   
   Address_t to;
@@ -221,9 +220,9 @@ struct Message_t {
 
   void clear() {
     to.clear();
-    specie        = "";
-    amount        = 0;
-    show_request  = false;
+    metabolites.clear();
+    show_request = false;
+    biomass_request = false;
   }
 };
 
@@ -266,17 +265,22 @@ struct metabolite_info_t {
 // TODO this type must be removed after the new implementation.
 struct enzyme_info_t {
 
-  Address_t       location;
-  vector<string>  reactants;
+  Address_t         location;
+  Integer_t         amount;
+  SetOfMolecules_t  reactants_sctry;
+  SetOfMolecules_t  products_sctry;
+  double            kon1;
+  double            kon2;
+  bool              reversible;
 
   enzyme_info_t()
   : location(), reactants() {}
 
-  enzyme_info_t(const Address_t& other_location, const vector<string>& other_reactants)
-  : location(other_location), reactants(other_reactants) {}
+  enzyme_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_kon1, double other_kon2, bool other_reversible)
+  : location(other_location), reactants(other_reactants), kon1(other_kon1), kon2(other_kon2), reversible(other_reversible) {}
 
   enzyme_info_t(const enzyme_info_t& other)
-  : location(other.location), reactants(other.reactants) {}
+  : location(other.location), reactants(other.reactants), kon1(other.kon1), kon2(other.kon2), reversible(other.reversible) {}
 };
 
 /*******************************************/

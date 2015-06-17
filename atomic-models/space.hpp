@@ -105,75 +105,95 @@ public:
     this->insertTask(new_task);
   }
 
+  // TODO: this for must explore the enzyme space taking carre of the amount of each kind and with the same probability. 
+  // It also delete de enzyme to not be elegible again, and if some thing was send to this enzyme, it must be deleted from the space.
+  // the function kon must be implemented following the formula in the thierry email.
   void internal() noexcept {
 
-    STask_t<TIME, MSG> sr, sb;
+    STask_t<TIME, MSG> sr, sb; // sr = selected_reactants, sb = selected_biomass
     MSG cm;
-    vector<MSG> coutput;
-    vector<Integer_t> distributed_reactants = {};
-    bool reaction_selected      = false;
-    bool biomass_selected       = false;
-    // Updating time left
+    bool rs = false; // this boolean says if a SELECTIN_FOR_REACTION tasks has already happen or not.
+    bool bs = false; // this boolean says if a SELECTIN_FOR_BIOMASS task has already happen or not.
+    double son, pon, rv;
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it->time_left == ZERO; it = _tasks.erase(it)) {
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !reaction_selected) {
+    // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is zero.
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); (it != _tasks.end()) && (it->time_left == ZERO); it = _tasks.erase(it)) {
+      
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !rs) {
 
-        // look for metabolites to send
-        for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+        // set a new task to send the selected metabolites.
+        sr.time_left  = ZERO;
+        sr.task_kind  = SState_t::SENDING_REACTIONS;
+        
+        // look for metabolites to send, all the messages are allocated in coutput
+        for (vector<enzyme_info_t>::iterator it = _enzymes.begin(); it != _enzymes.end(); ++it) {
+          cm.clear();
 
-          if (this->weightedRandomBool(it->second.amount)){
+          // calculating the son and pon
+          if (this->thereAreEnaughFor(it->reactants_sctry)) son = this->kon(it->reactants_sctry, it->kon1);
+          else son = 0;
+          if (it->reversible && this->thereAreEnaughFor(it->products_sctry)) pon = this->kon(it->products_sctry, it->kon2);
+          else pon = 0;
 
-            distributed_reactants.clear();
-            distributed_reactants.resize(it->second.enzymes.size());
-            randomDistribution(distributed_reactants, it->second.amount);
-            cm.specie = it->first; 
+          // son + pon can't be greater than 1. If that happen, they are normalized.
+          if (son + pon > 1) {
+            son = son / (son + pon);
+            pon = pon / (son + pon);
+          }
 
-            for (int i = 0; i < distributed_reactants.size(); ++i) {
-              
-              cm.amount          = distributed_reactants[i];
-              cm.to              = it->second.enzymes[i];
-              coutput.push_back(cm);
-              it->second.amount  -= distributed_reactants[i];
+          // the interval [0,1] is  divided in three pieces, [0 - son), [son - son+pon) and [son+pon - 1]
+          // depending in which of these three sub-interval belongs rv, the enzyme me a product to subtract, subtract to produc or nothing.
+          rv = _real_random.drawNumber(0.0, 1.0);
+          if (rv < son) {
+            // send message to enzyme for a subtract to product reaction
+            cm.to = it->location;
+            cm.react_direction = Way_t::STP;
+            sr.msgs.push_back(cm);
+
+            // update the taken metabolite from the space
+            for (SetOfMolecules_t::iterator jt = it->reactants_sctry.begin(); jt != it->reactants_sctry.end(); ++jt) {
+               _metabolites.at(jt->first) -= jt->second;
+            }
+          } else if (rv < kon) {
+            // send message to enzyme for a subtract to product reaction
+            cm.to = it->location;
+            cm.react_direction = Way_t::PTS;
+            sr.msgs.push_back(cm);
+
+            // update the taken metabolite from the space
+            for (SetOfMolecules_t::iterator jt = it->products_sctry.begin(); jt != it->products_sctry.end(); ++jt) {
+               _metabolites.at(jt->first) -= jt->second;
             }
           }
         }
-
-        // set a new task for out() to send the selected metabolites.
-        sr.time_left  = ZERO;
-        sr.task_kind  = SState_t::SENDING_REACTIONS;
-        sr.to_send    = coutput;
         
         // no more than one selection in a given time T;
-        reaction_selected = true;
-      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !biomass_selected) {
+        rs = true;
+      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !bs) {
 
         // look for metabolites to send
-        for (map<string, metabolite_info_t>::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-
-          cm.specie  = it->first; 
-          cm.amount  = it->second.amount;
-          cm.to      = _biomass_address;
-          coutput.push_back(cm);
-          it->second.amount = 0;
-
-        }
+        cm.to = _biomass_address;
+        appendMetabolites(cm.metabolites, _metabolites);
+        sb.msgs.push_back(cm);
 
         // set a new task for out() to send the selected metabolites.
         sb.time_left  = _biomass_request_rate;
         sb.task_kind  = SState_t::SENDING_BIOMAS;
-        sb.to_send    = coutput;
         
+        // once the metabolite are all send to biomass, there is no more metabolites in the space.
+        _metabolites.clear();
+
         // no more than one selection in a given time T;
-        biomass_selected = true;
+        bs = true;
       }
     }
 
 
     // inserting new tasks
-    if (!sr.to_send.empty()) this->insertTask(sr);
-    if (!sb.to_send.empty()) this->insertTask(sb);
+    if (!sr.msgs.empty()) this->insertTask(sr);
+    if (!sb.msgs.empty()) this->insertTask(sb);
 
     // setting new selection
     this->setNextSelection();
@@ -191,26 +211,22 @@ public:
   vector<MSG> out() const noexcept {
 
     vector<MSG> result;
-    MSG current_message;
+    MSG b_msg;
     TIME current_time  = _tasks.front().time_left;
 
-    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
+    // for all the tasks that ocurr in the current time. These tasks are processed now.
+    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {
 
       if ((it->task_kind == SState_t::SENDING_BIOMAS) || (it->task_kind == SState_t::SENDING_REACTIONS)) {
 
-        for (typename vector<MSG>::const_iterator mt = it->to_send.cbegin(); mt != it->to_send.cend(); ++mt) {       
-          result.push_back(*mt);
-        }
+        result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend()); //TODO: test this method of insert with constant iterators.
+
       } else if (it->task_kind == SState_t::SHOWING) {
 
-        // look for metabolites to send
-        for (map<string, metabolite_info_t>::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-
-          current_message.to  = {"output", _id}; 
-          current_message.specie  = it->first; 
-          current_message.amount  = it->second.amount;
-          result.push_back(current_message);
-        }
+        // Send all the current free metabolites in the space
+        b_msg.to  = {"output", _id};
+        appendMetabolites(result.metabolites, _metabolites);
+        result.push_back(b_msg);
       }
     }
 
@@ -225,9 +241,10 @@ public:
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
+
       if (it->show_request) {
         
-        new_task.time_left = ZERO;
+        new_task.time_left = ZERO; // TODO: aks to Gabriel if it shouldn't be 0.
         new_task.task_kind = SState_t::SHOWING;
         this->insertTask(new_task);
 
@@ -239,11 +256,11 @@ public:
       
       } else {
 
-        this->addToMetabolites(it->specie, it->amount);
+        appendMetabolites(_metabolites, it->metabolites);
       }
     }
 
-    // if some metabolites have just arrived, a selection task must be programed.
+    // if some metabolites have just arrived (the third part of the if has happen), a selection task must be programed.
     this->setNextSelection();
   }
 
@@ -257,67 +274,39 @@ public:
   ********* helper functions *************
   ***************************************/
 
-  void addToMetabolites(string n, Integer_t a){
+  // TODO: generate test of all the helper functions
+  // This funtion takes all the metabolites from om an amount grater than 0 and add them to m.
+  void appendMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  
+    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+      addMetabolite(m, it->first, it->second);
+    }
+  }
+
+  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a){
 
     if (a > 0) {
-      if (_metabolites.find(n) != _metabolites.end()) {
-        _metabolites.at(n) += a;
+      if (m.find(n) != m.end()) {
+        m.at(n) += a;
       } else {
-        _metabolites.insert({n, a});
+        m.insert({n, a}); // TODO: change all the initializer_list because they don't work in windows
       }
     }
   }
 
-  vector<Address_t> lookForEnzymes(string n) const {
-    vector<Address_t> result;
+  bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
+    bool result = true;
 
-    for (map<string, enzyme_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
-      if (belong(n, it->second.reactants)) {
-        result.push_back(it->second.location);
-      }
-    }
-
-    return result;
-  }
-
-  bool belong(const string& n, const vector<string>& ls) const {
-    bool result = false;
-
-    for (vector<string>::const_iterator it = ls.cbegin(); it != ls.cend(); ++it) {
-      if (n == *it) {
-        result = true;
+    for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
+      if((_metabolites.find(it->first) == _metabolites.end()) || (_metabolites.at(it->first) < it->second)) {
+        result = false;
         break;
       }
     }
+
     return result;
   }
 
-  bool weightedRandomBool(Integer_t a) {
-
-    double proportion;
-
-    if (a > 0)  proportion = _volume / (double)a;
-    else        proportion = numeric_limits<double>::infinity();
-    
-    double threshold  = (double)1.0 / pow( (double)e, (double)_factor*proportion );
-
-
-    return (_real_random.drawNumber(0.0, 1.0) < threshold);
-  }
-
-  void randomDistribution(vector<Integer_t>& ds, Integer_t a) {
-    
-    if (!ds.empty()) {
-
-      for (int i = 0; i < ds.size(); ++i) {
-        ds[i] = 0;
-      }
-
-      for (Integer_t i = 0; i < a; ++i) {
-        ds[_integer_random.drawNumber(0, ds.size() - 1)] += 1;
-      }
-    }
-  }
   // this function tells if there is or not metabolites in the space.
   bool thereIsMetabolites() const {
 
