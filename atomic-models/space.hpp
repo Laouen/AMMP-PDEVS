@@ -5,6 +5,7 @@
 #include <map>
 #include <limits>
 #include <memory>
+#include <math.h>
 // specially to shuffle the current_enzyme vector.
 #include <random>
 #include <algorithm>
@@ -22,6 +23,7 @@ using namespace boost::simulation;
 using namespace std;
 
 long double e = 2.71828182845904523536028747135266249775724709369995L;
+long double L = 6.0221413e+23;
 
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
@@ -334,9 +336,9 @@ public:
       cm.clear();
 
       // calculating the son and pon
-      if (this->thereAreEnaughFor(en.reactants_sctry)) son = this->kon(en.reactants_sctry, en.konSTP);
+      if (this->thereAreEnaughFor(en.reactants_sctry)) son = this->bindingTreshold(en.reactants_sctry, en.konSTP);
       else son = 0;
-      if (en.reversible && this->thereAreEnaughFor(en.products_sctry)) pon = this->kon(en.products_sctry, en.konPTS);
+      if (en.reversible && this->thereAreEnaughFor(en.products_sctry)) pon = this->bindingTreshold(en.products_sctry, en.konPTS);
       else pon = 0;
 
       // son + pon can't be greater than 1. If that happen, they are normalized
@@ -412,6 +414,17 @@ public:
         ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
       }
     }
+  }
+
+  double bindingTreshold(const SetOfMolecules_t% sctry, double kon) const {
+
+    // calculation of the consentrations [A][B][C]
+    double cons = 1.0;
+    for (SetOfMolecules_t::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
+      cons *= _metabolites.at(it->first) / (L * _volume);  
+    }
+
+    return exp(-(1.0 / (cons*kon)));
   }
 };
   

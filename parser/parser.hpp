@@ -40,9 +40,10 @@ public:
   // geting information from the current XML file loaded.
   list<UnitDefinition_t> getUnitDefinitions();
   map<string, string> getCompartments();
-  map<string, map<string, string> > getSpeciesByCompartment();
-  map<string, enzyme_parameter_t > getReactions();
-  enzyme_parameter_t getBiomass();
+  map<string, map<string, string> > getSpecies();
+  string getSpecieCompartment(string);
+  map<string, enzyme_info_t > getEnzymes();
+  enzyme_info_t getBiomass();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H
