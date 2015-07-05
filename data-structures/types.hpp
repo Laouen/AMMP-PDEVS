@@ -203,20 +203,21 @@ struct Message_t {
   Address_t to;
   SetOfMolecules_t metabolites;
   Way_t react_direction;
+  Integer_t react_amount;
   bool show_request;
   bool biomass_request;
 
-  Message_t(const Address_t& other_to, const string& other_specie, const Integer_t& other_amount)
-  : to(other_to), specie(other_specie), amount(other_amount), show_request(false), biomass_request(false) {}
+  Message_t(const Address_t& other_to, const SetOfMolecules_t& other_m, Way_t other_rd, Integer_t other_ra, bool other_sr, bool other_br)
+  : to(other_to), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
 
   Message_t()
-  :to(), specie(""), amount(0), show_request(false), biomass_request(false) {}
+  :to(), metabolites(), react_direction(), react_amount(), show_request(false), biomass_request(false) {}
 
   Message_t(const Message_t& other)
-  : to(other.to), specie(other.specie), amount(other.amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
+  : to(other.to), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
 
-  Message_t(Message_t* other)
-  : to(other->to), specie(other->specie), amount(other->amount), show_request(other->show_request), biomass_request(other->biomass_request) {}
+  Message_t(Message_t& other)
+  : to(other.to), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
 
   void clear() {
     to.clear();
@@ -232,6 +233,8 @@ ostream& operator<<(ostream& os, const vector<string>& m);
 ostream& operator<<(ostream& os, const SetOfMolecules_t& m);
 ostream& operator<<(ostream& os, const SState_t& s);
 ostream& operator<<(ostream& os, const BState_t& s);
+ostream& operator<<(ostream& os, const RState_t& s);
+ostream& operator<<(ostream& os, const Way_t& s);
 
 /*******************************************/
 /************** End Message_t **************/
@@ -269,19 +272,21 @@ struct enzyme_info_t {
   Integer_t         amount;
   SetOfMolecules_t  reactants_sctry;
   SetOfMolecules_t  products_sctry;
-  double            kon1;
-  double            kon2;
+  double            konSTP;
+  double            konPTS;
   bool              reversible;
 
   enzyme_info_t()
   : location(), reactants() {}
 
-  enzyme_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_kon1, double other_kon2, bool other_reversible)
-  : location(other_location), reactants(other_reactants), kon1(other_kon1), kon2(other_kon2), reversible(other_reversible) {}
+  enzyme_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_konSTP, double other_konPTS, bool other_reversible)
+  : location(other_location), reactants(other_reactants), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
 
   enzyme_info_t(const enzyme_info_t& other)
-  : location(other.location), reactants(other.reactants), kon1(other.kon1), kon2(other.kon2), reversible(other.reversible) {}
+  : location(other.location), reactants(other.reactants), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
 };
+
+metabolite_info_t& metabolite_info_t::operator=(metabolite_info_t &&) = default;
 
 /*******************************************/
 /*********** End Data info type ************/

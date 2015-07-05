@@ -5,6 +5,11 @@
 #include <map>
 #include <limits>
 #include <memory>
+// specially to shuffle the current_enzyme vector.
+#include <random>
+#include <algorithm>
+#include <iterator>
+#include <iostream>
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
@@ -24,10 +29,10 @@ class space : public pdevs::atomic<TIME, MSG>
 private:
   string                 _id;
   TIME                   _it;
-  TIME                   _biomass_request_rate;
+  TIME                   _br;
   Address_t              _biomass_address;
   SetOfMolecules_t       _metabolites;
-  vector<enzyme_info_t>  _enzymes;
+  map<enzyme_info_t>  _enzymes;
   double                 _volume;
 
   // task queue
@@ -46,14 +51,14 @@ public:
   explicit space(
     const string                 other_id,
     const TIME                   other_it,
-    const TIME                   other_biomass_request_rate,
+    const TIME                   other_br,
     const Address_t&             other_biomass_address,
-    const vector<enzyme_info_t>& other_enzymes,
+    const map<enzyme_info_t>&    other_enzymes,
     const double                 other_volume,
     ) noexcept :
   _id(other_id),
   _it(other_it),
-  _biomass_request_rate(other_biomass_request_rate),
+  _br(other_br),
   _biomass_address(other_biomass_address),
   _enzymes(other_enzymes),
   _volume(other_volume),
@@ -75,15 +80,15 @@ public:
   explicit space(
     const string                 other_id,
     const TIME                   other_it,
-    const TIME                   other_biomass_request_rate,
+    const TIME                   other_br,
     const Address_t&             other_biomass_address,
     const SetOfMolecules_t&      other_metabolites,
-    const vector<enzyme_info_t>& other_enzymes,
+    const map<enzyme_info_t>&    other_enzymes,
     const double                 other_volume,
     ) noexcept :
   _id(other_id),
   _it(other_it),
-  _biomass_request_rate(other_biomass_request_rate),
+  _br(other_br),
   _biomass_address(other_biomass_address),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
@@ -105,88 +110,44 @@ public:
     this->insertTask(new_task);
   }
 
-  // TODO: this for must explore the enzyme space taking carre of the amount of each kind and with the same probability. 
-  // It also delete de enzyme to not be elegible again, and if some thing was send to this enzyme, it must be deleted from the space.
-  // the function kon must be implemented following the formula in the thierry email.
+  // TODO: check the correct ordering of the tasks, if there is a biomass request and a selec for reaction, the biomass request must win.
   void internal() noexcept {
 
-    STask_t<TIME, MSG> sr, sb; // sr = selected_reactants, sb = selected_biomass
     MSG cm;
-    bool rs = false; // this boolean says if a SELECTIN_FOR_REACTION tasks has already happen or not.
-    bool bs = false; // this boolean says if a SELECTIN_FOR_BIOMASS task has already happen or not.
-    double son, pon, rv;
+    STask_t<TIME, MSG> sr, sb; // sr = selected_reactants, sb = selected_biomass
+    bool srah = false; // this boolean says if a SELECTIN_FOR_REACTION tasks has already happen or not.
+    bool sbah = false; // this boolean says if a SELECTIN_FOR_BIOMASS task has already happen or not.
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is zero.
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); (it != _tasks.end()) && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !rs) {
+      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
+        // no more than one selection in a given time T;
+        srah = true;
 
         // set a new task to send the selected metabolites.
-        sr.time_left  = ZERO;
         sr.task_kind  = SState_t::SENDING_REACTIONS;
-        
-        // look for metabolites to send, all the messages are allocated in coutput
-        for (vector<enzyme_info_t>::iterator it = _enzymes.begin(); it != _enzymes.end(); ++it) {
-          cm.clear();
+        sr.time_left  = ZERO;
 
-          // calculating the son and pon
-          if (this->thereAreEnaughFor(it->reactants_sctry)) son = this->kon(it->reactants_sctry, it->kon1);
-          else son = 0;
-          if (it->reversible && this->thereAreEnaughFor(it->products_sctry)) pon = this->kon(it->products_sctry, it->kon2);
-          else pon = 0;
-
-          // son + pon can't be greater than 1. If that happen, they are normalized.
-          if (son + pon > 1) {
-            son = son / (son + pon);
-            pon = pon / (son + pon);
-          }
-
-          // the interval [0,1] is  divided in three pieces, [0 - son), [son - son+pon) and [son+pon - 1]
-          // depending in which of these three sub-interval belongs rv, the enzyme me a product to subtract, subtract to produc or nothing.
-          rv = _real_random.drawNumber(0.0, 1.0);
-          if (rv < son) {
-            // send message to enzyme for a subtract to product reaction
-            cm.to = it->location;
-            cm.react_direction = Way_t::STP;
-            sr.msgs.push_back(cm);
-
-            // update the taken metabolite from the space
-            for (SetOfMolecules_t::iterator jt = it->reactants_sctry.begin(); jt != it->reactants_sctry.end(); ++jt) {
-               _metabolites.at(jt->first) -= jt->second;
-            }
-          } else if (rv < kon) {
-            // send message to enzyme for a subtract to product reaction
-            cm.to = it->location;
-            cm.react_direction = Way_t::PTS;
-            sr.msgs.push_back(cm);
-
-            // update the taken metabolite from the space
-            for (SetOfMolecules_t::iterator jt = it->products_sctry.begin(); jt != it->products_sctry.end(); ++jt) {
-               _metabolites.at(jt->first) -= jt->second;
-            }
-          }
-        }
-        
+        this->selectMetalobitesToReact(sr.msgs);
+        unifyMessages(sr.msgs);
+      } else if ((it->task_kind == SState_t::SELECTING_FOR_BIOMAS) && !sbah) {
         // no more than one selection in a given time T;
-        rs = true;
-      } else if (it->task_kind == SState_t::SELECTING_FOR_BIOMAS && !bs) {
+        sbah = true;
 
         // look for metabolites to send
         cm.to = _biomass_address;
-        appendMetabolites(cm.metabolites, _metabolites);
-        sb.msgs.push_back(cm);
+        addMultipleMetabolites(cm.metabolites, _metabolites);
 
         // set a new task for out() to send the selected metabolites.
-        sb.time_left  = _biomass_request_rate;
+        sb.time_left  = _br;
         sb.task_kind  = SState_t::SENDING_BIOMAS;
+        sb.msgs.push_back(cm);
         
         // once the metabolite are all send to biomass, there is no more metabolites in the space.
         _metabolites.clear();
-
-        // no more than one selection in a given time T;
-        bs = true;
       }
     }
 
@@ -225,7 +186,7 @@ public:
 
         // Send all the current free metabolites in the space
         b_msg.to  = {"output", _id};
-        appendMetabolites(result.metabolites, _metabolites);
+        addMultipleMetabolites(b_msg.metabolites, _metabolites);
         result.push_back(b_msg);
       }
     }
@@ -250,13 +211,13 @@ public:
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = _biomass_request_rate; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
+        new_task.time_left = _br; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
         new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
         this->insertTask(new_task);
       
       } else {
 
-        appendMetabolites(_metabolites, it->metabolites);
+        addMultipleMetabolites(_metabolites, it->metabolites);
       }
     }
 
@@ -276,7 +237,7 @@ public:
 
   // TODO: generate test of all the helper functions
   // This funtion takes all the metabolites from om an amount grater than 0 and add them to m.
-  void appendMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
   
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
       addMetabolite(m, it->first, it->second);
@@ -289,7 +250,7 @@ public:
       if (m.find(n) != m.end()) {
         m.at(n) += a;
       } else {
-        m.insert({n, a}); // TODO: change all the initializer_list because they don't work in windows
+        m.insert({n, a}); // TODO: change all the initializer_list because they don't work on windows
       }
     }
   }
@@ -354,6 +315,102 @@ public:
 
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
       it->time_left -= t;
+    }
+  }
+
+  // TODO one enzyme can do multiples reactions, ask about this.
+  // TODO the transport enzyme are a little different.
+  void selectMetalobitesToReact(vector<MSG>& m) const {
+    MSG cm;
+    double son, pon, rv;
+    enzyme_info_t en;
+    vector<string> current_enzymes;
+
+    this->unfoldEnzymes(current_enzymes); // all the enzyme are considered individualy not grouped by kind
+    shuffleEnzymes(current_enzymes); // the enzymes are iterated randomly
+
+    for (vector<string>::iterator it = current_enzymes.begin(); it != current_enzymes.end(); ++it) {
+      en = _enzymes.at(*it);
+      cm.clear();
+
+      // calculating the son and pon
+      if (this->thereAreEnaughFor(en.reactants_sctry)) son = this->kon(en.reactants_sctry, en.konSTP);
+      else son = 0;
+      if (en.reversible && this->thereAreEnaughFor(en.products_sctry)) pon = this->kon(en.products_sctry, en.konPTS);
+      else pon = 0;
+
+      // son + pon can't be greater than 1. If that happen, they are normalized
+      // if son + pon is smaller than 1, there is a chanse that the enzyme does'nt happen
+      if (son + pon > 1) {
+        son = son / (son + pon);
+        pon = pon / (son + pon);
+      }
+
+      // the interval [0,1] is  divided in three pieces, [0,son), [son,son+pon) and [son+pon,1)
+      // depending in which of those three sub-interval rv belongs, the enzyme recibe substrate, product or nothing.
+      rv = _real_random.drawNumber(0.0, 1.0);
+      if (rv < son) {
+        // send message to enzyme for a subtract to product reaction
+        cm.to = en.location;
+        cm.react_direction = Way_t::STP;
+        cm.react_amount = 1;
+        m.push_back(cm);
+
+        // update the metabolite amount in the space
+        for (SetOfMolecules_t::iterator jt = en.reactants_sctry.begin(); jt != en.reactants_sctry.end(); ++jt) {
+          _metabolites.at(jt->first) -= jt->second;
+        }
+      } else if (rv < pon) {
+        // send message to enzyme for a subtract to product reaction
+        cm.to = en.location;
+        cm.react_direction = Way_t::PTS;
+        cm.react_amount = 1;
+        m.push_back(cm);
+
+        // update the metabolite amount in the space
+        for (SetOfMolecules_t::iterator jt = en.products_sctry.begin(); jt != en.products_sctry.end(); ++jt) {
+          _metabolites.at(jt->first) -= jt->second;
+        }
+      }
+    }
+  }
+
+  void unfoldEnzymes(vector<string>& ce) const {
+
+    for (map<enzyme_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
+      ce.insert(ce.end(), it->second.amount, it->first);
+    }
+  }
+
+  void shuffleEnzymes(vector<string>& ce) const {
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(ce.begin(), ce.end(), g);
+  }
+
+  void unifyMessages(vector<MSG>& m) const {
+
+    map<Address_t, MSG> unMsgs;
+
+    for (vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+      insertMessage(unMsgs, *it);
+    }
+
+    m.clear();
+
+    for (map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+      m.push_back(it->second);
+    }
+  }
+
+  void insertMessage(map<Address_t, MSG>& ms, MSG& m) const {
+
+    if (m.react_amount > 0) {
+      if (ms.find(m.to) != ms.end()) {
+        ms.at(m.to).react_amount += m.react_amount;
+      } else {
+        ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
+      }
     }
   }
 };
