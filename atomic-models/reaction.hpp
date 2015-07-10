@@ -18,6 +18,7 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
+BRITime ZERO(0);
 
 template<class TIME, class MSG>
 class reaction : public pdevs::atomic<TIME, MSG>
@@ -29,20 +30,14 @@ private:
   shared_ptr< map<string, Address_t> >  _addresses;
   bool                                  _reversible;
   TIME                                  _rate;
-  SetOfMolecules_t                      _reactants_sctry;
+  SetOfMolecules_t                      _substrate_sctry;
   SetOfMolecules_t                      _products_sctry;
-  Integer_t                             _amount;
-  TIME                                  _interval_time;
-  // elements bound
-  SetOfMolecules_t                      _reactants;
-  SetOfMolecules_t                      _products;
+  map<string, int>                      _substrate_comps;
+  map<string, int>                      _product_comps;
+  TIME                                  _it;
   RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
   IntegerRandom_t<Integer_t>            _distribution;
-
-  // constant values
-  TIME                                  ZERO;
-
 
 public:
 
@@ -51,33 +46,25 @@ public:
     const shared_ptr< map<string, Address_t> >  other_addresses,
     const bool                                  other_reversible,
     const TIME                                  other_rate,
-    const SetOfMolecules_t&                     other_reactants_sctry,
+    const SetOfMolecules_t&                     other_substrate_sctry,
     const SetOfMolecules_t&                     other_products_sctry,
-    const Integer_t                             other_amount,
-    const TIME                                  other_interval_time
+    const map<string, int>                      other_substrate_comps;
+    const map<string, int>                      other_product_comps;
+    const TIME                                  other_it
   ) noexcept :
   _id(other_id),
   _addresses(other_addresses),
   _reversible(other_reversible),
   _rate(other_rate),
-  _reactants_sctry(other_reactants_sctry),
+  _substrate_sctry(other_substrate_sctry),
   _products_sctry(other_products_sctry),
-  _amount(other_amount),
-  _interval_time(other_interval_time) {
+  _substrate_comps(other_substrate_comps),
+  _product_comps(other_product_comps),  
+  _it(other_it) {
 
     random_device rd;
     _distribution.seed(rd());
 
-    for (SetOfMolecules_t::const_iterator it = _reactants_sctry.cbegin(); it != _reactants_sctry.cend(); ++it) {
-      _reactants[it->first] = 0;
-    }
-
-    for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
-      _products[it->first] = 0;
-    }
-
-    // Constant values;
-    ZERO = TIME(0);
   }
 
   void internal() noexcept {
@@ -149,7 +136,7 @@ public:
       } else if (it->task_kind == RState_t::REACTING) {
 
         if (it->reaction.first == Way_t::RTP)      curr_sctry = &_products_sctry;
-        else if (it->reaction.first == Way_t::PTR) curr_sctry = &_reactants_sctry;
+        else if (it->reaction.first == Way_t::PTR) curr_sctry = &_substrate_sctry;
 
         for (SetOfMolecules_t::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
           new_message.clear();
@@ -165,28 +152,14 @@ public:
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    RTask_t<TIME> to_reject, new_selection;
-    
     // Updating time left
     this->updateTaskTimeLefts(t);
 
-    // inserting new metaboolits and rejecting the surplus
-    this->bindMetabolitsAndDropSurplus(mb, to_reject);
+    // inserting new metaboolits
+    this->bindMetabolits(mb);
 
     // looking for new reactions
     this->lookForNewReactions();
-
-    // add rejecting surplus to the tasks
-    if (to_reject.rejected.size() > 0) { // TODO CHANGE FOR NOT EMPTY
-
-      to_reject.time_left = ZERO;
-      to_reject.task_kind = RState_t::REJECTING;
-      this->insertTask(to_reject);
-    }
-
-    // if there is more metabolites set a new selection tasks in interval time
-    this->setNextSelection();
-    
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
@@ -201,43 +174,15 @@ public:
   ***************************************/
 
   // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
-  void bindMetabolitsAndDropSurplus(const vector<MSG>& mb, RTask_t<TIME>& tr) {
-    Integer_t free_space, metabolites_taken_r, metabolites_taken_p, amount_for_r, amount_for_p;
-    bool is_reactant, is_product;
+  void bindMetabolits(const vector<MSG>& mb) {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-      
-      metabolites_taken_r = 0;
-      metabolites_taken_p = 0;
-      is_reactant         = _reactants.find(it->specie) != _reactants.end();
-      is_product          = _products.find(it->specie) != _products.end();
 
-      // dividing the metabolit between reactants and products
-      if (is_reactant && is_product && _reversible) {
-        amount_for_r = _distribution.drawNumber(0, it->amount);
-        amount_for_p = it->amount - amount_for_r;
-      } else {
-        amount_for_r = it->amount;
-        amount_for_p = it->amount;
+      if ( (it->react_direction == Way_t::STP) && (_substrate_comps.find(it->from) != _substrate_comps.end())) {
+        _substrate_comps.at += it->react_amount;
+      } else if ((it->react_direction == Way_t::PTS) && (_product_comps.find(it->from) != _product_comps.end())) {
+        _product_comps.at += it->react_amount;
       }
-
-      // binding the allowed amount of metabolits
-      if (is_reactant){
-
-        free_space                =   (_amount * _reactants_sctry.at(it->specie)) - _reactants.at(it->specie);
-        metabolites_taken_r       =   min(amount_for_r, free_space);
-        _reactants.at(it->specie) +=  metabolites_taken_r;
-      } 
-
-      if (is_product && _reversible) {
-      
-        free_space                =   (_amount * _products_sctry.at(it->specie)) - _products.at(it->specie);
-        metabolites_taken_p       =   min(amount_for_p, free_space);
-        _products.at(it->specie)  +=  metabolites_taken_p;
-      }
-      
-      // placing the surplus metabolites in the rejected list
-      addRejected(tr.rejected, it->specie, it->amount - (metabolites_taken_p + metabolites_taken_r));
     }
   }
 
@@ -282,7 +227,7 @@ public:
     
     if ( (!isClean(_reactants) || !isClean(_products)) && !this->thereIsNextSelection() ) {
 
-      new_selection.time_left = _interval_time;
+      new_selection.time_left = _it;
       new_selection.task_kind = RState_t::SELECTING;
       this->insertTask(new_selection);
     }
@@ -315,7 +260,7 @@ public:
   void deleteUsedMetabolics(Integer_t r, Integer_t p) {
 
     for (SetOfMolecules_t::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
-      it->second -= r * _reactants_sctry.at(it->first); 
+      it->second -= r * _substrate_sctry.at(it->first); 
     } 
 
     for (SetOfMolecules_t::iterator it = _products.begin(); it != _products.end(); ++it) {
@@ -341,7 +286,7 @@ public:
 
     if (d == Way_t::RTP) {
       curr_metabolics = &_reactants;
-      curr_sctry      = &_reactants_sctry;
+      curr_sctry      = &_substrate_sctry;
       fr              = this->freeFor(Way_t::RTP);
     } else {
       curr_metabolics = &_products;
@@ -368,7 +313,7 @@ public:
       curr_sctry      = &_products_sctry;
     } else {
       curr_metabolics = &_reactants;
-      curr_sctry      = &_reactants_sctry;
+      curr_sctry      = &_substrate_sctry;
     }
 
     Integer_t m = 0;
@@ -395,7 +340,7 @@ public:
     bool result = false;
 
     for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      if ((it->task_kind == RState_t::SELECTING) && (it->time_left <= _interval_time)) {
+      if ((it->task_kind == RState_t::SELECTING) && (it->time_left <= _it)) {
         result = true;
         break;
       }
@@ -460,11 +405,11 @@ public:
     os << "id: "            << _id                              << endl;
     os << "rate: "          << _rate                            << endl;
     os << "reversible: "    << (_reversible ? "true" : "false") << endl;
-    os << "interval time: " << _interval_time                   << endl;
+    os << "interval time: " << _it                   << endl;
     os << "free enzymes: "  << _amount                          << endl;
     
     os << "react sctry: ";
-    show(os, _reactants_sctry);
+    show(os, _substrate_sctry);
     os << endl;
     
     os << "prod sctry: ";

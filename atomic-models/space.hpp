@@ -22,20 +22,19 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
-long double e = 2.71828182845904523536028747135266249775724709369995L;
 long double L = 6.0221413e+23;
 
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
 {
 private:
-  string                 _id;
-  TIME                   _it;
-  TIME                   _br;
-  Address_t              _biomass_address;
-  SetOfMolecules_t       _metabolites;
+  string              _id;
+  TIME                _it;
+  TIME                _br;
+  Address_t           _biomass_address;
+  SetOfMolecules_t    _metabolites;
   map<enzyme_info_t>  _enzymes;
-  double                 _volume;
+  double              _volume;
 
   // task queue
   STaskQueue_t<TIME, MSG> _tasks;
@@ -123,7 +122,7 @@ public:
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is zero.
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); (it != _tasks.end()) && (it->time_left == ZERO); it = _tasks.erase(it)) {
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
         // no more than one selection in a given time T;
@@ -257,6 +256,7 @@ public:
     }
   }
 
+  // TODO modify this funtion to check only the molecules that belong to the current space.
   bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
     bool result = true;
 
@@ -419,12 +419,12 @@ public:
   double bindingTreshold(const SetOfMolecules_t% sctry, double kon) const {
 
     // calculation of the consentrations [A][B][C]
-    double cons = 1.0;
+    double consentration = 1.0;
     for (SetOfMolecules_t::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
-      cons *= _metabolites.at(it->first) / (L * _volume);  
+      consentration *= _metabolites.at(it->first) / (L * _volume);  
     }
 
-    return exp(-(1.0 / (cons*kon)));
+    return exp(-(1.0 / (consentration*kon)));
   }
 };
   

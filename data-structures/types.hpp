@@ -19,7 +19,7 @@ using namespace boost::simulation::pdevs::basic_models;
 /********** Enums and renames *************/
 /******************************************/
 
-enum class RState_t { SELECTING = 0, REJECTING = 1, REACTING = 2 };
+enum class RState_t { REACTING = 0 };
 enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4};
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
 enum class Way_t { STP, PTS };
@@ -201,26 +201,28 @@ using Address_t = list<string>;
 struct Message_t {
   
   Address_t to;
+  string from;
   SetOfMolecules_t metabolites;
   Way_t react_direction;
   Integer_t react_amount;
   bool show_request;
   bool biomass_request;
 
-  Message_t(const Address_t& other_to, const SetOfMolecules_t& other_m, Way_t other_rd, Integer_t other_ra, bool other_sr, bool other_br)
-  : to(other_to), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
+  Message_t(const Address_t& other_to, string other_from, const SetOfMolecules_t& other_m, Way_t other_rd, Integer_t other_ra, bool other_sr, bool other_br)
+  : to(other_to), from(other_from), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
 
   Message_t()
-  :to(), metabolites(), react_direction(), react_amount(), show_request(false), biomass_request(false) {}
+  :to(), from(""), metabolites(), react_direction(), react_amount(), show_request(false), biomass_request(false) {}
 
   Message_t(const Message_t& other)
-  : to(other.to), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
+  : to(other.to), from(other.from), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
 
   Message_t(Message_t& other)
-  : to(other.to), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
+  : to(other.to), from(other.from), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
 
   void clear() {
     to.clear();
+    from = "";
     metabolites.clear();
     show_request = false;
     biomass_request = false;
