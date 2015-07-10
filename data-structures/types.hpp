@@ -19,7 +19,6 @@ using namespace boost::simulation::pdevs::basic_models;
 /********** Enums and renames *************/
 /******************************************/
 
-enum class RState_t { REACTING = 0 };
 enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4};
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
 enum class Way_t { STP, PTS };
@@ -77,45 +76,26 @@ struct enzyme_parameter_t {
 
 template<class TIME>
 struct RTask_t {
-  TIME                    time_left;
-  RState_t                task_kind;
-  SetOfMolecules_t        rejected;  
-  pair<Way_t, Integer_t>  reaction;
+  TIME        time_left;
+  Way_t       direction; 
+  Integer_t   amount;
 
   RTask_t() {}
 
-  RTask_t(const RTask_t<TIME>& other) {
-    time_left = other.time_left;
-    task_kind = other.task_kind;
-    rejected  = other.rejected;
-    reaction  = other.reaction;
-  }
+  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
+  : time_left(other_t), direction(other_d), amount(other_a) {}
+
+  RTask_t(const RTask_t<TIME>& other) 
+  : time_left(other.time_left), direction(other.direction), amount(other.amount) {}
 
   inline bool operator<(const RTask_t<TIME>& o) const {
 
-    bool result;
-    if (time_left != o.time_left) result = (time_left < o.time_left);
-    else                          result = (task_kind < o.task_kind);
-
-    return result;
+    return (time_left < o.time_left);
   }
 
-  inline bool operator==(const RTask_t<TIME>& o)  const {
+  inline bool operator==(const RTask_t<TIME>& o)  const { 
 
-    bool result;
-
-    result = (time_left == o.time_left);
-    result = result && (task_kind == o.task_kind);
-
-    if (task_kind == RState_t::REJECTING) {
-      result = result && (rejected == o.rejected);
-    }
-
-    if (task_kind == RState_t::REACTING) {
-      result = result && (reaction == o.reaction);
-    }    
-
-    return result;
+    return (time_left == o.time_left) && (direction == o.direction) && (amount == o.amount);
   }
 
 };

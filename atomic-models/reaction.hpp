@@ -32,8 +32,8 @@ private:
   TIME                                  _rate;
   SetOfMolecules_t                      _substrate_sctry;
   SetOfMolecules_t                      _products_sctry;
-  map<string, int>                      _substrate_comps;
-  map<string, int>                      _product_comps;
+  map<string, Integer_t>                _substrate_comps;
+  map<string, Integer_t>                _product_comps;
   TIME                                  _it;
   RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
@@ -48,8 +48,8 @@ public:
     const TIME                                  other_rate,
     const SetOfMolecules_t&                     other_substrate_sctry,
     const SetOfMolecules_t&                     other_products_sctry,
-    const map<string, int>                      other_substrate_comps;
-    const map<string, int>                      other_product_comps;
+    const map<string, Integer_t>                other_substrate_comps;
+    const map<string, Integer_t>                other_product_comps;
     const TIME                                  other_it
   ) noexcept :
   _id(other_id),
@@ -68,50 +68,18 @@ public:
   }
 
   void internal() noexcept {
-    
-    RTask_t<TIME> selected_to_leave;
-    bool already_selected = false;
 
     // Updating time left
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-    // Processing all the tasks with time left == 0 (happening now)
-    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it->time_left == ZERO; it = _tasks.erase(it)) {
-
-      if ((it->task_kind == RState_t::SELECTING) && !already_selected) {
-
-        this->selectFrom(_reactants, selected_to_leave);      
-        this->selectFrom(_products, selected_to_leave);
-        this->lookForNewReactions();
-
-        already_selected = true;
-      
-      } else if (it->task_kind == RState_t::REACTING) {
-
-        _amount += it->reaction.second;
-      } 
-    }
-
-    // add leaving metabolites to the tasks
-    if (selected_to_leave.rejected.size() > 0) { // TODO CHANGE FOR EMPTY
-
-      selected_to_leave.time_left = ZERO;
-      selected_to_leave.task_kind = RState_t::REJECTING;
-      this->insertTask(selected_to_leave);
-    }
-
-    // if there is more metabolites set a new selection tasks in interval time
-    this->setNextSelection();
-    
+    // removing all the task made in the las out function
+    this->removeFinishedTasks();
   }
 
   TIME advance() const noexcept {
-    
-    TIME result;
-    if (!_tasks.empty()) result = _tasks.front().time_left;
-    else                 result = pdevs::atomic<TIME, MSG>::infinity;
-    
-    return result;
+  
+    if (!_tasks.empty()) return _tasks.front().time_left;
+    else                 return pdevs::atomic<TIME, MSG>::infinity;
   }
 
   vector<MSG> out() const noexcept {
@@ -122,31 +90,20 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); it->time_left == current_time; ++it) {
+    for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
-      if (it->task_kind == RState_t::REJECTING) {
-        
-        for (SetOfMolecules_t::const_iterator jt = it->rejected.cbegin(); jt != it->rejected.cend(); ++jt) {
-          new_message.clear();
-          new_message.to     = _addresses->at(jt->first);
-          new_message.specie = jt->first;
-          new_message.amount = jt->second;
-          result.push_back(new_message); 
-        }
-      } else if (it->task_kind == RState_t::REACTING) {
+      if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
+      else curr_sctry = &_substrate_sctry;
 
-        if (it->reaction.first == Way_t::RTP)      curr_sctry = &_products_sctry;
-        else if (it->reaction.first == Way_t::PTR) curr_sctry = &_substrate_sctry;
-
-        for (SetOfMolecules_t::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
-          new_message.clear();
-          new_message.to     = _addresses->at(jt->first);
-          new_message.specie = jt->first;
-          new_message.amount = it->reaction.second * jt->second;
-          result.push_back(new_message); 
-        }
+      for (SetOfMolecules_t::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
+        new_message.clear();
+        new_message.to = _addresses->at(jt->first);
+        new_message.metabolites.insert({jt->first, it->amount*jt->second});
+        result.push_back(new_message); 
       }
     }
+
+    unifyMessages(result);
     
     return result;
   }
@@ -155,7 +112,7 @@ public:
     // Updating time left
     this->updateTaskTimeLefts(t);
 
-    // inserting new metaboolits
+    // inserting new metabolites
     this->bindMetabolits(mb);
 
     // looking for new reactions
@@ -173,19 +130,6 @@ public:
   ********* helper functions *************
   ***************************************/
 
-  // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
-  void bindMetabolits(const vector<MSG>& mb) {
-
-    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-
-      if ( (it->react_direction == Way_t::STP) && (_substrate_comps.find(it->from) != _substrate_comps.end())) {
-        _substrate_comps.at += it->react_amount;
-      } else if ((it->react_direction == Way_t::PTS) && (_product_comps.find(it->from) != _product_comps.end())) {
-        _product_comps.at += it->react_amount;
-      }
-    }
-  }
-
   // Decrease the time left of all the current tasks in _tasks by the parameter t.
   void updateTaskTimeLefts(TIME t){
 
@@ -194,160 +138,109 @@ public:
     }
   }
 
-  void lookForNewReactions() {
-    Integer_t reactant_ready, product_ready, intersection_range, intersection;
-    RTask_t<TIME> rtp, ptr;
+  void removeFinishedTasks() {
 
-    reactant_ready      = this->totalReadyFor(Way_t::RTP);
-    product_ready       = this->totalReadyFor(Way_t::PTR);
-    intersection_range  = min(reactant_ready, product_ready);
-    intersection        =  _distribution.drawNumber(0, intersection_range);
-    reactant_ready      -= intersection;
-    product_ready       -= intersection;
-
-    this->deleteUsedMetabolics(reactant_ready, product_ready);
-
-    if (reactant_ready > 0) {
-      rtp.time_left = _rate;
-      rtp.task_kind = RState_t::REACTING;
-      rtp.reaction  = make_pair(Way_t::RTP, reactant_ready);
-      this->insertTask(rtp);
-    }
-
-    if (product_ready > 0) {
-      ptr.time_left = _rate;
-      ptr.task_kind = RState_t::REACTING;
-      ptr.reaction  = make_pair(Way_t::PTR, product_ready);
-      this->insertTask(ptr);
+    while(!_tasks.empty() && (_tasks.front().time_left == ZERO)) {
+      _tasks.pop_front();
     }
   }
 
-  void setNextSelection() {
-    RTask_t<TIME> new_selection;
-    
-    if ( (!isClean(_reactants) || !isClean(_products)) && !this->thereIsNextSelection() ) {
+  // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
+  void bindMetabolits(const vector<MSG>& mb) {
 
-      new_selection.time_left = _it;
-      new_selection.task_kind = RState_t::SELECTING;
-      this->insertTask(new_selection);
-    }
-  }
+    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-  void selectFrom(SetOfMolecules_t& m, RTask_t<TIME>& t) {
-    Integer_t amount_leaving;
-
-    for (SetOfMolecules_t::iterator it = m.begin(); it != m.end(); ++it) {
-
-      amount_leaving  = _distribution.drawNumber(0, it->second);
-      it->second      -= amount_leaving;
-      addRejected(t.rejected, it->first, amount_leaving);
-    }
-  }
-
-  // Add the rejected amount of the species specified in n by inserting/increasing the amount a in the set Of Molecule (garbage set) t.
-  void addRejected(SetOfMolecules_t& t, string n, Integer_t a){
-
-    if (a > 0) {
-      if (t.find(n) != t.end()) {
-        t.at(n) += a;
+      if (it->react_direction == Way_t::STP) {
+        _substrate_comps.at(it->from) += it->react_amount;
       } else {
-        t.insert({n, a});
+        _product_comps.at(it->from) += it->react_amount;
       }
     }
   }
 
-  // It decrease the number of reactants and products removing the specified number by the parameters r and p.
-  void deleteUsedMetabolics(Integer_t r, Integer_t p) {
+  void lookForNewReactions() {
+    
+    Integer_t stp_ready = totalReadyFor(_substrate_comps); 
+    Integer_t pts_ready = totalReadyFor(_product_comps);
 
-    for (SetOfMolecules_t::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
-      it->second -= r * _substrate_sctry.at(it->first); 
-    } 
-
-    for (SetOfMolecules_t::iterator it = _products.begin(); it != _products.end(); ++it) {
-      it->second -= p * _products_sctry.at(it->first); 
+    if (stp_ready > 0) {
+      RTask_t<TIME> stp_task(_rate, Way_t::STP, stp_ready);
+      this->insertTask(stp_task);
+      this->removeMetabolites(_substrate_comps, stp_ready);
     }
 
-    _amount -= r + p;
+    if (pts_ready > 0) {
+      RTask_t<TIME> pts_task(_rate, Way_t::STP, pts_ready);
+      this->insertTask(pts_task);
+      this->removeMetabolites(_product_comps, pts_ready);
+    }
   }
 
-  // Insert a copy of the parameter t in the RTaskQueue_t in an ordered Way_t.
+  void removeMetabolites(map<string, Integer_t>& comp, Integer_t a) {
+
+    for (map<string, Integer_t>::iterator it = comp.begin(); it != comp.end(); ++it) {
+      it->second -= a;  
+    }
+  }
+
+  Integer_t totalReadyFor(const map<string, Integer_t>& comp) {
+    
+    Integer_t result = numeric_limits<Integer_t>::max();
+    for (map<string, Integer_t>::const_iterator it = comp.cbegin(); it != comp.cend(); ++it) {
+      if (result > it->second) result = it->second;
+    }
+
+    return result;
+  }
+
   void insertTask(const RTask_t<TIME>& t) {
 
-    typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    typename STaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
   }
 
-  // It return the total number of enzymes that are ready to react in the Way_t specified by the parameter d.
-  Integer_t totalReadyFor(Way_t d) const {
-    Integer_t fr;
+  void unifyMessages(vector<MSG>& m) const {
 
-    const SetOfMolecules_t *curr_metabolics; 
-    const SetOfMolecules_t *curr_sctry;
+    map<Address_t, MSG> unMsgs;
 
-    if (d == Way_t::RTP) {
-      curr_metabolics = &_reactants;
-      curr_sctry      = &_substrate_sctry;
-      fr              = this->freeFor(Way_t::RTP);
-    } else {
-      curr_metabolics = &_products;
-      curr_sctry      = &_products_sctry;
-      fr              = this->freeFor(Way_t::PTR);
+    for (vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+      insertMessage(unMsgs, *it);
     }
 
-    Integer_t m = numeric_limits<Integer_t>::max();
-    for (SetOfMolecules_t::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = min(m, (Integer_t)floor(it->second / curr_sctry->at(it->first)));
+    m.clear();
 
-    return min(m,fr);
-  }
-
-  //usando la stoichiometry y el _amount calcula cuanto es la cantidad de enzymas que estan libres de
-  // ese set de elementos. mira la maximo elemento que aparece y cuantas enzymas este ocupa.
-  Integer_t freeFor(Way_t d) const {
-    
-    const SetOfMolecules_t *curr_metabolics;
-    const SetOfMolecules_t *curr_sctry;
-
-    if (d == Way_t::RTP) {
-      curr_metabolics = &_products;
-      curr_sctry      = &_products_sctry;
-    } else {
-      curr_metabolics = &_reactants;
-      curr_sctry      = &_substrate_sctry;
+    for (map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+      m.push_back(it->second);
     }
-
-    Integer_t m = 0;
-    for (SetOfMolecules_t::const_iterator it = curr_metabolics->cbegin(); it != curr_metabolics->cend(); ++it)
-      m = max( m, (Integer_t)ceil(it->second / curr_sctry->at(it->first)) ); 
-
-    return _amount - m;
   }
 
-  bool isClean(const SetOfMolecules_t& t) {
+  void insertMessage(map<Address_t, MSG>& ms, MSG& m) const {
 
-    bool result = true;
-    for (SetOfMolecules_t::const_iterator it = t.cbegin(); it != t.cend(); ++it) {
-      if (it->second != 0) {
-        result = false;
-        break;
+    if (ms.find(m.to) != ms.end()) {
+      addMultipleMetabolites(ms.at(m.to).metabolites, m.metabolites);
+    } else {
+      ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
+    }
+  }
+
+  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  
+    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+      addMetabolite(m, it->first, it->second);
+    }
+  }
+
+  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a){
+
+    if (a > 0) {
+      if (m.find(n) != m.end()) {
+        m.at(n) += a;
+      } else {
+        m.insert({n, a}); // TODO: change all the initializer_list because they don't work on windows
       }
     }
-
-    return result;
   }
 
-  bool thereIsNextSelection() {
-    bool result = false;
-
-    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      if ((it->task_kind == RState_t::SELECTING) && (it->time_left <= _it)) {
-        result = true;
-        break;
-      }
-    }
-
-    return result;
-  }
 
   /*********************************************/
   /************** Testing functions ************/

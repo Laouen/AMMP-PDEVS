@@ -23,6 +23,7 @@ using namespace boost::simulation;
 using namespace std;
 
 long double L = 6.0221413e+23;
+BRITime ZERO(0);
 
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
@@ -43,9 +44,6 @@ private:
   RealRandom_t<double>       _real_random;
   IntegerRandom_t<Integer_t> _integer_random;
 
-  // constant variables
-  TIME ZERO;
-
 public:
 
   // This constructor start a new space without any metabolite, so, there isn't programed tasks when the space start.
@@ -62,8 +60,7 @@ public:
   _br(other_br),
   _biomass_address(other_biomass_address),
   _enzymes(other_enzymes),
-  _volume(other_volume),
-  ZERO(0) {
+  _volume(other_volume) {
 
     // The random atributes must be initilized with a random generator
     random_device real_rd; // Random generator variable
