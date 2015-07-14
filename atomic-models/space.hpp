@@ -258,7 +258,7 @@ public:
     bool result = true;
 
     for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
-      if((_metabolites.find(it->first) == _metabolites.end()) || (_metabolites.at(it->first) < it->second)) {
+      if((_metabolites.find(it->first) != _metabolites.end()) && (_metabolites.at(it->first) < it->second)) {
         result = false;
         break;
       }
@@ -319,7 +319,7 @@ public:
 
   // TODO one enzyme can do multiples reactions, ask about this.
   // TODO the transport enzyme are a little different.
-  void selectMetalobitesToReact(vector<MSG>& m) const {
+  void selectMetalobitesToReact(vector<MSG>& m) {
     MSG cm;
     double son, pon, rv;
     enzyme_info_t en;
@@ -357,7 +357,7 @@ public:
 
         // update the metabolite amount in the space
         for (SetOfMolecules_t::iterator jt = en.reactants_sctry.begin(); jt != en.reactants_sctry.end(); ++jt) {
-          _metabolites.at(jt->first) -= jt->second;
+          if (_metabolites.find(jt->first) != _metabolites.end()) _metabolites.at(jt->first) -= jt->second;
         }
       } else if (rv < pon) {
         // send message to enzyme for a subtract to product reaction
@@ -368,7 +368,7 @@ public:
 
         // update the metabolite amount in the space
         for (SetOfMolecules_t::iterator jt = en.products_sctry.begin(); jt != en.products_sctry.end(); ++jt) {
-          _metabolites.at(jt->first) -= jt->second;
+          if (_metabolites.find(jt->first) != _metabolites.end()) _metabolites.at(jt->first) -= jt->second;
         }
       }
     }
@@ -381,6 +381,7 @@ public:
     }
   }
 
+  // TODO test this function specially
   void shuffleEnzymes(vector<string>& ce) const {
     std::random_device rd;
     std::mt19937 g(rd());
@@ -418,7 +419,9 @@ public:
     // calculation of the consentrations [A][B][C]
     double consentration = 1.0;
     for (SetOfMolecules_t::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
-      consentration *= _metabolites.at(it->first) / (L * _volume);  
+      if (_metabolites.find(it->first) != _metabolites.end()) {
+        consentration *= _metabolites.at(it->first) / (L * _volume);  
+      }
     }
 
     return exp(-(1.0 / (consentration*kon)));
