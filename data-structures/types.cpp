@@ -91,23 +91,6 @@ ostream& operator<<(ostream& os, const BState_t& s) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const RState_t& s) {
-
-  switch(s) {
-    case RState_t::SELECTING:
-      os << "SELECTING";
-      break;
-    case RState_t::REJECTING:
-      os << "REJECTING";
-      break;
-    case RState_t::REACTING:
-      os << "REACTING";
-      break;
-  }
-
-  return os;
-}
-
 ostream& operator<<(ostream& os, const Way_t& s) {
 
   switch(s) {

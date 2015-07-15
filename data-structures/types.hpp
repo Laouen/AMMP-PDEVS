@@ -197,7 +197,6 @@ ostream& operator<<(ostream& os, const vector<string>& m);
 ostream& operator<<(ostream& os, const SetOfMolecules_t& m);
 ostream& operator<<(ostream& os, const SState_t& s);
 ostream& operator<<(ostream& os, const BState_t& s);
-ostream& operator<<(ostream& os, const RState_t& s);
 ostream& operator<<(ostream& os, const Way_t& s);
 
 /*******************************************/
@@ -214,21 +213,6 @@ ostream& operator<<(ostream& os, const Way_t& s);
 /************* Data info type **************/
 /*******************************************/
 
-struct metabolite_info_t {
-  
-  Integer_t         amount;
-  vector<Address_t> enzymes;
-
-  metabolite_info_t()
-  : amount(0), enzymes() {}
-
-  metabolite_info_t(Integer_t other_amount, const vector<Address_t>& other_enzymes)
-  : amount(other_amount), enzymes(other_enzymes) {}
-
-  metabolite_info_t(const metabolite_info_t& other)
-  : amount(other.amount), enzymes(other.enzymes) {}
-};
-
 // TODO this type must be removed after the new implementation.
 struct reaction_info_t {
 
@@ -241,16 +225,15 @@ struct reaction_info_t {
   bool              reversible;
 
   reaction_info_t()
-  : location(), reactants() {}
+  : location(), amount(0), konSTP(1), konPTS(1), reversible(false) {}
 
-  reaction_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_konSTP, double other_konPTS, bool other_reversible)
-  : location(other_location), reactants(other_reactants), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
+  reaction_info_t(const Address_t& other_location, const Integer_t& other_amount, double other_konSTP, double other_konPTS, bool other_reversible)
+  : location(other_location), amount(other_amount), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
 
   reaction_info_t(const reaction_info_t& other)
-  : location(other.location), reactants(other.reactants), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
+  : location(other.location), amount(other.amount), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
 };
 
-metabolite_info_t& metabolite_info_t::operator=(metabolite_info_t &&) = default;
 
 /*******************************************/
 /*********** End Data info type ************/

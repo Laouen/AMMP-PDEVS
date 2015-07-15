@@ -11,7 +11,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, RState_t, Way_t, RTaskQueue_t
+#include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace boost::simulation::pdevs;
@@ -48,8 +48,8 @@ public:
     const TIME                                  other_rate,
     const SetOfMolecules_t&                     other_substrate_sctry,
     const SetOfMolecules_t&                     other_products_sctry,
-    const map<string, Integer_t>                other_substrate_comps;
-    const map<string, Integer_t>                other_product_comps;
+    const map<string, Integer_t>                other_substrate_comps,
+    const map<string, Integer_t>                other_product_comps,
     const TIME                                  other_it
   ) noexcept :
   _id(other_id),
@@ -241,90 +241,6 @@ public:
       }
     }
   }
-
-
-  /*********************************************/
-  /************** Testing functions ************/
-  /*********************************************/
-
-  ostream& show(ostream& os, const SetOfMolecules_t& to) {
-
-    os << "[";
-
-    SetOfMolecules_t::const_iterator it = to.cbegin();
-    while ( it != to.cend()) {
-      os << "(" << it->first << "," << it->second << ")";
-      ++it;
-      if (it != to.cend()) os << ",";
-    }
-    os << "]";
-    return os;
-  }
-
-  ostream& show(ostream& os, const RTask_t<TIME>& to) {
-
-    string kind, w;
-    if (to.task_kind == RState_t::SELECTING)        kind = "RState_t::SELECTING";
-    else if (to.task_kind == RState_t::REJECTING)   kind = "RState_t::REJECTING";
-    else if (to.task_kind == RState_t::REACTING)    kind = "RState_t::REACTING";
-
-    os << "Task Kind: " << kind << endl;
-    os << "Time left: " << to.time_left << endl;
-
-    if(to.task_kind == RState_t::REJECTING) {
-      show(os, to.rejected);
-    } else if (to.task_kind == RState_t::REACTING) {
-
-      if (to.reaction.first == Way_t::RTP)       w = "Way_t::RTP";
-      else if (to.reaction.first == Way_t::PTR)  w = "Way_t::PTR";
-
-      os << "Way: " << w << " amount: " << to.reaction.second;
-    }
-
-    return os;
-  }
-
-  ostream& show(ostream& os, const RTaskQueue_t<TIME>& to) {
-
-    os << "Current Tasks in the queue: ";
-    for (typename RTaskQueue_t<TIME>::const_iterator it = to.cbegin(); it != to.cend(); ++it) {
-      os << endl << endl;
-      show(cout, *it);
-    }
-    return os;
-  }
-
-  ostream& show(ostream& os) {
-
-    os << "id: "            << _id                              << endl;
-    os << "rate: "          << _rate                            << endl;
-    os << "reversible: "    << (_reversible ? "true" : "false") << endl;
-    os << "interval time: " << _it                   << endl;
-    os << "free enzymes: "  << _amount                          << endl;
-    
-    os << "react sctry: ";
-    show(os, _substrate_sctry);
-    os << endl;
-    
-    os << "prod sctry: ";
-    show(os, _products_sctry);
-    os << endl;
-    
-    os << "reactants: ";
-    show(os, _reactants);
-    os << endl;
-    
-    os << "products: ";
-    show(os, _products);
-    os << endl;
-    
-    os << "schedulled tasks: " << endl;
-    show(os, _tasks);
-    os << endl;
-    
-    return os;
-  }
-
 };
 
 #endif // BOOST_SIMULATION_PDEVS_REACTION_H

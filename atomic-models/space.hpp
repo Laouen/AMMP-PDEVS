@@ -14,7 +14,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // metabolite_info_t, reaction_info_t, SState_t, Integer_t
+#include "../data-structures/types.hpp" // reaction_info_t, SState_t, Integer_t
 #include "../data-structures/randomNumbers.hpp" // IntegerRandom_t
 
 
