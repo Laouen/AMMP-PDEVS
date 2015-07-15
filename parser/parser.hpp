@@ -24,26 +24,35 @@ private:
 	TiXmlDocument               _document;
   map<string, TiXmlElement*>  _models;
   string                      _biomass_ID;
-  long double                 _cell_weight;
-  Integer_t                   _norm_number;
+
+  // data
+  list<UnitDefinition_t>            _units;
+  map<string, string>               _comps;
+  map<string, map<string, string>>  _speciesByComps;
+
+  // private methods
+  Integer_t getBiomassStoichiometryFrom(long double, long double, Integer_t);
+  Integer_t getStoichiometryFrom(long double);
+  string specieComp(string);
+  string getCompAndSubComp(const SetOfMolecules_t&, const SetOfMolecules_t&);
+  Address_t getReactionAddress(const SetOfMolecules_t&, const SetOfMolecules_t&, string);
 
 public:
   // Constructors
   Parser_t() = default;
-	Parser_t(const char *filename, const string other_biomass_ID, const long double other_cell_weight, const Integer_t other_norm_number)
-  : _document(filename), _biomass_ID(other_biomass_ID), _cell_weight(other_cell_weight), _norm_number(other_norm_number) {};
+	Parser_t(const char *filename, const string other_biomass_ID)
+  : _document(filename), _biomass_ID(other_biomass_ID) {};
 	
   // methods to load the XML files in the class
   bool loadFile(const char *filename);
   bool loadFile();
 
-  // geting information from the current XML file loaded.
-  list<UnitDefinition_t> getUnitDefinitions();
-  map<string, string> getCompartments();
-  map<string, map<string, string> > getSpecies();
-  string getSpecieCompartment(string);
-  map<string, enzyme_info_t > getEnzymes();
-  enzyme_info_t getBiomass();
+  // methods to get the information from the current SBML file.
+  list<UnitDefinition_t>& getUnitDefinitions();
+  map<string, string>& getCompartments();
+  map<string, map<string, string>>& getSpecieByCompartments();
+  map<string, reaction_info_t> getReactions();
+  reaction_info_t getBiomass();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

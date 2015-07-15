@@ -195,8 +195,8 @@ public:
 
     if (_compartment_models.find(c) == _compartment_models.end()){
 
-      map<string, enzyme_info_t> eis;
-      enzyme_info_t ei;
+      map<string, reaction_info_t> eis;
+      reaction_info_t ei;
 
       for (map<string, enzyme_parameter_t>::const_iterator i = _reactions.cbegin(); i != _reactions.end(); ++i) {
 
@@ -217,7 +217,7 @@ public:
         const TIME,
         const Address_t&,
         const map<string, metabolite_info_t>&, 
-        const map<string, enzyme_info_t>&, 
+        const map<string, reaction_info_t>&, 
         const double, 
         const double >(
           c, 

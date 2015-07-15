@@ -51,24 +51,6 @@ using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
 /************ End models type *************/
 /******************************************/
 
-/******************************************/
-/************ Parser types ****************/
-/******************************************/
-
-
-struct enzyme_parameter_t {
-  
-  string            name;
-  bool              reversible;
-  SetOfMolecules_t  reactants_sctry;
-  SetOfMolecules_t  products_sctry;
-};
-
-
-/******************************************/
-/*********** End parser types *************/
-/******************************************/
-
 
 /*******************************************/
 /**************** RTask_t ******************/
@@ -248,7 +230,7 @@ struct metabolite_info_t {
 };
 
 // TODO this type must be removed after the new implementation.
-struct enzyme_info_t {
+struct reaction_info_t {
 
   Address_t         location;
   Integer_t         amount;
@@ -258,13 +240,13 @@ struct enzyme_info_t {
   double            konPTS;
   bool              reversible;
 
-  enzyme_info_t()
+  reaction_info_t()
   : location(), reactants() {}
 
-  enzyme_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_konSTP, double other_konPTS, bool other_reversible)
+  reaction_info_t(const Address_t& other_location, const vector<string>& other_reactants, double other_konSTP, double other_konPTS, bool other_reversible)
   : location(other_location), reactants(other_reactants), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
 
-  enzyme_info_t(const enzyme_info_t& other)
+  reaction_info_t(const reaction_info_t& other)
   : location(other.location), reactants(other.reactants), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
 };
 

@@ -18,6 +18,9 @@
 // include vendors
 #include "vendors/pdevs_tools.hpp"
 
+// TEMPORAL FOR TEST
+#include "parser/parser.hpp"
+
 #define TIXML_USE_STL
 
 using namespace std;
@@ -38,6 +41,9 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
+  return 0;
+}
+  /*
   long double cell_weight   = 280 * 1e-15;  
   Integer_t norm_number     = 1;  
   string e                  = "e";
@@ -83,7 +89,7 @@ int main(int argc, char* argv[]) {
   /*****************************************************************************************************/
   /************************************** Runing Simulation ********************************************/
   /*****************************************************************************************************/
-
+  /*
   if (comment_mode) cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   string partial_input = "";

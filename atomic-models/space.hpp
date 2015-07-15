@@ -14,7 +14,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // metabolite_info_t, enzyme_info_t, SState_t, Integer_t
+#include "../data-structures/types.hpp" // metabolite_info_t, reaction_info_t, SState_t, Integer_t
 #include "../data-structures/randomNumbers.hpp" // IntegerRandom_t
 
 
@@ -34,7 +34,7 @@ private:
   TIME                _br;
   Address_t           _biomass_address;
   SetOfMolecules_t    _metabolites;
-  map<enzyme_info_t>  _enzymes;
+  map<reaction_info_t>  _enzymes;
   double              _volume;
 
   // task queue
@@ -52,7 +52,7 @@ public:
     const TIME                   other_it,
     const TIME                   other_br,
     const Address_t&             other_biomass_address,
-    const map<enzyme_info_t>&    other_enzymes,
+    const map<reaction_info_t>&    other_enzymes,
     const double                 other_volume,
     ) noexcept :
   _id(other_id),
@@ -81,7 +81,7 @@ public:
     const TIME                   other_br,
     const Address_t&             other_biomass_address,
     const SetOfMolecules_t&      other_metabolites,
-    const map<enzyme_info_t>&    other_enzymes,
+    const map<reaction_info_t>&    other_enzymes,
     const double                 other_volume,
     ) noexcept :
   _id(other_id),
@@ -322,7 +322,7 @@ public:
   void selectMetalobitesToReact(vector<MSG>& m) {
     MSG cm;
     double son, pon, rv;
-    enzyme_info_t en;
+    reaction_info_t en;
     vector<string> current_enzymes;
 
     this->unfoldEnzymes(current_enzymes); // all the enzyme are considered individualy not grouped by kind
@@ -376,7 +376,7 @@ public:
 
   void unfoldEnzymes(vector<string>& ce) const {
 
-    for (map<enzyme_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
+    for (map<reaction_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
       ce.insert(ce.end(), it->second.amount, it->first);
     }
   }
