@@ -6,19 +6,34 @@ using namespace std;
 /******************** HELPER FUNCTIONS *************************/
 /***************************************************************/
 
-long double L   = 6.0221413e+23;
 long double MOL = 1e-6;
 
-// TODO this implementation should modify all the stoichimetry
-Integer_t Parser_t::getStoichiometryFrom(long double amount) {
+void Parser_t::loadExternParameters(
+  shared_ptr<map<string, Integer_t>> other_amounts,
+  shared_ptr<map<string, Integer_t>> other_konSTPs,
+  shared_ptr<map<string, Integer_t>> other_konPTSs,
+  long double other_cw,
+  Integer_t other_n
+) {
+  
+  _amounts = other_amounts;
+  _konSTPs = other_konSTPs;
+  _konPTSs = other_konPTSs;
+  _cell_weight = other_cw;
+  _normalization = other_n;
+}
 
-  return (unsigned long long)amount;
+// TODO this implementation should modify all the stoichimetry
+Integer_t Parser_t::getStoichiometryFrom(double amount) {
+
+  return (Integer_t)amount;
 }
 
 // is a temporary implemetation
-Integer_t Parser_t::getBiomassStoichiometryFrom(long double amount, long double cw, Integer_t nm) {
-
-  return (Integer_t) ((amount * MOL * L * cw) / nm);
+Integer_t Parser_t::getBiomassStoichiometryFrom(double amount) {
+  assert((this->_cell_weight != 0) && (this->_normalization != 0));
+  
+  return (Integer_t) ((amount * MOL * L * this->_cell_weight) / this->_normalization);
 }
 
 string Parser_t::specieComp(string id) {
@@ -35,8 +50,8 @@ string Parser_t::specieComp(string id) {
     }
   }
 
-  if (a == 0) assert(false && "This specie does not belong to any compartment.");
-  if (a > 1) assert(false && "More than one compartment for the specie " + id + ".");
+  assert((a == 0));
+  assert((a > 1));
 
   return res;
 }
@@ -58,7 +73,7 @@ pair<string, string> Parser_t::getCompAndSubComp(const SetOfMolecules_t& st, con
     if (comps.find(c) == comps.end()) comps.insert({c, true});
   }
 
-  switch(ac.size()) {
+  switch(comps.size()) {
   case 1:
 
     res.first = comps.begin()->first;
@@ -66,27 +81,28 @@ pair<string, string> Parser_t::getCompAndSubComp(const SetOfMolecules_t& st, con
     break;
   case 2:
 
-    res.first = _p;
-    if (comps[_e] > 0){
+    res.first = this->_p;
+    if (comps[this->_e] > 0){
 
-      res = "outer_membrane";
-    } else if (comps[_c] > 0) {
+      res.second = "outer_membrane";
+    } else if (comps[this->_c] > 0) {
 
-      res = "inner_membrane";
-    } else if ((comps[_e] > 0) && (comps[_c] > 0)) {
+      res.second = "inner_membrane";
+    } else if ((comps[this->_e] > 0) && (comps[this->_c] > 0)) {
 
-      res = "trans_membrane";
+      res.second = "trans_membrane";
     } else {
 
       assert(false && "The specie stoichiometry belong to a wrong conbination of 2 compartments.");
     }
     break;
   case 3:
-    if ((comps[_e] > 0) && (comps[_p] > 0) && (comps[_c] > 0))
-      res.first = _p;
+    if ((comps[this->_e] > 0) && (comps[this->_p] > 0) && (comps[this->_c] > 0)) {
+      res.first = this->_p;
       res.second = "trans_membrane";
-    else
+    } else {
       assert(false && "The specie stoichiometry belong to a wrong conbination of 3 compartments.");
+    }
     break;
   }
 
@@ -189,11 +205,12 @@ map<string, string>& Parser_t::getCompartments() {
   return this->_comps; 
 }
 
-map<string, map<string, string>>& Parser_t::getSpecieByCompartments(string s) {
+map<string, map<string, string>>& Parser_t::getSpecieByCompartments() {
   assert(this->_loaded);
 
   if (this->_speciesByComps.empty()) {
     string c, n, id;
+    map<string, string> new_value;
 
     for (TiXmlElement *it = _models["listOfSpecies"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
       c = it->Attribute("compartment");
@@ -203,7 +220,8 @@ map<string, map<string, string>>& Parser_t::getSpecieByCompartments(string s) {
       if (this->_speciesByComps.find(c) != this->_speciesByComps.end()){
         this->_speciesByComps.at(c).insert({id, n});
       } else {
-        this->_speciesByComps.insert({c, {id, n}});
+        new_value = {{id, n}};
+        this->_speciesByComps.insert({c, new_value});
       }
     }
   }
@@ -213,10 +231,11 @@ map<string, map<string, string>>& Parser_t::getSpecieByCompartments(string s) {
 
 map<string, reaction_info_t>& Parser_t::getReactions() {
   assert(this->_loaded);
+  assert(this->_amounts && this->_konSTPs && this->_konPTSs);
 
   if (this->_reactions.empty()) {
     string specieID;
-    Integer_t sctry_value;
+    double sctry_value;
     reaction_info_t react;
 
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
@@ -251,9 +270,9 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
       // setting location, amoun and both Knos
       react.location = this->getReactionAddress(react.substrate_sctry, react.products_sctry, it->Attribute("id"));
-      react.amount = _amounts.at(it->Attribute("id"));
-      react.konSTP = _knoSTPs.at(it->Attribute("id"));
-      react.konPTS = _knoPTSs.at(it->Attribute("id"));
+      react.amount = this->_amounts->at(it->Attribute("id"));
+      react.konSTP = this->_konSTPs->at(it->Attribute("id"));
+      react.konPTS = this->_konPTSs->at(it->Attribute("id"));
 
       // insert the new reaction to the res;
       this->_reactions.insert({it->Attribute("id"), react});
@@ -268,7 +287,7 @@ reaction_info_t Parser_t::getBiomass() {
   assert(this->_loaded);
 
   string specieID;
-  Integer_t sctry_value;
+  double sctry_value;
   reaction_info_t react;
 
   for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {

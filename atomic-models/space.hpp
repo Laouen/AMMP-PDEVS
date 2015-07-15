@@ -1,5 +1,5 @@
-#ifndef BOOST_SIMULATION_PDEVS_CONTROLER_H
-#define BOOST_SIMULATION_PDEVS_CONTROLER_H
+#ifndef BOOST_SIMULATION_PDEVS_SPACE_H
+#define BOOST_SIMULATION_PDEVS_SPACE_H
 #include <string>
 #include <utility>
 #include <map>
@@ -22,20 +22,17 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
-long double L = 6.0221413e+23;
-BRITime ZERO(0);
-
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
 {
 private:
-  string              _id;
-  TIME                _it;
-  TIME                _br;
-  Address_t           _biomass_address;
-  SetOfMolecules_t    _metabolites;
-  map<reaction_info_t>  _enzymes;
-  double              _volume;
+  string                        _id;
+  TIME                          _it;
+  TIME                          _br;
+  Address_t                     _biomass_address;
+  SetOfMolecules_t              _metabolites;
+  map<string, reaction_info_t>  _enzymes;
+  double                        _volume;
 
   // task queue
   STaskQueue_t<TIME, MSG> _tasks;
@@ -48,12 +45,12 @@ public:
 
   // This constructor start a new space without any metabolite, so, there isn't programed tasks when the space start.
   explicit space(
-    const string                 other_id,
-    const TIME                   other_it,
-    const TIME                   other_br,
-    const Address_t&             other_biomass_address,
-    const map<reaction_info_t>&    other_enzymes,
-    const double                 other_volume,
+    const string                          other_id,
+    const TIME                            other_it,
+    const TIME                            other_br,
+    const Address_t&                      other_biomass_address,
+    const map<string, reaction_info_t>&   other_enzymes,
+    const double                          other_volume
     ) noexcept :
   _id(other_id),
   _it(other_it),
@@ -76,13 +73,13 @@ public:
   // This constructor start a new space with metabolites, the SetOfMolecules_t must have elements, is a precondition.
   // because of this, the space start with a selection task
   explicit space(
-    const string                 other_id,
-    const TIME                   other_it,
-    const TIME                   other_br,
-    const Address_t&             other_biomass_address,
-    const SetOfMolecules_t&      other_metabolites,
-    const map<reaction_info_t>&    other_enzymes,
-    const double                 other_volume,
+    const string                          other_id,
+    const TIME                            other_it,
+    const TIME                            other_br,
+    const Address_t&                      other_biomass_address,
+    const SetOfMolecules_t&               other_metabolites,
+    const map<string, reaction_info_t>&   other_enzymes,
+    const double                          other_volume
     ) noexcept :
   _id(other_id),
   _it(other_it),
@@ -90,8 +87,7 @@ public:
   _biomass_address(other_biomass_address),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
-  _volume(other_volume),
-  ZERO(0) {
+  _volume(other_volume) {
     assert((_metabolites.size() > 0) && "This constructor require a non empty map of metabolites.");
 
     // The random atributes must be initilized with a random generator
@@ -118,7 +114,7 @@ public:
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
-    // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is zero.
+    // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is ZERO.
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
@@ -253,7 +249,6 @@ public:
     }
   }
 
-  // TODO modify this funtion to check only the molecules that belong to the current space.
   bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
     bool result = true;
 
@@ -333,7 +328,7 @@ public:
       cm.clear();
 
       // calculating the son and pon
-      if (this->thereAreEnaughFor(en.reactants_sctry)) son = this->bindingTreshold(en.reactants_sctry, en.konSTP);
+      if (this->thereAreEnaughFor(en.substrate_sctry)) son = this->bindingTreshold(en.substrate_sctry, en.konSTP);
       else son = 0;
       if (en.reversible && this->thereAreEnaughFor(en.products_sctry)) pon = this->bindingTreshold(en.products_sctry, en.konPTS);
       else pon = 0;
@@ -356,7 +351,7 @@ public:
         m.push_back(cm);
 
         // update the metabolite amount in the space
-        for (SetOfMolecules_t::iterator jt = en.reactants_sctry.begin(); jt != en.reactants_sctry.end(); ++jt) {
+        for (SetOfMolecules_t::iterator jt = en.substrate_sctry.begin(); jt != en.substrate_sctry.end(); ++jt) {
           if (_metabolites.find(jt->first) != _metabolites.end()) _metabolites.at(jt->first) -= jt->second;
         }
       } else if (rv < pon) {
@@ -376,7 +371,7 @@ public:
 
   void unfoldEnzymes(vector<string>& ce) const {
 
-    for (map<reaction_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
+    for (map<string, reaction_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
       ce.insert(ce.end(), it->second.amount, it->first);
     }
   }
@@ -392,13 +387,13 @@ public:
 
     map<Address_t, MSG> unMsgs;
 
-    for (vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
       insertMessage(unMsgs, *it);
     }
 
     m.clear();
 
-    for (map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
       m.push_back(it->second);
     }
   }
@@ -414,7 +409,7 @@ public:
     }
   }
 
-  double bindingTreshold(const SetOfMolecules_t% sctry, double kon) const {
+  double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
 
     // calculation of the consentrations [A][B][C]
     double consentration = 1.0;
@@ -429,4 +424,4 @@ public:
 };
   
 
-#endif // BOOST_SIMULATION_PDEVS_CONTROLER_H
+#endif // BOOST_SIMULATION_PDEVS_SPACE_H

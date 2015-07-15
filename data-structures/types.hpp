@@ -9,6 +9,8 @@
 
 #include <boost/simulation.hpp>
 
+#include "britime.hpp"
+
 
 using namespace std;
 using namespace boost::simulation;
@@ -26,10 +28,19 @@ enum class Way_t { STP, PTS };
 using Integer_t = unsigned long long;
 using SetOfMolecules_t  = map<string, Integer_t>;
 
-
-
 /******************************************/
 /******** End enums and renames ***********/
+/******************************************/
+
+/******************************************/
+/************** Constants *****************/
+/******************************************/
+
+const long double L = 6.0221413e+23L;
+const BRITime ZERO(0);
+
+/******************************************/
+/************ End Constants ***************/
 /******************************************/
 
 /******************************************/
@@ -218,7 +229,7 @@ struct reaction_info_t {
 
   Address_t         location;
   Integer_t         amount;
-  SetOfMolecules_t  reactants_sctry;
+  SetOfMolecules_t  substrate_sctry;
   SetOfMolecules_t  products_sctry;
   double            konSTP;
   double            konPTS;
@@ -227,11 +238,21 @@ struct reaction_info_t {
   reaction_info_t()
   : location(), amount(0), konSTP(1), konPTS(1), reversible(false) {}
 
-  reaction_info_t(const Address_t& other_location, const Integer_t& other_amount, double other_konSTP, double other_konPTS, bool other_reversible)
-  : location(other_location), amount(other_amount), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
+  reaction_info_t(const Address_t& other_location, const Integer_t& other_amount, const SetOfMolecules_t& other_substrate_sctry, const SetOfMolecules_t& other_products_sctry, double other_konSTP, double other_konPTS, bool other_reversible)
+  : location(other_location), amount(other_amount), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
 
   reaction_info_t(const reaction_info_t& other)
-  : location(other.location), amount(other.amount), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
+  : location(other.location), amount(other.amount), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
+
+  void clear() {
+    location.clear();
+    amount = 0;
+    substrate_sctry.clear();
+    products_sctry.clear();
+    konSTP = 0;
+    konPTS = 0;
+    reversible = false;
+  }
 };
 
 

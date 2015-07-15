@@ -18,8 +18,6 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
-BRITime ZERO(0);
-
 template<class TIME, class MSG>
 class reaction : public pdevs::atomic<TIME, MSG>
 {
@@ -196,7 +194,7 @@ public:
 
   void insertTask(const RTask_t<TIME>& t) {
 
-    typename STaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
   }
 
@@ -204,13 +202,13 @@ public:
 
     map<Address_t, MSG> unMsgs;
 
-    for (vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
       insertMessage(unMsgs, *it);
     }
 
     m.clear();
 
-    for (map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
       m.push_back(it->second);
     }
   }
