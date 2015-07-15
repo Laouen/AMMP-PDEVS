@@ -62,7 +62,10 @@ public:
     shared_ptr<map<string, Integer_t>> other_konSTPs,
     shared_ptr<map<string, Integer_t>> other_konPTSs,
     long double other_cw,
-    Integer_t other_n
+    Integer_t other_n,
+    string other_p,
+    string other_e,
+    string other_c
   );
 
   // methods to get the information from the current SBML file.
@@ -70,6 +73,7 @@ public:
   map<string, string>& getCompartments();
   map<string, map<string, string>>& getSpecieByCompartments();
   map<string, reaction_info_t>& getReactions();
+  vector<string> getReactionIDs();
   reaction_info_t getBiomass();
 };
 

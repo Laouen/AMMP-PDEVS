@@ -255,6 +255,8 @@ struct reaction_info_t {
   }
 };
 
+ostream& operator<<(ostream& os, const reaction_info_t& r);
+
 
 /*******************************************/
 /*********** End Data info type ************/

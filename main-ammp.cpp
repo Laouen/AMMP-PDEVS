@@ -36,10 +36,40 @@ int main(int argc, char* argv[]) {
 
   bool comment_mode = true;
 
+  shared_ptr<map<string, Integer_t>> amounts(new map<string, Integer_t>());
+  shared_ptr<map<string, Integer_t>> konSTPs(new map<string, Integer_t>());
+  shared_ptr<map<string, Integer_t>> konPTSs(new map<string, Integer_t>());
+
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
     exit(1);
   }
+
+  Parser_t p(argv[1], "R_Ec_biomass_iJO1366_WT_53p95M");
+  p.loadFile();
+  map<string, map<string, string>> sp = p.getSpecieByCompartments();
+  vector<string> reactID = p.getReactionIDs();
+
+  for (vector<string>::iterator i = reactID.begin(); i != reactID.end(); ++i) {
+    amounts->insert({*i, 100});
+    konSTPs->insert({*i, 1});
+    konPTSs->insert({*i, 1});
+  }
+
+  p.loadExternParameters(amounts, konSTPs, konPTSs, 1, 1, "p", "e", "c");
+
+  map<string, reaction_info_t> r = p.getReactions();
+  cout << "llegue" << endl;
+
+  cout << "reaction amount: " << reactID.size() << endl;
+
+  for (map<string, map<string, string>>::iterator i = sp.begin(); i != sp.end(); ++i) {
+    cout << "comp: " << i->first << endl;
+    cout << "species: " << i->second.size() << endl;
+  }
+
+  cout << "reaction: R_CHLabcpp" << endl;
+  cout << r.at("R_CHLabcpp") << endl;
 
   return 0;
 }

@@ -13,7 +13,10 @@ void Parser_t::loadExternParameters(
   shared_ptr<map<string, Integer_t>> other_konSTPs,
   shared_ptr<map<string, Integer_t>> other_konPTSs,
   long double other_cw,
-  Integer_t other_n
+  Integer_t other_n,
+  string other_p,
+  string other_e,
+  string other_c
 ) {
   
   _amounts = other_amounts;
@@ -21,6 +24,9 @@ void Parser_t::loadExternParameters(
   _konPTSs = other_konPTSs;
   _cell_weight = other_cw;
   _normalization = other_n;
+  _p = other_p;
+  _e = other_e;
+  _c = other_c;
 }
 
 // TODO this implementation should modify all the stoichimetry
@@ -44,15 +50,13 @@ string Parser_t::specieComp(string id) {
   map<string, map<string, string>> s = this->getSpecieByCompartments();
 
   for (map<string, map<string, string>>::const_iterator i = s.begin(); i != s.end(); ++i) {
-    if (i->second.find(id) != i->second.cend()) {
+    if (i->second.find(id) != i->second.end()) {
       res = i->first;
-      ++a;
+      a += 1;
     }
   }
 
-  assert((a == 0));
-  assert((a > 1));
-
+  assert((a == 1));
   return res;
 }
 
@@ -101,6 +105,7 @@ pair<string, string> Parser_t::getCompAndSubComp(const SetOfMolecules_t& st, con
       res.first = this->_p;
       res.second = "trans_membrane";
     } else {
+      cout << _e << " " << _p << " " << _c << endl;
       assert(false && "The specie stoichiometry belong to a wrong conbination of 3 compartments.");
     }
     break;
@@ -237,7 +242,6 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
     string specieID;
     double sctry_value;
     reaction_info_t react;
-
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
       if (it->Attribute("id") == _biomass_ID) continue;
 
@@ -253,17 +257,17 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
           for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
             
-            specieID      = lt->Attribute("species");
+            specieID    = lt->Attribute("species");
             sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-            react.substrate_sctry.at(specieID) = getStoichiometryFrom(sctry_value);
+            react.substrate_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
           } 
         } else if ((string)jt->Value() == "listOfProducts") {
 
           for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
             
-            specieID      = lt->Attribute("species");
+            specieID    = lt->Attribute("species");
             sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-            react.substrate_sctry.at(specieID) = getStoichiometryFrom(sctry_value);
+            react.substrate_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
           } 
         }
       }
@@ -281,6 +285,15 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
 
   return this->_reactions;
+}
+
+vector<string> Parser_t::getReactionIDs() {
+
+  vector<string> res;  
+  for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+    if (it->Attribute("id") != _biomass_ID) res.push_back(it->Attribute("id"));
+  }
+  return res;
 }
 
 reaction_info_t Parser_t::getBiomass() {
