@@ -34,32 +34,36 @@ using hclock_t = chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
 
-  bool comment_mode = true;
+  map<string, map<string, string>> s;
+  map<string, reaction_info_t> r;
 
   shared_ptr<map<string, Integer_t>> amounts(new map<string, Integer_t>());
   shared_ptr<map<string, Integer_t>> konSTPs(new map<string, Integer_t>());
   shared_ptr<map<string, Integer_t>> konPTSs(new map<string, Integer_t>());
+
+  bool comment_mode = true;
+  
+  Parser_t p();
 
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
     exit(1);
   }
 
-  Parser_t p(argv[1], "R_Ec_biomass_iJO1366_WT_53p95M");
-  p.loadFile();
-  map<string, map<string, string>> sp = p.getSpecieByCompartments();
-  vector<string> reactID = p.getReactionIDs();
+  p.loadFile(argv[1]);
 
+  // TODO this is a temporal parametrization
+  vector<string> reactID = p.getReactionIDs();
   for (vector<string>::iterator i = reactID.begin(); i != reactID.end(); ++i) {
     amounts->insert({*i, 100});
     konSTPs->insert({*i, 1});
     konPTSs->insert({*i, 1});
   }
 
-  p.loadExternParameters(amounts, konSTPs, konPTSs, 1, 1, "p", "e", "c");
-
-  map<string, reaction_info_t> r = p.getReactions();
-  cout << "llegue" << endl;
+  p.loadExternParameters(amounts, konSTPs, konPTSs, 1, 1, "p", "e", "c", "R_Ec_biomass_iJO1366_WT_53p95M");
+  
+  s = p.getSpecieByCompartments();
+  r = p.getReactions();
 
   cout << "reaction amount: " << reactID.size() << endl;
 

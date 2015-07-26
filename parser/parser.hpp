@@ -51,8 +51,8 @@ public:
   // Constructors
   Parser_t() 
   : _loaded(false) {};
-	Parser_t(const char *filename, const string other_biomass_ID)
-  : _document(filename), _biomass_ID(other_biomass_ID), _loaded(false), _cell_weight(0), _normalization(0) {};
+	Parser_t(const char *filename)
+  : _document(filename), _loaded(false) {};
 	
   // methods to load the XML files in the class
   bool loadFile(const char *filename);
@@ -65,7 +65,8 @@ public:
     Integer_t other_n,
     string other_p,
     string other_e,
-    string other_c
+    string other_c,
+    string other_bID,
   );
 
   // methods to get the information from the current SBML file.

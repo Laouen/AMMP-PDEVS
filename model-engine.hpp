@@ -20,4 +20,8 @@
 #include "atomic-models/space.hpp"
 #include "atomic-models/biomass.hpp"
 
+template<class TIME,class MSG>
+class ModelEngine {
+};
+
 #endif // BOOST_SIMULATION_PDEVS_MODEL_ENGINE_H

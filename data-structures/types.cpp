@@ -107,12 +107,12 @@ ostream& operator<<(ostream& os, const Way_t& s) {
 
 ostream& operator<<(ostream& os, const reaction_info_t& r) {
 
-  cout << r.location << endl;
-  cout << r.amount << endl;
-  cout << r.substrate_sctry << endl;
-  cout << r.products_sctry << endl;
-  cout << r.konSTP << endl;
-  cout << r.konPTS << endl;
-  cout << r.reversible << endl;
+  cout << "Address: " << r.location << endl;
+  cout << "substrates: " << r.substrate_sctry << endl;
+  cout << "products: " << r.products_sctry << endl;
+  cout << "amount: " << r.amount << endl;
+  cout << "KonSTP: " << r.konSTP << endl;
+  cout << "KonPTS" << r.konPTS << endl;
+  cout << "reversible: " << ((r.reversible) ? "true" : "false");
   return os;
 }

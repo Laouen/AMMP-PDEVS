@@ -6,8 +6,6 @@ using namespace std;
 /******************** HELPER FUNCTIONS *************************/
 /***************************************************************/
 
-long double MOL = 1e-6;
-
 void Parser_t::loadExternParameters(
   shared_ptr<map<string, Integer_t>> other_amounts,
   shared_ptr<map<string, Integer_t>> other_konSTPs,
@@ -16,7 +14,8 @@ void Parser_t::loadExternParameters(
   Integer_t other_n,
   string other_p,
   string other_e,
-  string other_c
+  string other_c,
+  string other_bID
 ) {
   
   _amounts = other_amounts;
@@ -27,6 +26,7 @@ void Parser_t::loadExternParameters(
   _p = other_p;
   _e = other_e;
   _c = other_c;
+  _biomass_ID = other_bID;
 }
 
 // TODO this implementation should modify all the stoichimetry
@@ -248,8 +248,8 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
       react.clear();
 
       // Setting reversibilty
-      if ((string)it->Attribute("reversible") == "false")  react.reversible = false;
-      else react.reversible = true;
+      if ((it->Attribute("reversible") == NULL) || ((string)it->Attribute("reversible") == "false")) react.reversible = true;
+      else react.reversible = false;
 
       // setting stoichiometries
       for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
@@ -267,7 +267,7 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
             
             specieID    = lt->Attribute("species");
             sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-            react.substrate_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
+            react.products_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
           } 
         }
       }
