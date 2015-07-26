@@ -32,6 +32,8 @@ private:
   SetOfMolecules_t                      _products_sctry;
   map<string, Integer_t>                _substrate_comps;
   map<string, Integer_t>                _product_comps;
+  double                                _kon_STP;
+  double                                _kon_PTS;
   TIME                                  _it;
   RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
@@ -48,6 +50,8 @@ public:
     const SetOfMolecules_t&                     other_products_sctry,
     const map<string, Integer_t>                other_substrate_comps,
     const map<string, Integer_t>                other_product_comps,
+    const double                                other_kon_STP;
+    const double                                other_kon_PTS;
     const TIME                                  other_it
   ) noexcept :
   _id(other_id),
@@ -57,7 +61,9 @@ public:
   _substrate_sctry(other_substrate_sctry),
   _products_sctry(other_products_sctry),
   _substrate_comps(other_substrate_comps),
-  _product_comps(other_product_comps),  
+  _product_comps(other_product_comps),
+  _kon_STP(other_kon_STP),
+  _kon_PTS(other_kon_PTS),
   _it(other_it) {
 
     random_device rd;
@@ -162,13 +168,13 @@ public:
     Integer_t pts_ready = totalReadyFor(_product_comps);
 
     if (stp_ready > 0) {
-      RTask_t<TIME> stp_task(_rate, Way_t::STP, stp_ready);
+      RTask_t<TIME> stp_task(RState_t::REACTING, _rate, Way_t::STP, stp_ready);
       this->insertTask(stp_task);
       this->removeMetabolites(_substrate_comps, stp_ready);
     }
 
     if (pts_ready > 0) {
-      RTask_t<TIME> pts_task(_rate, Way_t::STP, pts_ready);
+      RTask_t<TIME> pts_task(RState_t::REACTING, _rate, Way_t::STP, pts_ready);
       this->insertTask(pts_task);
       this->removeMetabolites(_product_comps, pts_ready);
     }

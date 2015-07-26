@@ -21,7 +21,8 @@ using namespace boost::simulation::pdevs::basic_models;
 /********** Enums and renames *************/
 /******************************************/
 
-enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4};
+enum class RState_t { REACTING = 0, REJECTING = 1 };
+enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
 enum class Way_t { STP, PTS };
 
@@ -37,6 +38,7 @@ using SetOfMolecules_t  = map<string, Integer_t>;
 /******************************************/
 
 const long double L = 6.0221413e+23L;
+const long double MOL = 1e-6;
 const BRITime ZERO(0);
 
 /******************************************/
@@ -69,17 +71,18 @@ using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
 
 template<class TIME>
 struct RTask_t {
+  RState_t    task_kind;
   TIME        time_left;
   Way_t       direction; 
   Integer_t   amount;
 
   RTask_t() {}
 
-  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
-  : time_left(other_t), direction(other_d), amount(other_a) {}
+  RTask_t(RState_t other_tk, const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
+  : task_kind(other_tk), time_left(other_t), direction(other_d), amount(other_a) {}
 
   RTask_t(const RTask_t<TIME>& other) 
-  : time_left(other.time_left), direction(other.direction), amount(other.amount) {}
+  : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount) {}
 
   inline bool operator<(const RTask_t<TIME>& o) const {
 
