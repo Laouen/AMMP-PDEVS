@@ -35,6 +35,7 @@ private:
   double                                _kon_STP;
   double                                _kon_PTS;
   TIME                                  _it;
+  TIME                                  _rt;
   RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
   IntegerRandom_t<Integer_t>            _distribution;
@@ -53,6 +54,7 @@ public:
     const double                                other_kon_STP;
     const double                                other_kon_PTS;
     const TIME                                  other_it
+    const TIME                                  other_rt
   ) noexcept :
   _id(other_id),
   _addresses(other_addresses),
@@ -64,7 +66,8 @@ public:
   _product_comps(other_product_comps),
   _kon_STP(other_kon_STP),
   _kon_PTS(other_kon_PTS),
-  _it(other_it) {
+  _it(other_it),
+  _rt(other_rt) {
 
     random_device rd;
     _distribution.seed(rd());
@@ -94,6 +97,8 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
+    // TODO add the handler for the REJECTING task and modularize this using processReaction and processRejecting
+
     for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
       if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
@@ -116,8 +121,15 @@ public:
     // Updating time left
     this->updateTaskTimeLefts(t);
 
-    // inserting new metabolites
-    this->bindMetabolits(mb);
+    // inserting new acepted metabolites 
+    SetOfMolecules_t rejected;
+    this->bindMetabolits(mb, rejected); // TODO: modify this method to allow reject metabolites using Koff.
+
+    // send back the rejected metabolites
+    vector<MSG> ts = {}; // ts = to send
+    collectInMessage(rejected, ts); // TODO: implement this function that collect all the rejected amount in MSGs using the stoichiometry. unify message here to.
+
+    // TODO: add new task with the rejected metabolites ts.
 
     // looking for new reactions
     this->lookForNewReactions();
@@ -150,7 +162,7 @@ public:
   }
 
   // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
-  void bindMetabolits(const vector<MSG>& mb) {
+  void bindMetabolits(const vector<MSG>& mb, SetOfMolecules_t& r) {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
@@ -168,13 +180,13 @@ public:
     Integer_t pts_ready = totalReadyFor(_product_comps);
 
     if (stp_ready > 0) {
-      RTask_t<TIME> stp_task(RState_t::REACTING, _rate, Way_t::STP, stp_ready);
+      RTask_t<TIME, MSG> stp_task(RState_t::REACTING, _rate, Way_t::STP, stp_ready);
       this->insertTask(stp_task);
       this->removeMetabolites(_substrate_comps, stp_ready);
     }
 
     if (pts_ready > 0) {
-      RTask_t<TIME> pts_task(RState_t::REACTING, _rate, Way_t::STP, pts_ready);
+      RTask_t<TIME, MSG> pts_task(RState_t::REACTING, _rate, Way_t::STP, pts_ready);
       this->insertTask(pts_task);
       this->removeMetabolites(_product_comps, pts_ready);
     }
@@ -198,7 +210,7 @@ public:
     return result;
   }
 
-  void insertTask(const RTask_t<TIME>& t) {
+  void insertTask(const RTask_t<TIME, MSG>& t) {
 
     typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);

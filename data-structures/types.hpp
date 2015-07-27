@@ -21,7 +21,7 @@ using namespace boost::simulation::pdevs::basic_models;
 /********** Enums and renames *************/
 /******************************************/
 
-enum class RState_t { REACTING = 0, REJECTING = 1 };
+enum class RState_t { REJECTING = 1, REACTING = 0 };
 enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, NOTHING = 2, START = 3 };
 enum class Way_t { STP, PTS };
@@ -69,35 +69,47 @@ using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
 /**************** RTask_t ******************/
 /*******************************************/
 
-template<class TIME>
+template<class TIME, class MSG>
 struct RTask_t {
   RState_t    task_kind;
   TIME        time_left;
-  Way_t       direction; 
+  Way_t       direction;
   Integer_t   amount;
+  vector<MSG> toSend;
 
   RTask_t() {}
 
-  RTask_t(RState_t other_tk, const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
-  : task_kind(other_tk), time_left(other_t), direction(other_d), amount(other_a) {}
+  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
+  : task_kind(RState_t::REJECTING), time_left(other_t), direction(other_d), amount(other_a) {}
 
-  RTask_t(const RTask_t<TIME>& other) 
-  : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount) {}
+  RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
+  : task_kind(RState_t::REJECTING), time_left(other_t), toSend(other_ts);
 
-  inline bool operator<(const RTask_t<TIME>& o) const {
+  RTask_t(const RTask_t<TIME, MSG>& other) 
+  : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount), toSend(other.toSend) {}
 
-    return (time_left < o.time_left);
+  inline bool operator<(const RTask_t<TIME, MSG>& o) const {
+
+    bool result;
+    if (time_left != o.time_left) result = (time_left < o.time_left);
+    else                          result = (task_kind < o.task_kind);
+
+    return result;
   }
 
-  inline bool operator==(const RTask_t<TIME>& o)  const { 
+  inline bool operator==(const RTask_t<TIME, MSG>& o)  const { 
 
-    return (time_left == o.time_left) && (direction == o.direction) && (amount == o.amount);
+    if (task_kind == RState_t::REJECTING) {
+      return (time_left == o.time_left) && (toSend == o.toSend);
+    } else {
+      return (time_left == o.time_left) && (direction == o.direction) && (amount == o.amount);
+    }
   }
 
 };
 
 template<class TIME>
-using RTaskQueue_t = list< RTask_t<TIME> >;
+using RTaskQueue_t = list< RTask_t<TIME, MSG> >;
 
 /*******************************************/
 /************** End RTask_t ****************/
