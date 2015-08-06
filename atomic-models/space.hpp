@@ -346,6 +346,7 @@ public:
       if (rv < son) {
         // send message to enzyme for a subtract to product reaction
         cm.to = en.location;
+        cm.from = _id;
         cm.react_direction = Way_t::STP;
         cm.react_amount = 1;
         m.push_back(cm);
@@ -357,6 +358,7 @@ public:
       } else if (rv < pon) {
         // send message to enzyme for a subtract to product reaction
         cm.to = en.location;
+        cm.from = _id;
         cm.react_direction = Way_t::PTS;
         cm.react_amount = 1;
         m.push_back(cm);

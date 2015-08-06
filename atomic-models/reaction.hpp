@@ -32,13 +32,13 @@ private:
   SetOfMolecules_t                      _products_sctry;
   map<string, Integer_t>                _substrate_comps;
   map<string, Integer_t>                _product_comps;
-  double                                _kon_STP;
-  double                                _kon_PTS;
+  double                                _koff_STP;
+  double                                _koff_PTS;
   TIME                                  _it;
   TIME                                  _rt;
   RTaskQueue_t<TIME>                    _tasks;
   // used for uniform random number 
-  IntegerRandom_t<Integer_t>            _distribution;
+  RealRandom_t<double>                  _real_random;
 
 public:
 
@@ -51,10 +51,10 @@ public:
     const SetOfMolecules_t&                     other_products_sctry,
     const map<string, Integer_t>                other_substrate_comps,
     const map<string, Integer_t>                other_product_comps,
-    const double                                other_kon_STP;
-    const double                                other_kon_PTS;
-    const TIME                                  other_it
-    const TIME                                  other_rt
+    const double                                other_koff_STP;
+    const double                                other_koff_PTS;
+    const TIME                                  other_it // Interval Time
+    const TIME                                  other_rt // Rejecting Time
   ) noexcept :
   _id(other_id),
   _addresses(other_addresses),
@@ -64,13 +64,14 @@ public:
   _products_sctry(other_products_sctry),
   _substrate_comps(other_substrate_comps),
   _product_comps(other_product_comps),
-  _kon_STP(other_kon_STP),
-  _kon_PTS(other_kon_PTS),
+  _koff_STP(other_koff_STP),
+  _koff_PTS(other_koff_PTS),
   _it(other_it),
   _rt(other_rt) {
 
-    random_device rd;
-    _distribution.seed(rd());
+    // The random atributes must be initilized with a random generator
+    random_device real_rd; // Random generator engine
+    _real_random.seed(real_rd());
 
   }
 
@@ -97,8 +98,7 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    // TODO add the handler for the REJECTING task and modularize this using processReaction and processRejecting
-
+    // REACTING AND REJECTING handler is the same procedure , so, there is a single handler for both
     for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
       if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
@@ -122,14 +122,19 @@ public:
     this->updateTaskTimeLefts(t);
 
     // inserting new acepted metabolites 
-    SetOfMolecules_t rejected;
-    this->bindMetabolits(mb, rejected); // TODO: modify this method to allow reject metabolites using Koff.
+    map<string, pair<int, int>> rejected = {}; // first = STP, second = PTS
+    this->bindMetabolits(mb, rejected);
 
-    // send back the rejected metabolites
-    vector<MSG> ts = {}; // ts = to send
-    collectInMessage(rejected, ts); // TODO: implement this function that collect all the rejected amount in MSGs using the stoichiometry. unify message here to.
+    // adding task for the rejected metabolites
+    if (rejected.first > 0) {
+      RTask_t reject_task(RState_t::REJECTING, _rt, Way_t::PTS, rejected.first); // because is the rejecting reaction, the reaction happens in the oposite direction
+      insertTask(reject_task);
+    }
 
-    // TODO: add new task with the rejected metabolites ts.
+    if (rejected.second > 0) {
+      RTask_t reject_task(RState_t::REJECTING, _rt, Way_t::STP, rejected.second); // because is the rejecting reaction, the reaction happens in the oposite direction
+      insertTask(reject_task);
+    }
 
     // looking for new reactions
     this->lookForNewReactions();
@@ -161,17 +166,58 @@ public:
     }
   }
 
-  // It take the needed number of each specie in mb and rejected (by calling addRejected) the not needed part.
-  void bindMetabolits(const vector<MSG>& mb, SetOfMolecules_t& r) {
+  void bindMetabolits(const vector<MSG>& mb, map<string, pair<int, int>>& r) {
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
       if (it->react_direction == Way_t::STP) {
-        _substrate_comps.at(it->from) += it->react_amount;
+
+        for (int i = 0; i < it->react_amount; ++i) {
+          if (aceptedMetabolites(_koff_STP)) _substrate_comps.at(it->from) += 1;
+          else increaseRejected(r, it->from); // r.first = STP, r.second = PTS
+        }
       } else {
-        _product_comps.at(it->from) += it->react_amount;
+
+        for (int i = 0; i < it->react_amount; ++i) {
+          if (aceptedMetabolites(_koff_PTS)) _product_comps.at(it->from) += 1;
+          else increaseRejected(r, it->from); // r.first = STP, r.second = PTS
+        }
       }
     }
+  }
+
+  bool aceptedMetabolites(double k) const {
+
+    return (_real_random.drawNumber(0.0, 1.0) > k);
+  }
+
+  void collectInMessage(const pair<int, int>& r, vector<MSG>& ts) const {
+
+    MSG m;
+    if (r.first > 0) {
+      for (SetOfMolecules_t::const_iterator it = _substrate_sctry.cbegin(); it != _substrate_sctry.cend(); ++it) {
+        
+        m.clear();
+        m.to = _addresses->at(it->first);
+        m.metabolites.insert({it->first, r.first*it->second});
+        result.push_back(m); 
+      }
+    }
+
+    if (r.second > 0) {
+      for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
+        
+        m.clear();
+        m.to = _addresses->at(it->first);
+        m.metabolites.insert({it->first, r.second*it->second});
+        result.push_back(m); 
+      }
+    }
+  }
+
+  // TODO implemet this function
+  void increaseRejected(map<string, pair<int, int>>& r, string it->from) {
+
   }
 
   void lookForNewReactions() {
