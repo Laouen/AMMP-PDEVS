@@ -82,14 +82,8 @@ struct RTask_t {
   RTask_t(const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
   : task_kind(RState_t::REACTING), time_left(other_t), direction(other_d), amount(other_a) {}
 
-  RTask_t(const RState_t& other_tk, const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
-  : task_kind(other_tk), time_left(other_t), direction(other_d), amount(other_a) {}
-
   RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
   : task_kind(RState_t::REJECTING), time_left(other_t), toSend(other_ts);
-
-  RTask_t(const RState_t& other_tk, const TIME& other_t, const vector<MSG>& other_ts)
-  : task_kind(other_tk), time_left(other_t), toSend(other_ts);
 
   RTask_t(const RTask_t<TIME, MSG>& other) 
   : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount), toSend(other.toSend) {}

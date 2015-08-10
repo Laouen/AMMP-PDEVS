@@ -28,8 +28,8 @@ private:
   shared_ptr< map<string, Address_t> >  _addresses;
   bool                                  _reversible;
   TIME                                  _rate;
-  SetOfMolecules_t                      _substrate_sctry;
-  SetOfMolecules_t                      _products_sctry;
+  map<string, SetOfMolecules_t>         _substrate_sctry; // the stoichiometry is separated by compartments
+  map<string, SetOfMolecules_t>         _products_sctry; // the stoichiometry is separated by compartments
   map<string, Integer_t>                _substrate_comps;
   map<string, Integer_t>                _product_comps;
   double                                _koff_STP;
@@ -47,8 +47,8 @@ public:
     const shared_ptr< map<string, Address_t> >  other_addresses,
     const bool                                  other_reversible,
     const TIME                                  other_rate,
-    const SetOfMolecules_t&                     other_substrate_sctry,
-    const SetOfMolecules_t&                     other_products_sctry,
+    const map<string, SetOfMolecules_t>&        other_substrate_sctry,
+    const map<string, SetOfMolecules_t>&        other_products_sctry,
     const map<string, Integer_t>                other_substrate_comps,
     const map<string, Integer_t>                other_product_comps,
     const double                                other_koff_STP;
@@ -69,7 +69,7 @@ public:
   _it(other_it),
   _rt(other_rt) {
 
-    // The random atributes must be initilized with a random generator
+    // The random atributes is initilized with a random generator
     random_device real_rd; // Random generator engine
     _real_random.seed(real_rd());
 
@@ -93,22 +93,31 @@ public:
   vector<MSG> out() const noexcept {
     
     MSG new_message;
-    const SetOfMolecules_t* curr_sctry;
+    const map<string, SetOfMolecules_t>* curr_sctry;
 
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    // REACTING AND REJECTING handler is the same procedure , so, there is a single handler for both
     for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
-      if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
-      else curr_sctry = &_substrate_sctry;
+      if (it->task_kind == RState_t::REACTING) {
 
-      for (SetOfMolecules_t::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
-        new_message.clear();
-        new_message.to = _addresses->at(jt->first);
-        new_message.metabolites.insert({jt->first, it->amount*jt->second});
-        result.push_back(new_message); 
+        
+        if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
+        else curr_sctry = &_substrate_sctry;
+
+        for (map<string, SetOfMolecules_t>::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
+          
+          for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
+            new_message.clear();
+            new_message.to = _addresses->at(mt->first);
+            new_message.metabolites.insert({mt->first, it->amount*mt->second});
+            result.push_back(new_message); 
+          }
+        }
+      } else {
+
+        result.insert(result.end(), it->toSend.begin(), it->toSend.end());
       }
     }
 
@@ -125,16 +134,14 @@ public:
     map<string, pair<int, int>> rejected = {}; // first = STP, second = PTS
     this->bindMetabolits(mb, rejected);
 
-    // adding task for the rejected metabolites
-    if (rejected.first > 0) {
-      RTask_t reject_task(RState_t::REJECTING, _rt, Way_t::PTS, rejected.first); // because is the rejecting reaction, the reaction happens in the oposite direction
-      insertTask(reject_task);
-    }
+    // puting the rejected metabolites in msg to be send it.
+    vector<MSG> ts;
+    collectInMessage(rejected, ts);
+    unifyMessages(result);
 
-    if (rejected.second > 0) {
-      RTask_t reject_task(RState_t::REJECTING, _rt, Way_t::STP, rejected.second); // because is the rejecting reaction, the reaction happens in the oposite direction
-      insertTask(reject_task);
-    }
+    // adding task for the rejected metabolites
+    RTask_t new_task(_rt, ts);
+    insertTask(new_task);
 
     // looking for new reactions
     this->lookForNewReactions();
@@ -174,13 +181,13 @@ public:
 
         for (int i = 0; i < it->react_amount; ++i) {
           if (aceptedMetabolites(_koff_STP)) _substrate_comps.at(it->from) += 1;
-          else increaseRejected(r, it->from); // r.first = STP, r.second = PTS
+          else increaseRejected(r, it->from, Way_t::STP); // r.first = STP, r.second = PTS
         }
       } else {
 
         for (int i = 0; i < it->react_amount; ++i) {
           if (aceptedMetabolites(_koff_PTS)) _product_comps.at(it->from) += 1;
-          else increaseRejected(r, it->from); // r.first = STP, r.second = PTS
+          else increaseRejected(r, it->from, Way_t::PTS); // r.first = STP, r.second = PTS
         }
       }
     }
@@ -191,33 +198,54 @@ public:
     return (_real_random.drawNumber(0.0, 1.0) > k);
   }
 
-  void collectInMessage(const pair<int, int>& r, vector<MSG>& ts) const {
+  void increaseRejected(map<string, pair<int, int>>& r, string f, Way_t w) {
 
-    MSG m;
-    if (r.first > 0) {
-      for (SetOfMolecules_t::const_iterator it = _substrate_sctry.cbegin(); it != _substrate_sctry.cend(); ++it) {
-        
-        m.clear();
-        m.to = _addresses->at(it->first);
-        m.metabolites.insert({it->first, r.first*it->second});
-        result.push_back(m); 
+    if (w == Way_t::STP) {
+
+      if(r.find(f) != r.end()) {
+        r.at(f).first += 1;
+      } else {
+        r.insert({f, make_pair(1,0)});
       }
-    }
+    } else {
 
-    if (r.second > 0) {
-      for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
-        
-        m.clear();
-        m.to = _addresses->at(it->first);
-        m.metabolites.insert({it->first, r.second*it->second});
-        result.push_back(m); 
+      if(r.find(f) != r.end()) {
+        r.at(f).second += 1;
+      } else {
+        r.insert({f, make_pair(0,1)});
       }
     }
   }
 
-  // TODO implemet this function
-  void increaseRejected(map<string, pair<int, int>>& r, string it->from) {
+  void collectInMessage(const map<string, pair<int, int>>& r, vector<MSG>& ts) const {
 
+    MSG m;
+    for (const map<string, pair<int, int>>::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
+
+      if (it->second.first > 0) {
+        assert(_substrate_sctry.find(it->first) != _substrate_sctry.end());
+        
+        for (SetOfMolecules_t::const_iterator jt = _substrate_sctry.at(it->first).cbegin(); jt != _substrate_sctry.at(it->first).cend(); ++jt) {
+          
+          m.clear();
+          m.to = _addresses->at(jt->first);
+          m.metabolites.insert({jt->first, it->second.first*jt->second});
+          ts.push_back(m); 
+        }
+      }
+
+      if (it->second.second > 0) {
+        assert(_products_sctry.find(it->first) != _products_sctry.end());
+        
+        for (SetOfMolecules_t::const_iterator jt = _products_sctry.at(it->first).cbegin(); jt != _products_sctry.at(it->first).cend(); ++jt) {
+          
+          m.clear();
+          m.to = _addresses->at(jt->first);
+          m.metabolites.insert({jt->first, it->second.second*jt->second});
+          ts.push_back(m); 
+        }
+      }
+    }
   }
 
   void lookForNewReactions() {
@@ -226,13 +254,13 @@ public:
     Integer_t pts_ready = totalReadyFor(_product_comps);
 
     if (stp_ready > 0) {
-      RTask_t<TIME, MSG> stp_task(RState_t::REACTING, _rate, Way_t::STP, stp_ready);
+      RTask_t<TIME, MSG> stp_task(_rate, Way_t::STP, stp_ready);
       this->insertTask(stp_task);
       this->removeMetabolites(_substrate_comps, stp_ready);
     }
 
     if (pts_ready > 0) {
-      RTask_t<TIME, MSG> pts_task(RState_t::REACTING, _rate, Way_t::STP, pts_ready);
+      RTask_t<TIME, MSG> pts_task(_rate, Way_t::STP, pts_ready);
       this->insertTask(pts_task);
       this->removeMetabolites(_product_comps, pts_ready);
     }
