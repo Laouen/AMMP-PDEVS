@@ -189,11 +189,19 @@ using Address_t = list<string>;
 struct Message_t {
   
   Address_t to;
+  
+  // fields for reactions
   string from;
-  SetOfMolecules_t metabolites;
   Way_t react_direction;
   Integer_t react_amount;
+  
+  // fields for spaces
+  SetOfMolecules_t metabolites;
+  
+  // field for show request
   bool show_request;
+  
+  // field for biomass reaction request
   bool biomass_request;
 
   Message_t(const Address_t& other_to, string other_from, const SetOfMolecules_t& other_m, Way_t other_rd, Integer_t other_ra, bool other_sr, bool other_br)
@@ -211,9 +219,14 @@ struct Message_t {
   void clear() {
     to.clear();
     from = "";
+    react_amount = 0;
     metabolites.clear();
     show_request = false;
     biomass_request = false;
+  }
+
+  bool empty() {
+    return to.empty() && metabolites.empty() && (from == "") && (react_amount == 0);
   }
 };
 
@@ -242,8 +255,8 @@ ostream& operator<<(ostream& os, const Way_t& s);
 // TODO this type must be removed after the new implementation.
 struct reaction_info_t {
 
+  string            id;
   Address_t         location;
-  Integer_t         amount;
   SetOfMolecules_t  substrate_sctry;
   SetOfMolecules_t  products_sctry;
   double            konSTP;
@@ -260,6 +273,7 @@ struct reaction_info_t {
   : location(other.location), amount(other.amount), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
 
   void clear() {
+    id = "";
     location.clear();
     amount = 0;
     substrate_sctry.clear();
@@ -267,6 +281,10 @@ struct reaction_info_t {
     konSTP = 0;
     konPTS = 0;
     reversible = false;
+  }
+
+  bool empty() {
+    return (id == "") && location.empty() && substrate_sctry.empty() && products_sctry.empty();
   }
 };
 
@@ -277,6 +295,20 @@ ostream& operator<<(ostream& os, const reaction_info_t& r);
 /*********** End Data info type ************/
 /*******************************************/
 
+/*******************************************/
+/*********** Data enzyme type **************/
+/*******************************************/
+
+struct enzyme_t {
+  string id;
+  Integer_t amount;
+  map<string, reaction_info_t> reacts;
+};
+
+
+/*******************************************/
+/*********** Data enzyme type ************/
+/*******************************************/
 
 
 

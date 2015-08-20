@@ -26,13 +26,13 @@ template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
 {
 private:
-  string                        _id;
-  TIME                          _it;
-  TIME                          _br;
-  Address_t                     _biomass_address;
-  SetOfMolecules_t              _metabolites;
-  map<string, reaction_info_t>  _enzymes;
-  double                        _volume;
+  string                  _id;
+  TIME                    _it;
+  TIME                    _br;
+  Address_t               _biomass_address;
+  SetOfMolecules_t        _metabolites;
+  map<string, enzyme_t>   _enzymes;
+  double                  _volume;
 
   // task queue
   STaskQueue_t<TIME, MSG> _tasks;
@@ -68,40 +68,6 @@ public:
     // just to confirm, the space and metabolites start empty.
     _tasks.clear();
     _metabolites.clear();
-  }
-
-  // This constructor start a new space with metabolites, the SetOfMolecules_t must have elements, is a precondition.
-  // because of this, the space start with a selection task
-  explicit space(
-    const string                          other_id,
-    const TIME                            other_it,
-    const TIME                            other_br,
-    const Address_t&                      other_biomass_address,
-    const SetOfMolecules_t&               other_metabolites,
-    const map<string, reaction_info_t>&   other_enzymes,
-    const double                          other_volume
-    ) noexcept :
-  _id(other_id),
-  _it(other_it),
-  _br(other_br),
-  _biomass_address(other_biomass_address),
-  _metabolites(other_metabolites),
-  _enzymes(other_enzymes),
-  _volume(other_volume) {
-    assert((_metabolites.size() > 0) && "This constructor require a non empty map of metabolites.");
-
-    // The random atributes must be initilized with a random generator
-    random_device real_rd; // Random generator variable
-    _real_random.seed(real_rd());
-    random_device integer_rd;
-    _integer_random.seed(integer_rd());
-
-    // Becouse it start already with metabolites in the space, a selection task is programed.
-    _tasks.clear();
-    STask_t<TIME, MSG> new_task;
-    new_task.time_left = _it;
-    new_task.task_kind = SState_t::SELECTING_FOR_REACTION;
-    this->insertTask(new_task);
   }
 
   // TODO: check the correct ordering of the tasks, if there is a biomass request and a selec for reaction, the biomass request must win.
@@ -230,7 +196,7 @@ public:
   ***************************************/
 
   // TODO: generate test of all the helper functions
-  // This funtion takes all the metabolites from om an amount grater than 0 and add them to m.
+  // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
   void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
   
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
@@ -313,68 +279,115 @@ public:
   }
 
   // TODO one enzyme can do multiples reactions, ask about this.
-  // TODO the transport enzyme are a little different.
   void selectMetalobitesToReact(vector<MSG>& m) {
     MSG cm;
-    double son, pon, rv;
-    reaction_info_t en;
-    vector<string> current_enzymes;
+    double rv, total, partial;
+    map<string, double> son, pon;
+    enzyme_t en;
+    reaction_info_t re;
+    vector<string> enzyme_IDs;
 
-    this->unfoldEnzymes(current_enzymes); // all the enzyme are considered individualy not grouped by kind
-    shuffleEnzymes(current_enzymes); // the enzymes are iterated randomly
+    this->unfoldEnzymes(enzyme_IDs); // all the enzyme are considered individualy not grouped by kind
+    shuffleEnzymes(enzyme_IDs); // the enzymes are iterated randomly
 
-    for (vector<string>::iterator it = current_enzymes.begin(); it != current_enzymes.end(); ++it) {
-      en = _enzymes.at(*it);
+    for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
       cm.clear();
+      en = _enzymes.at(*it);
 
-      // calculating the son and pon
-      if (this->thereAreEnaughFor(en.substrate_sctry)) son = this->bindingTreshold(en.substrate_sctry, en.konSTP);
-      else son = 0;
-      if (en.reversible && this->thereAreEnaughFor(en.products_sctry)) pon = this->bindingTreshold(en.products_sctry, en.konPTS);
-      else pon = 0;
-
-      // son + pon can't be greater than 1. If that happen, they are normalized
-      // if son + pon is smaller than 1, there is a chanse that the enzyme does'nt happen
-      if (son + pon > 1) {
-        son = son / (son + pon);
-        pon = pon / (son + pon);
+      for (map<string, reaction_info_t>::iterator reac = en.reacts.begin(); reac != en.reacts.end(); ++reac) {
+        
+        // calculating the sons and pons
+        if (this->thereAreEnaughFor(reac->second.substrate_sctry)) son.insert({reac->first, this->bindingTreshold(reac->second.substrate_sctry, reac->second.konSTP)});
+        else son.insert({reac->first, 0});
+        if (reac->second.reversible && this->thereAreEnaughFor(reac->second.products_sctry)) pon.insert({reac->first, this->bindingTreshold(reac->second.products_sctry, reac->second.konPTS)});
+        else pon.insert({reac->first, 0});
       }
 
-      // the interval [0,1] is  divided in three pieces, [0,son), [son,son+pon) and [son+pon,1)
-      // depending in which of those three sub-interval rv belongs, the enzyme recibe substrate, product or nothing.
-      rv = _real_random.drawNumber(0.0, 1.0);
-      if (rv < son) {
-        // send message to enzyme for a subtract to product reaction
-        cm.to = en.location;
-        cm.from = _id;
-        cm.react_direction = Way_t::STP;
-        cm.react_amount = 1;
-        m.push_back(cm);
 
-        // update the metabolite amount in the space
-        for (SetOfMolecules_t::iterator jt = en.substrate_sctry.begin(); jt != en.substrate_sctry.end(); ++jt) {
-          if (_metabolites.find(jt->first) != _metabolites.end()) _metabolites.at(jt->first) -= jt->second;
+      // sons + pons can't be greater than 1. If that happen, they are normalized
+      // if sons + pons is smaller than 1, there is a chanse that the enzyme does'nt react
+      total = summAll(sons) + sumAll(pons);
+      if (total > 1) {
+
+        for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
+          i->second = i->second / total;
         }
-      } else if (rv < pon) {
-        // send message to enzyme for a subtract to product reaction
-        cm.to = en.location;
-        cm.from = _id;
-        cm.react_direction = Way_t::PTS;
-        cm.react_amount = 1;
-        m.push_back(cm);
 
+        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
+          i->second = i->second / total;
+        }
+      }
+      
+      // the interval [0,1] is  divided in pieces: 
+      // [0,son1), [son1, son1+son2), ... , [son1 + ... + sonk, son1 + ... + sonk + pon1), ... ,[son1 + ... + sonk + pon1 + ... + ponk, 1)
+      // depending on which of those sub-interval rv belongs, the enzyme triggers the correct reaction or do nothing.
+
+      rv = _real_random.drawNumber(0.0, 1.0);
+      partial = 0;
+      
+      for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
+        
+        partial += i->second;
+        if (rv < partial) {
+          // send message to trigger the reaction
+          re = en.reacts.at(i->first);
+          cm.to = re.location;
+          cm.from = _id;
+          cm.react_direction = Way_t::STP;
+          cm.react_amount = 1;
+          m.push_back(cm);
+          break;
+        } 
+      }
+
+      // update the metabolite amount in the space
+      if (!re.empty()) {
+        for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
+          _metabolites.at(it->first) -= it->second;
+        }
+      }
+
+      // if re is empty, then no one of the STP reactions has ben triggered and the search continue with the PTS reactions.
+      if (re.empty()) {
+        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
+        
+          partial += i->second;
+          if (rv < partial) {
+            // send message to trigger the reaction
+            re = en.reacts.at(i->first);
+            cm.to = re.location;
+            cm.from = _id;
+            cm.react_direction = Way_t::PTS;
+            cm.react_amount = 1;
+            m.push_back(cm);
+            break;
+          } 
+        }
+      
         // update the metabolite amount in the space
-        for (SetOfMolecules_t::iterator jt = en.products_sctry.begin(); jt != en.products_sctry.end(); ++jt) {
-          if (_metabolites.find(jt->first) != _metabolites.end()) _metabolites.at(jt->first) -= jt->second;
+        if (!re.empty()) {
+          for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
+            _metabolites.at(it->first) -= it->second;
+          }
         }
       }
     }
   }
 
+  double summAll(const map<string, double>& ons) const {
+    double result = 0;
+
+    for (map<string, double>::const_iterator i = ons.cbegin(); i != ons.cend(); ++i) {
+      result += i->second;
+    }
+
+    return result;
+  }
+
   void unfoldEnzymes(vector<string>& ce) const {
 
-    for (map<string, reaction_info_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
-      ce.insert(ce.end(), it->second.amount, it->first);
+    for (map<string, enzyme_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
+      ce.insert(ce.end(), it->second.amount, it->second.id);
     }
   }
 

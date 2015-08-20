@@ -275,8 +275,8 @@ public:
 
   // TODO test this function specially
   Integer_t totalReadyFor(const map<string, Integer_t>& comp) {
-    
-    Integer_t result = numeric_limits<Integer_t>::max();
+
+    Integer_t result = comp.cbegin()->second;
     for (map<string, Integer_t>::const_iterator it = comp.cbegin(); it != comp.cend(); ++it) {
       if (result > it->second) result = it->second;
     }
