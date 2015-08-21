@@ -299,7 +299,10 @@ public:
       }
     }
 
-    return exp(-(1.0 / (consentration*kon)));
+    if (consentration = 0.0) 
+      return 0.0;
+
+    return exp(-(1.0 / (consentration*kon)));;
   }
 
   // TODO for testing
