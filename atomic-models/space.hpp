@@ -43,12 +43,13 @@ private:
 
 public:
 
-  // This constructor start a new space without any metabolite, so, there isn't programed tasks when the space start.
+  // precondition: the setOfMetabolites_t given as parameter must contain all the metabolites in the space defined
   explicit space(
     const string                          other_id,
     const TIME                            other_it,
     const TIME                            other_br,
     const Address_t&                      other_biomass_address,
+    const SetOfMolecules_t                other_metabolites,
     const map<string, reaction_info_t>&   other_enzymes,
     const double                          other_volume
     ) noexcept :
@@ -56,6 +57,7 @@ public:
   _it(other_it),
   _br(other_br),
   _biomass_address(other_biomass_address),
+  _metabolites(other_metabolites),
   _enzymes(other_enzymes),
   _volume(other_volume) {
 
@@ -67,7 +69,6 @@ public:
 
     // just to confirm, the space and metabolites start empty.
     _tasks.clear();
-    _metabolites.clear();
   }
 
   // TODO: check the correct ordering of the tasks, if there is a biomass request and a selec for reaction, the biomass request must win.
@@ -75,8 +76,8 @@ public:
 
     MSG cm;
     STask_t<TIME, MSG> sr, sb; // sr = selected_reactants, sb = selected_biomass
-    bool srah = false; // this boolean says if a SELECTIN_FOR_REACTION tasks has already happen or not.
-    bool sbah = false; // this boolean says if a SELECTIN_FOR_BIOMASS task has already happen or not.
+    bool srah = false; // this boolean says if a SELECTING_FOR_REACTION tasks has already happen or not.
+    bool sbah = false; // this boolean says if a SELECTING_FOR_BIOMASS task has already happen or not.
 
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
@@ -84,8 +85,8 @@ public:
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
-        // no more than one selection in a given time T;
-        srah = true;
+
+        srah = true; // no more than one selection in a given time T;
 
         // set a new task to send the selected metabolites.
         sr.task_kind  = SState_t::SENDING_REACTIONS;
@@ -107,7 +108,7 @@ public:
         sb.msgs.push_back(cm);
         
         // once the metabolite are all send to biomass, there is no more metabolites in the space.
-        _metabolites.clear();
+        this->removeAllMetabolites(); // TODO this method must be implemented
       }
     }
 
@@ -195,38 +196,19 @@ public:
   ********* helper functions *************
   ***************************************/
 
+  /************** addMultipleMetabolites ****************************/
+
   // TODO: generate test of all the helper functions
   // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
   void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
   
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      addMetabolite(m, it->first, it->second);
+      // if the metabolite isn't defined in the compartment is not from there and an error ocurre.
+      m.at(it->first) += it->second;
     }
   }
 
-  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a){
-
-    if (a > 0) {
-      if (m.find(n) != m.end()) {
-        m.at(n) += a;
-      } else {
-        m.insert({n, a}); // TODO: change all the initializer_list because they don't work on windows
-      }
-    }
-  }
-
-  bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
-    bool result = true;
-
-    for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
-      if((_metabolites.find(it->first) != _metabolites.end()) && (_metabolites.at(it->first) < it->second)) {
-        result = false;
-        break;
-      }
-    }
-
-    return result;
-  }
+  /************** SetNextSelection *********************************/
 
   // this function tells if there is or not metabolites in the space.
   bool thereIsMetabolites() const {
@@ -240,17 +222,7 @@ public:
     }
     return result;
   }
-  // this function look if there is metabolites to send and in this case, if the space have not alreafy programed a selection task to send metabolites, it will program one.
-  void setNextSelection() {
-    STask_t<TIME, MSG> new_selection;
-    
-    if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
 
-      new_selection.time_left = _it;
-      new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
-      this->insertTask(new_selection);
-    }
-  }
   // this function looks if there is a selection task already programed.
   bool thereIsNextSelection() const {
     bool result = false;
@@ -265,113 +237,31 @@ public:
     return result;
   }
 
-  void insertTask(const STask_t<TIME, MSG>& t) {
+  // this function look if there is metabolites to send and in this case, if the space have not alreafy programed a selection task to send metabolites, it will program one.
+  void setNextSelection() {
+    STask_t<TIME, MSG> new_selection;
+    
+    if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
 
-    typename STaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
-    _tasks.insert(it, t);
-  }
-
-  void updateTaskTimeLefts(TIME t){
-
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      it->time_left -= t;
+      new_selection.time_left = _it;
+      new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
+      this->insertTask(new_selection);
     }
   }
 
-  // TODO one enzyme can do multiples reactions, ask about this.
-  void selectMetalobitesToReact(vector<MSG>& m) {
-    MSG cm;
-    double rv, total, partial;
-    map<string, double> son, pon;
-    enzyme_t en;
-    reaction_info_t re;
-    vector<string> enzyme_IDs;
+  /***************** selectMetabolitesToReact ********************/
 
-    this->unfoldEnzymes(enzyme_IDs); // all the enzyme are considered individualy not grouped by kind
-    shuffleEnzymes(enzyme_IDs); // the enzymes are iterated randomly
+  bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
+    bool result = true;
 
-    for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
-      cm.clear();
-      en = _enzymes.at(*it);
-
-      for (map<string, reaction_info_t>::iterator reac = en.reacts.begin(); reac != en.reacts.end(); ++reac) {
-        
-        // calculating the sons and pons
-        if (this->thereAreEnaughFor(reac->second.substrate_sctry)) son.insert({reac->first, this->bindingTreshold(reac->second.substrate_sctry, reac->second.konSTP)});
-        else son.insert({reac->first, 0});
-        if (reac->second.reversible && this->thereAreEnaughFor(reac->second.products_sctry)) pon.insert({reac->first, this->bindingTreshold(reac->second.products_sctry, reac->second.konPTS)});
-        else pon.insert({reac->first, 0});
-      }
-
-
-      // sons + pons can't be greater than 1. If that happen, they are normalized
-      // if sons + pons is smaller than 1, there is a chanse that the enzyme does'nt react
-      total = summAll(sons) + sumAll(pons);
-      if (total > 1) {
-
-        for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
-          i->second = i->second / total;
-        }
-
-        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
-          i->second = i->second / total;
-        }
-      }
-      
-      // the interval [0,1] is  divided in pieces: 
-      // [0,son1), [son1, son1+son2), ... , [son1 + ... + sonk, son1 + ... + sonk + pon1), ... ,[son1 + ... + sonk + pon1 + ... + ponk, 1)
-      // depending on which of those sub-interval rv belongs, the enzyme triggers the correct reaction or do nothing.
-
-      rv = _real_random.drawNumber(0.0, 1.0);
-      partial = 0;
-      
-      for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
-        
-        partial += i->second;
-        if (rv < partial) {
-          // send message to trigger the reaction
-          re = en.reacts.at(i->first);
-          cm.to = re.location;
-          cm.from = _id;
-          cm.react_direction = Way_t::STP;
-          cm.react_amount = 1;
-          m.push_back(cm);
-          break;
-        } 
-      }
-
-      // update the metabolite amount in the space
-      if (!re.empty()) {
-        for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
-          _metabolites.at(it->first) -= it->second;
-        }
-      }
-
-      // if re is empty, then no one of the STP reactions has ben triggered and the search continue with the PTS reactions.
-      if (re.empty()) {
-        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
-        
-          partial += i->second;
-          if (rv < partial) {
-            // send message to trigger the reaction
-            re = en.reacts.at(i->first);
-            cm.to = re.location;
-            cm.from = _id;
-            cm.react_direction = Way_t::PTS;
-            cm.react_amount = 1;
-            m.push_back(cm);
-            break;
-          } 
-        }
-      
-        // update the metabolite amount in the space
-        if (!re.empty()) {
-          for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
-            _metabolites.at(it->first) -= it->second;
-          }
-        }
+    for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
+      if((_metabolites.find(it->first) != _metabolites.end()) && (_metabolites.at(it->first) < it->second)) {
+        result = false;
+        break;
       }
     }
+
+    return result;
   }
 
   double summAll(const map<string, double>& ons) const {
@@ -398,32 +288,7 @@ public:
     std::shuffle(ce.begin(), ce.end(), g);
   }
 
-  void unifyMessages(vector<MSG>& m) const {
-
-    map<Address_t, MSG> unMsgs;
-
-    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
-      insertMessage(unMsgs, *it);
-    }
-
-    m.clear();
-
-    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
-      m.push_back(it->second);
-    }
-  }
-
-  void insertMessage(map<Address_t, MSG>& ms, MSG& m) const {
-
-    if (m.react_amount > 0) {
-      if (ms.find(m.to) != ms.end()) {
-        ms.at(m.to).react_amount += m.react_amount;
-      } else {
-        ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
-      }
-    }
-  }
-
+  // TODO test this function specially
   double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
 
     // calculation of the consentrations [A][B][C]
@@ -435,6 +300,151 @@ public:
     }
 
     return exp(-(1.0 / (consentration*kon)));
+  }
+
+  // TODO for testing
+  void collectOns(map<string, reaction_info_t>& r, map<string, double>& s, map<string, double>& p) {
+
+    for (map<string, reaction_info_t>::iterator it = r.begin(); it != r.end(); ++it) {
+      
+      // calculating the sons and pons
+      if (this->thereAreEnaughFor(it->second.substrate_sctry)) s.insert({it->first, this->bindingTreshold(it->second.substrate_sctry, it->second.konSTP)});
+      else s.insert({it->first, 0});
+      if (it->second.reversible && this->thereAreEnaughFor(it->second.products_sctry)) p.insert({it->first, this->bindingTreshold(it->second.products_sctry, it->second.konPTS)});
+      else p.insert({it->first, 0});
+    }
+  }
+  // TODO for testing
+  void normalize(map<string, double>& ons, double t) {
+    for (map<string, double>::iterator i = ons.begin(); i != ons.end(); ++i) {
+      i->second = i->second / t;
+    }
+  }
+
+
+  void selectMetalobitesToReact(vector<MSG>& m) {
+    MSG cm;
+    double rv, total, partial;
+    map<string, double> sons, pons;
+    enzyme_t en;
+    reaction_info_t re;
+    vector<string> enzyme_IDs;
+
+    this->unfoldEnzymes(enzyme_IDs); // all the enzyme are considered individualy not grouped by kind
+    shuffleEnzymes(enzyme_IDs); // the enzymes are iterated randomly
+
+    for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
+      en = _enzymes.at(*it);
+
+      collectOns(en.reacts, sons, pons);
+
+
+      // sons + pons can't be greater than 1. If that happen, they are normalized
+      // if sons + pons is smaller than 1, there is a chanse that the enzyme does'nt react
+      total = summAll(sons) + sumAll(pons);
+      if (total > 1) {
+        normalize(sons, total);
+        normalize(pons, total);
+      }
+      
+      // the interval [0,1] is  divided in pieces: 
+      // [0,son1), [son1, son1+son2), ... , [son1 + ... + sonk, son1 + ... + sonk + pon1), ... ,[son1 + ... + sonk + pon1 + ... + ponk, 1)
+      // depending on which of those sub-interval rv belongs, the enzyme triggers the correct reaction or do nothing.
+
+      rv = _real_random.drawNumber(0.0, 1.0);
+      partial = 0;
+      
+      for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
+        
+        partial += i->second;
+        if (rv < partial) {
+          // send message to trigger the reaction
+          re = en.reacts.at(i->first);
+          cm.clear();
+          cm.to = re.location;
+          cm.from = _id;
+          cm.react_direction = Way_t::STP;
+          cm.react_amount = 1;
+          m.push_back(cm);
+          break;
+        } 
+      }
+
+      // update the metabolite amount in the space
+      if (!re.empty()) {
+        for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
+          if (_metabolites.find(it->first) != _metabolites.end()) {
+            _metabolites.at(it->first) -= it->second;
+          }
+        }
+      } else { // if re is empty, then no one of the STP reactions have ben triggered and the search continue with the PTS reactions.
+        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
+        
+          partial += i->second;
+          if (rv < partial) {
+            // send message to trigger the reaction
+            re = en.reacts.at(i->first);
+            cm.clear();
+            cm.to = re.location;
+            cm.from = _id;
+            cm.react_direction = Way_t::PTS;
+            cm.react_amount = 1;
+            m.push_back(cm);
+            break;
+          } 
+        }
+      
+        // update the metabolite amount in the space
+        if (!re.empty()) {
+          for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
+            if (_metabolites.find(it->first) != _metabolites.end()) {
+              _metabolites.at(it->first) -= it->second;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /*****************************************************************/
+
+  void insertTask(const STask_t<TIME, MSG>& t) {
+
+    typename STaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    _tasks.insert(it, t);
+  }
+
+  void updateTaskTimeLefts(TIME t){
+
+    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+      it->time_left -= t;
+    }
+  }
+
+  void unifyMessages(vector<MSG>& m) const {
+
+    map<Address_t, MSG> unMsgs;
+
+    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+      insertMessageUnifying(unMsgs, *it);
+    }
+
+    m.clear();
+
+    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+      m.push_back(it->second);
+    }
+  }
+
+  void insertMessageUnifying(map<Address_t, MSG>& ms, MSG& m) const {
+
+    if (m.react_amount > 0) {
+      if (ms.find(m.to) != ms.end()) {
+        ms.at(m.to).react_amount += m.react_amount;
+      } else {
+        ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
+      }
+    }
   }
 };
   
