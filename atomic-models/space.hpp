@@ -306,9 +306,9 @@ public:
   }
 
   // TODO for testing
-  void collectOns(map<string, reaction_info_t>& r, map<string, double>& s, map<string, double>& p) {
+  void collectOns(const map<string, reaction_info_t>& r, map<string, double>& s, map<string, double>& p) {
 
-    for (map<string, reaction_info_t>::iterator it = r.begin(); it != r.end(); ++it) {
+    for (map<string, reaction_info_t>::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
       
       // calculating the sons and pons
       if (this->thereAreEnaughFor(it->second.substrate_sctry)) s.insert({it->first, this->bindingTreshold(it->second.substrate_sctry, it->second.konSTP)});
@@ -317,6 +317,7 @@ public:
       else p.insert({it->first, 0});
     }
   }
+
   // TODO for testing
   void normalize(map<string, double>& ons, double t) {
     for (map<string, double>::iterator i = ons.begin(); i != ons.end(); ++i) {
@@ -339,7 +340,7 @@ public:
     for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
       en = _enzymes.at(*it);
 
-      collectOns(en.reacts, sons, pons);
+      collectOns(en.handled_reactions, sons, pons);
 
 
       // sons + pons can't be greater than 1. If that happen, they are normalized
@@ -362,7 +363,7 @@ public:
         partial += i->second;
         if (rv < partial) {
           // send message to trigger the reaction
-          re = en.reacts.at(i->first);
+          re = en.handled_reactions.at(i->first);
           cm.clear();
           cm.to = re.location;
           cm.from = _id;
@@ -386,7 +387,7 @@ public:
           partial += i->second;
           if (rv < partial) {
             // send message to trigger the reaction
-            re = en.reacts.at(i->first);
+            re = en.handled_reactions.at(i->first);
             cm.clear();
             cm.to = re.location;
             cm.from = _id;

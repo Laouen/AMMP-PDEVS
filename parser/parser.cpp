@@ -127,23 +127,45 @@ Address_t Parser_t::getReactionAddress(const SetOfMolecules_t& st, const SetOfMo
   return to;
 }
 
+void Parser_t::setReactionSctry(TiXmlElement * p, SetOfMolecules_t& sctry) {
+  string specieID;
+  double sctry_value;
+
+  for (TiXmlElement *it = p->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+    specieID    = it->Attribute("species");
+    sctry_value = (it->Attribute("stoichiometry") == NULL) ? 1 : stod(it->Attribute("stoichiometry"));
+    
+    assert(sctry.find(specieID) == sctry.end());    
+    sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
+  } 
+}
+
+string Parser_t::getGAParameter(TiXmlElement *r) {
+
+  TiXmlElement *body
+  TiXmlElement *p
+  string gaString
+  
+  for (TiXmlElement *it = r->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+    if (it->ValueStr() != "notes") continue;
+
+    body      = it->FirstChildElement();
+    p         = body->FirstChildElement();
+    gaString  = p.GetText();
+  }
+
+  return gaString;
+}
+
+
 /***************************************************************/
 /******************* END HELPER FUNCTIONS **********************/
 /***************************************************************/
 
 bool Parser_t::loadFile(const char *fileName) {
 
-  this->_loaded = _document.LoadFile(fileName);
-
-  if (this->_loaded) {
-    TiXmlElement *root  = _document.FirstChildElement();
-    TiXmlElement *model = root->FirstChildElement();
-    for (TiXmlElement *it = model->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-      _models[it->Value()] = it;
-    }
-  }
-
-	return this->_loaded;
+  this->_document = fileName;
+  this->loadFile();
 }
 
 bool Parser_t::loadFile() {
@@ -236,14 +258,18 @@ map<string, map<string, string>>& Parser_t::getSpecieByCompartments() {
 
 map<string, reaction_info_t>& Parser_t::getReactions() {
   assert(this->_loaded);
-  assert(this->_amounts && this->_konSTPs && this->_konPTSs);
+  assert(this->_konSTPs && this->_konPTSs);
 
   if (this->_reactions.empty()) {
-    string specieID;
-    double sctry_value;
+
+    string reactID;
     reaction_info_t react;
+
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-      if (it->Attribute("id") == _biomass_ID) continue;
+      
+      reactID = it->Attribute("id") 
+      
+      if (reactID == _biomass_ID) continue;
 
       react.clear();
 
@@ -253,36 +279,23 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
       // setting stoichiometries
       for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
-        if ((string)jt->Value() == "listOfReactants") {
-
-          for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-            
-            specieID    = lt->Attribute("species");
-            sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-            react.substrate_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
-          } 
-        } else if ((string)jt->Value() == "listOfProducts") {
-
-          for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-            
-            specieID    = lt->Attribute("species");
-            sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-            react.products_sctry.insert({specieID, getStoichiometryFrom(sctry_value)});
-          } 
+        if (jt->ValueStr() == "listOfReactants") {
+          setReactionSctry(jt, react.substrate_sctry);
+        } else if (jt->ValueStr() == "listOfProducts") {
+          setReactionSctry(jt, react.products_sctry);
         }
       }
 
-      // setting location, amoun and both Knos
+      // setting location, id, Kons and Pons
+      react.id = reactID;
       react.location = this->getReactionAddress(react.substrate_sctry, react.products_sctry, it->Attribute("id"));
-      react.amount = this->_amounts->at(it->Attribute("id"));
       react.konSTP = this->_konSTPs->at(it->Attribute("id"));
       react.konPTS = this->_konPTSs->at(it->Attribute("id"));
 
-      // insert the new reaction to the res;
-      this->_reactions.insert({it->Attribute("id"), react});
+      // insert the new reaction to the reactions map;
+      this->_reactions.insert({reactID, react});
     }
   }
-
 
   return this->_reactions;
 }
@@ -313,7 +326,7 @@ reaction_info_t Parser_t::getBiomass() {
 
     // setting stoichiometries
     for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
-      if ((string)jt->Value() == "listOfReactants") {
+      if (jt->ValueStr() == "listOfReactants") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
           
@@ -321,7 +334,7 @@ reaction_info_t Parser_t::getBiomass() {
           sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
           react.substrate_sctry.at(specieID) = this->getBiomassStoichiometryFrom(sctry_value);
         } 
-      } else if ((string)jt->Value() == "listOfProducts") {
+      } else if (jt->ValueStr() == "listOfProducts") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
           
@@ -339,4 +352,42 @@ reaction_info_t Parser_t::getBiomass() {
   }
 
   return react;
+}
+
+map<string, enzyme_t> Parser_t::getEnzymes() {
+  assert(this->_loaded);
+  assert(this->_amounts);
+  assert(!this->_reactions.empty())
+
+  string reactID;
+  enzyme_t enz;
+  vector<string> enzyme_hendlers;
+  string gene_association;
+
+  if (this->_enzymes.empty()) {
+    for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+
+      reactID = it->Attribute("id")
+      if (reactID == _biomass_ID) continue;
+
+      gene_association = getGAParameter(it, jt);
+      getEnzymesHandlerIDs(enzyme_hendlers, jt); // TODO implemente this function 
+
+      for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
+        if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
+
+          enz.clear();
+          enz.id      = *enzymeID;
+          enz.amount  = this->_amounts(enz.id);
+          enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+          this->_enzymes.insert({enz.id, enz});
+        } else {
+
+          this->_enzymes.at(*enzymeID).handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+        }
+      }
+    }
+  }
+
+  return this->_enzymes;
 }

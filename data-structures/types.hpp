@@ -264,18 +264,24 @@ struct reaction_info_t {
   bool              reversible;
 
   reaction_info_t()
-  : location(), amount(0), konSTP(1), konPTS(1), reversible(false) {}
+  : string(), location(), konSTP(1), konPTS(1), reversible(false) {}
 
-  reaction_info_t(const Address_t& other_location, const Integer_t& other_amount, const SetOfMolecules_t& other_substrate_sctry, const SetOfMolecules_t& other_products_sctry, double other_konSTP, double other_konPTS, bool other_reversible)
-  : location(other_location), amount(other_amount), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
+  reaction_info_t(
+    string                  other_id,
+    const Address_t&        other_location,
+    const SetOfMolecules_t& other_substrate_sctry,
+    const SetOfMolecules_t& other_products_sctry,
+    double                  other_konSTP,
+    double                  other_konPTS,
+    bool                    other_reversible
+    ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
 
   reaction_info_t(const reaction_info_t& other)
-  : location(other.location), amount(other.amount), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
+  : id(other.id), location(other.location), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
 
   void clear() {
     id = "";
     location.clear();
-    amount = 0;
     substrate_sctry.clear();
     products_sctry.clear();
     konSTP = 0;
@@ -300,9 +306,18 @@ ostream& operator<<(ostream& os, const reaction_info_t& r);
 /*******************************************/
 
 struct enzyme_t {
-  string id;
-  Integer_t amount;
-  map<string, reaction_info_t> reacts;
+  string      id;
+  Integer_t   amount;
+  map<string, reaction_info_t> handled_reactions;
+
+  enzyme_t(string other_id, const Integer_t& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
+  : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
+
+  clear() {
+    id = "";
+    amount = 0;
+    handled_reactions.clear();
+  }
 };
 
 

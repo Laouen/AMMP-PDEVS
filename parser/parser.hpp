@@ -31,6 +31,7 @@ private:
   map<string, string>               _comps;
   map<string, map<string, string>>  _speciesByComps;
   map<string, reaction_info_t>      _reactions;
+  map<string, enzyme_t>             _enzymes;
   bool                              _loaded;
 
   // extern parameters
@@ -74,6 +75,7 @@ public:
   map<string, string>& getCompartments();
   map<string, map<string, string>>& getSpecieByCompartments();
   map<string, reaction_info_t>& getReactions();
+  map<string, enzyme_t>& getEnzymes();
   vector<string> getReactionIDs();
   reaction_info_t getBiomass();
 };
