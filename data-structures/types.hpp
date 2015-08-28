@@ -83,7 +83,7 @@ struct RTask_t {
   : task_kind(RState_t::REACTING), time_left(other_t), direction(other_d), amount(other_a) {}
 
   RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
-  : task_kind(RState_t::REJECTING), time_left(other_t), toSend(other_ts);
+  : task_kind(RState_t::REJECTING), time_left(other_t), toSend(other_ts) {};
 
   RTask_t(const RTask_t<TIME, MSG>& other) 
   : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount), toSend(other.toSend) {}
@@ -108,7 +108,7 @@ struct RTask_t {
 
 };
 
-template<class TIME>
+template<class TIME, class MSG>
 using RTaskQueue_t = list< RTask_t<TIME, MSG> >;
 
 /*******************************************/
@@ -264,7 +264,7 @@ struct reaction_info_t {
   bool              reversible;
 
   reaction_info_t()
-  : string(), location(), konSTP(1), konPTS(1), reversible(false) {}
+  : id(), location(), konSTP(1), konPTS(1), reversible(false) {}
 
   reaction_info_t(
     string                  other_id,
@@ -313,7 +313,7 @@ struct enzyme_t {
   enzyme_t(string other_id, const Integer_t& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
   : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
 
-  clear() {
+  void clear() {
     id = "";
     amount = 0;
     handled_reactions.clear();

@@ -43,14 +43,13 @@ int main(int argc, char* argv[]) {
 
   bool comment_mode = true;
   
-  Parser_t p();
 
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
     exit(1);
   }
 
-  p.loadFile(argv[1]);
+  Parser_t p(argv[1]);
 
   // TODO this is a temporal parametrization
   vector<string> reactID = p.getReactionIDs();
@@ -67,7 +66,7 @@ int main(int argc, char* argv[]) {
 
   cout << "reaction amount: " << reactID.size() << endl;
 
-  for (map<string, map<string, string>>::iterator i = sp.begin(); i != sp.end(); ++i) {
+  for (map<string, map<string, string>>::iterator i = s.begin(); i != s.end(); ++i) {
     cout << "comp: " << i->first << endl;
     cout << "species: " << i->second.size() << endl;
   }

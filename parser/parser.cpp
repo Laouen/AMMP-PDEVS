@@ -6,29 +6,6 @@ using namespace std;
 /******************** HELPER FUNCTIONS *************************/
 /***************************************************************/
 
-void Parser_t::loadExternParameters(
-  shared_ptr<map<string, Integer_t>> other_amounts,
-  shared_ptr<map<string, Integer_t>> other_konSTPs,
-  shared_ptr<map<string, Integer_t>> other_konPTSs,
-  long double other_cw,
-  Integer_t other_n,
-  string other_p,
-  string other_e,
-  string other_c,
-  string other_bID
-) {
-  
-  _amounts = other_amounts;
-  _konSTPs = other_konSTPs;
-  _konPTSs = other_konPTSs;
-  _cell_weight = other_cw;
-  _normalization = other_n;
-  _p = other_p;
-  _e = other_e;
-  _c = other_c;
-  _biomass_ID = other_bID;
-}
-
 // TODO this implementation should modify all the stoichimetry
 Integer_t Parser_t::getStoichiometryFrom(double amount) {
 
@@ -140,7 +117,7 @@ void Parser_t::setReactionSctry(TiXmlElement * p, SetOfMolecules_t& sctry) {
   } 
 }
 
-string Parser_t::getGAParameter(TiXmlElement *r) {
+string Parser_t::getGAStringParameter(TiXmlElement *r) {
 
   TiXmlElement *body
   TiXmlElement *p
@@ -157,17 +134,6 @@ string Parser_t::getGAParameter(TiXmlElement *r) {
   return gaString;
 }
 
-
-/***************************************************************/
-/******************* END HELPER FUNCTIONS **********************/
-/***************************************************************/
-
-bool Parser_t::loadFile(const char *fileName) {
-
-  this->_document = fileName;
-  this->loadFile();
-}
-
 bool Parser_t::loadFile() {
 
   this->_loaded = _document.LoadFile();
@@ -182,6 +148,40 @@ bool Parser_t::loadFile() {
   }
 
   return this->_loaded;
+}
+
+/***************************************************************/
+/******************* END HELPER FUNCTIONS **********************/
+/***************************************************************/
+
+Parser_t::Parser_t(const char *filename)
+: _document(filename), _loaded(false) {
+
+  this->loadFile();
+};
+
+
+void Parser_t::loadExternParameters(
+  shared_ptr<map<string, Integer_t>> other_amounts,
+  shared_ptr<map<string, Integer_t>> other_konSTPs,
+  shared_ptr<map<string, Integer_t>> other_konPTSs,
+  long double other_cw,
+  Integer_t other_n,
+  string other_p,
+  string other_e,
+  string other_c,
+  string other_bID
+) {
+  
+  _amounts = other_amounts;
+  _konSTPs = other_konSTPs;
+  _konPTSs = other_konPTSs;
+  _cell_weight = other_cw;
+  _normalization = other_n;
+  _p = other_p;
+  _e = other_e;
+  _c = other_c;
+  _biomass_ID = other_bID;
 }
 
 list<UnitDefinition_t>& Parser_t::getUnitDefinitions() {
@@ -370,9 +370,9 @@ map<string, enzyme_t> Parser_t::getEnzymes() {
       reactID = it->Attribute("id")
       if (reactID == _biomass_ID) continue;
 
-      gene_association = getGAParameter(it, jt);
-      getEnzymesHandlerIDs(enzyme_hendlers, jt); // TODO implemente this function 
-
+      gene_association = getGAStringParameter(it, jt);
+      //getEnzymesHandlerIDs(enzyme_hendlers, gene_association); // TODO implemente this function 
+      enzyme_hendlers = {};
       for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
         if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
 

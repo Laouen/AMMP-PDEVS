@@ -264,7 +264,7 @@ public:
     return result;
   }
 
-  double summAll(const map<string, double>& ons) const {
+  double sumAll(const map<string, double>& ons) const {
     double result = 0;
 
     for (map<string, double>::const_iterator i = ons.cbegin(); i != ons.cend(); ++i) {
@@ -345,7 +345,7 @@ public:
 
       // sons + pons can't be greater than 1. If that happen, they are normalized
       // if sons + pons is smaller than 1, there is a chanse that the enzyme does'nt react
-      total = summAll(sons) + sumAll(pons);
+      total = sumAll(sons) + sumAll(pons);
       if (total > 1) {
         normalize(sons, total);
         normalize(pons, total);

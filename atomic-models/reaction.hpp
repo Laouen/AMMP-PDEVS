@@ -36,7 +36,7 @@ private:
   double                                _koff_PTS;
   TIME                                  _it;
   TIME                                  _rt;
-  RTaskQueue_t<TIME>                    _tasks;
+  RTaskQueue_t<TIME, MSG>               _tasks;
   // used for uniform random number 
   RealRandom_t<double>                  _real_random;
 
@@ -51,9 +51,9 @@ public:
     const map<string, SetOfMolecules_t>&        other_products_sctry,
     const map<string, Integer_t>                other_substrate_comps,
     const map<string, Integer_t>                other_product_comps,
-    const double                                other_koff_STP;
-    const double                                other_koff_PTS;
-    const TIME                                  other_it // Interval Time
+    const double                                other_koff_STP,
+    const double                                other_koff_PTS,
+    const TIME                                  other_it, // Interval Time
     const TIME                                  other_rt // Rejecting Time
   ) noexcept :
   _id(other_id),
@@ -98,7 +98,7 @@ public:
     vector<MSG> result = {};
     TIME current_time  = _tasks.front().time_left;
 
-    for (typename RTaskQueue_t<TIME>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
+    for (typename RTaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
       if (it->task_kind == RState_t::REACTING) {
 
@@ -137,10 +137,10 @@ public:
     // puting the rejected metabolites in msg to be send it.
     vector<MSG> ts;
     collectInMessage(rejected, ts);
-    unifyMessages(result);
+    unifyMessages(ts);
 
     // adding task for the rejected metabolites
-    RTask_t new_task(_rt, ts);
+    RTask_t<TIME, MSG> new_task(_rt, ts);
     insertTask(new_task);
 
     // looking for new reactions
@@ -161,7 +161,7 @@ public:
   // Decrease the time left of all the current tasks in _tasks by the parameter t.
   void updateTaskTimeLefts(TIME t){
 
-    for (typename RTaskQueue_t<TIME>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+    for (typename RTaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
       it->time_left -= t;
     }
   }
@@ -193,7 +193,7 @@ public:
     }
   }
 
-  bool aceptedMetabolites(double k) const {
+  bool aceptedMetabolites(double k) {
 
     return (_real_random.drawNumber(0.0, 1.0) > k);
   }
@@ -220,7 +220,7 @@ public:
   void collectInMessage(const map<string, pair<int, int>>& r, vector<MSG>& ts) const {
 
     MSG m;
-    for (const map<string, pair<int, int>>::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
+    for (map<string, pair<int, int> >::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
 
       if (it->second.first > 0) {
         assert(_substrate_sctry.find(it->first) != _substrate_sctry.end());
@@ -286,7 +286,7 @@ public:
 
   void insertTask(const RTask_t<TIME, MSG>& t) {
 
-    typename RTaskQueue_t<TIME>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
+    typename RTaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);
   }
 

@@ -47,16 +47,14 @@ private:
   string specieComp(string);
   pair<string, string> getCompAndSubComp(const SetOfMolecules_t&, const SetOfMolecules_t&);
   Address_t getReactionAddress(const SetOfMolecules_t&, const SetOfMolecules_t&, string);
+  bool loadFile(const char *);
+  void setReactionSctry(TiXmlElement *, SetOfMolecules_t&);
+  string getGAStringParameter(TiXmlElement *);
 
 public:
   // Constructors
-  Parser_t() 
-  : _loaded(false) {};
-	Parser_t(const char *filename)
-  : _document(filename), _loaded(false) {};
-	
-  // methods to load the XML files in the class
-  bool loadFile(const char *filename);
+  Parser_t(const char *filename);
+  
   bool loadFile();
   void loadExternParameters(
     shared_ptr<map<string, Integer_t>> other_amounts,
@@ -67,7 +65,7 @@ public:
     string other_p,
     string other_e,
     string other_c,
-    string other_bID,
+    string other_bID
   );
 
   // methods to get the information from the current SBML file.
