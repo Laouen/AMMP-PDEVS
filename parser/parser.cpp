@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -119,19 +120,40 @@ void Parser_t::setReactionSctry(TiXmlElement * p, SetOfMolecules_t& sctry) {
 
 string Parser_t::getGAStringParameter(TiXmlElement *r) {
 
-  TiXmlElement *body
-  TiXmlElement *p
-  string gaString
-  
-  for (TiXmlElement *it = r->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-    if (it->ValueStr() != "notes") continue;
+  TiXmlElement *body;
+  TiXmlElement *p;
+  string result;
 
-    body      = it->FirstChildElement();
-    p         = body->FirstChildElement();
-    gaString  = p.GetText();
+  for (TiXmlElement *it = r->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
+    if ((string)it->Value() != "notes") continue;
+    body   = it->FirstChildElement();
+    p      = body->FirstChildElement();
+    result = p->GetText ();
   }
 
-  return gaString;
+  return result;
+}
+
+vector<string> Parser_t::getEnzymesHandlerIDs(TiXmlElement *r) {
+
+  string ga = getGAStringParameter(r);
+  vector<string> tokens, result;
+  boost::split(tokens, ga, boost::is_any_of(" "));
+
+  for (vector<string>::iterator t = tokens.begin(); t != tokens.end(); ++t) {
+    
+    if ((*t) == "or") continue;
+    if ((*t) == "and") continue;
+    if ((*t) == "GENE_ASSOCIATION:") continue;
+
+    if ((*t)[0] == '(') (*t).erase(0,1);
+    if ((*t)[(*t).size()-1] == ')') (*t).erase((*t).size()-1,1);
+
+    result.push_back(*t);
+    cout << *t << endl;
+  }
+
+  return result;
 }
 
 bool Parser_t::loadFile() {
@@ -267,7 +289,7 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
       
-      reactID = it->Attribute("id") 
+      reactID = it->Attribute("id"); 
       
       if (reactID == _biomass_ID) continue;
 
@@ -279,9 +301,9 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
 
       // setting stoichiometries
       for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
-        if (jt->ValueStr() == "listOfReactants") {
+        if ((string)jt->Value() == "listOfReactants") {
           setReactionSctry(jt, react.substrate_sctry);
-        } else if (jt->ValueStr() == "listOfProducts") {
+        } else if ((string)jt->Value() == "listOfProducts") {
           setReactionSctry(jt, react.products_sctry);
         }
       }
@@ -326,7 +348,7 @@ reaction_info_t Parser_t::getBiomass() {
 
     // setting stoichiometries
     for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
-      if (jt->ValueStr() == "listOfReactants") {
+      if ((string)jt->Value() == "listOfReactants") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
           
@@ -334,7 +356,7 @@ reaction_info_t Parser_t::getBiomass() {
           sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
           react.substrate_sctry.at(specieID) = this->getBiomassStoichiometryFrom(sctry_value);
         } 
-      } else if (jt->ValueStr() == "listOfProducts") {
+      } else if ((string)jt->Value() == "listOfProducts") {
 
         for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
           
@@ -354,38 +376,35 @@ reaction_info_t Parser_t::getBiomass() {
   return react;
 }
 
-map<string, enzyme_t> Parser_t::getEnzymes() {
+map<string, enzyme_t>& Parser_t::getEnzymes() {
   assert(this->_loaded);
   assert(this->_amounts);
-  assert(!this->_reactions.empty())
+  assert(!this->_reactions.empty());
 
   string reactID;
   enzyme_t enz;
   vector<string> enzyme_hendlers;
-  string gene_association;
 
   if (this->_enzymes.empty()) {
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
 
-      reactID = it->Attribute("id")
+      reactID = it->Attribute("id");
       if (reactID == _biomass_ID) continue;
 
-      gene_association = getGAStringParameter(it, jt);
-      //getEnzymesHandlerIDs(enzyme_hendlers, gene_association); // TODO implemente this function 
-      enzyme_hendlers = {};
-      for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
+      enzyme_hendlers = getEnzymesHandlerIDs(it);
+      /*for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
         if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
 
           enz.clear();
           enz.id      = *enzymeID;
-          enz.amount  = this->_amounts(enz.id);
+          enz.amount  = this->_amounts->at(enz.id);
           enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
           this->_enzymes.insert({enz.id, enz});
         } else {
 
           this->_enzymes.at(*enzymeID).handled_reactions.insert({reactID, this->_reactions.at(reactID)});
         }
-      }
+      } */
     }
   }
 

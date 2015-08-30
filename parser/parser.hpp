@@ -50,6 +50,7 @@ private:
   bool loadFile(const char *);
   void setReactionSctry(TiXmlElement *, SetOfMolecules_t&);
   string getGAStringParameter(TiXmlElement *);
+  vector<string> getEnzymesHandlerIDs(TiXmlElement *r);
 
 public:
   // Constructors

@@ -43,7 +43,6 @@ int main(int argc, char* argv[]) {
 
   bool comment_mode = true;
   
-
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
     exit(1);
@@ -71,8 +70,7 @@ int main(int argc, char* argv[]) {
     cout << "species: " << i->second.size() << endl;
   }
 
-  cout << "reaction: R_CHLabcpp" << endl;
-  cout << r.at("R_CHLabcpp") << endl;
+  p.getEnzymes();
 
   return 0;
 }

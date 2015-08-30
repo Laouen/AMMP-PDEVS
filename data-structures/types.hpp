@@ -310,6 +310,9 @@ struct enzyme_t {
   Integer_t   amount;
   map<string, reaction_info_t> handled_reactions;
 
+  enzyme_t()
+  : id(""), amount(0), handled_reactions() {};
+
   enzyme_t(string other_id, const Integer_t& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
   : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
 
