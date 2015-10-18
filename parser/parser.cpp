@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 using namespace std;
 
@@ -137,20 +138,29 @@ string Parser_t::getGAStringParameter(TiXmlElement *r) {
 vector<string> Parser_t::getEnzymesHandlerIDs(TiXmlElement *r) {
 
   string ga = getGAStringParameter(r);
-  vector<string> tokens, result;
-  boost::split(tokens, ga, boost::is_any_of(" "));
+  cout << ga << endl;
+  vector<string> dropGA, tokens, result;
+  boost::split(dropGA, ga, boost::regex("GENE_ASSOCIATION"));
+    
+  for (int i = 0; i < dropGA.size(); ++i)
+  {
+    cout << dropGA[i] << "-";
+  }
+
+  cout << dropGA.size() << endl;
+  boost::split(tokens, ga, boost::is_any_of("(|)"));
 
   for (vector<string>::iterator t = tokens.begin(); t != tokens.end(); ++t) {
     
     if ((*t) == "or") continue;
     if ((*t) == "and") continue;
-    if ((*t) == "GENE_ASSOCIATION:") continue;
+    if ((*t) == "GENE_ASSOCIATION: ") continue;
 
     if ((*t)[0] == '(') (*t).erase(0,1);
     if ((*t)[(*t).size()-1] == ')') (*t).erase((*t).size()-1,1);
 
     result.push_back(*t);
-    cout << *t << endl;
+    //cout << *t << endl;
   }
 
   return result;
