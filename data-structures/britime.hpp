@@ -91,10 +91,20 @@ inline bool operator<=(const BRITime& lhs, const BRITime& rhs) noexcept {return 
 
 inline bool operator>=(const BRITime& lhs, const BRITime& rhs) noexcept {return !operator< (lhs,rhs);}
 
+/*  Fractional representation no errors
 inline std::ostream& operator<<(std::ostream& os, const BRITime& t) noexcept {
     
     if (t._is_inf) os << "inf";
     else os << t._value; 
+    return os;
+}
+*/
+
+// Decimal representation with division errors.
+inline std::ostream& operator<<(std::ostream& os, const BRITime& t) noexcept {
+    
+    if (t._is_inf) os << "inf";
+    else os <<(long double)((long double)t._value.numerator()/(long double)t._value.denominator()); 
     return os;
 }
 

@@ -25,20 +25,24 @@ class ModelGenerator {
 
 private:
 	Parser_t parser;
-  TIME _it, _rt, _r, _br, _current_time; 
+  TIME _it, _rt, _r, _br, _bit, _current_time; 
   shared_ptr< map<string, Address_t> > _species_addresses;
-  string _biomass_ID;
+  string _biomass_ID, _p, _e, _c;
   map<string, double> _compartment_volums;
   
   // Models
   map< string, vm_t<TIME>> _reaction_models;
   mm_t<TIME> _reaction_set_models;
   mm_t<TIME> _space_models;
+  mm_t<TIME> _bulk_solutions;
+  shared_ptr<model<TIME>> _biomass_model;
+  shared_ptr<model<TIME>> _periplasm_model;
+  shared_ptr<model<TIME>> _cell_model;
   bool _comment_mode;
 
 public:
-	ModelGenerator(const char *filename, TIME other_it, TIME other_rt, TIME other_r, TIME other_br, TIME other_ct, bool other_comment_mode) 
-  : parser(filename), _it(other_it), _rt(other_rt), _r(other_r), _br(other_br), _current_time(other_ct), _species_addresses(new map<string, Address_t>), _comment_mode(other_comment_mode) {
+	ModelGenerator(const char *filename, TIME other_it, TIME other_rt, TIME other_r, TIME other_br, TIME other_bit, TIME other_ct, bool other_comment_mode) 
+  : parser(filename), _it(other_it), _rt(other_rt), _r(other_r), _br(other_br), _bit(other_bit), _current_time(other_ct), _species_addresses(new map<string, Address_t>), _comment_mode(other_comment_mode) {
     comment("Init ...");
 
     shared_ptr<map<string, Integer_t>> amounts(new map<string, Integer_t>());
@@ -53,10 +57,13 @@ public:
       konPTSs->insert({*i, 1});
     }
 
+    _p = "p"; 
+    _e = "e"; 
+    _c = "c"; 
     _biomass_ID = "R_Ec_biomass_iJO1366_WT_53p95M";
 
     // data initialization
-    parser.loadExternParameters(100, amounts, konSTPs, konPTSs, 1, 1, "p", "e", "c", _biomass_ID);
+    parser.loadExternParameters(100, amounts, konSTPs, konPTSs, 1, 1, _p, _e, _c, _biomass_ID);
     map<string, string> places = parser.getCompartments();
     parser.getSpecieByCompartments();
     parser.getReactions();
@@ -69,12 +76,16 @@ public:
     comment("End init.");
 	}
 
+  Parser_t& getParser() {
+    return parser;
+  }
+
   /*****************************************************/
   /*************** REACTION MODELS *********************/
   /*****************************************************/
   
   /**
-   * it return the reaction models grouped by the enzyme set that they belong
+   * it return the reaction models grouped by the reaction set that they belong
    *
    */
   map< string, vm_t<TIME>>& getReactionModels() {
@@ -85,13 +96,13 @@ public:
       if (_species_addresses->empty()) this->createSpeciesAddresses();
 
       pair<string, string> place;
-      string enzyme_set, id, comp;
+      string reaction_set, id, comp;
       map<string, reaction_info_t> reactions = parser.getReactions();
       
       for (map<string, reaction_info_t>::iterator r = reactions.begin(); r != reactions.end(); ++r) {
 
         place = parser.getCompAndSubComp(r->second.substrate_sctry, r->second.products_sctry);
-        enzyme_set = place.first + "_" + place.second;
+        reaction_set = place.first + "_" + place.second;
         id = r->first;
 
         auto reaction_model = make_atomic_ptr< 
@@ -125,13 +136,13 @@ public:
         // filter atomic model
         auto rFilter = make_atomic_ptr< filter<TIME, MSG>, const string>(id);
         
-        if (_reaction_models.find(enzyme_set) == _reaction_models.end()){
+        if (_reaction_models.find(reaction_set) == _reaction_models.end()){
           vm_t<TIME> empty_entry;
-          _reaction_models.insert({enzyme_set, empty_entry});
+          _reaction_models.insert({reaction_set, empty_entry});
         }
 
         // enzyme flattened_coupled model
-        _reaction_models.at(enzyme_set).push_back(make_shared<
+        _reaction_models.at(reaction_set).push_back(make_shared<
           flattened_coupled<TIME, MSG>,
           vector<shared_ptr<model<TIME> > >,
           vector<shared_ptr<model<TIME> > >,
@@ -249,7 +260,7 @@ public:
 
       for (map<string, map<string, enzyme_t>>::iterator comp = enzymes_by_comps.begin(); comp != enzymes_by_comps.end(); ++comp) {
         id = comp->first;
-        Address_t biomass_address(1, _biomass_ID);
+        Address_t biomass_address = parser.getBiomass().location;
 
         auto space_model = make_atomic_ptr< 
         space<TIME, MSG>,
@@ -271,18 +282,192 @@ public:
           _compartment_volums.at(id)
         );
 
-        // space flattened_coupled model
-        vm_t<TIME> models(1, space_model); 
-        vm_t<TIME> eic(1, space_model); 
-        vm_t<TIME> eoc(1, space_model);
-        vmp_t<TIME> ic; 
-        _space_models.insert({id, make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc)});
+        SetOfMolecules_t met = parser.getCompartmentMetabolites(id);
+        cout << "id: " << id << " metabolites: ";
+        for (SetOfMolecules_t::iterator i = met.begin(); i != met.end(); ++i) {
+          cout << i->first << " ";
+        }
+        cout << endl;
+
+        _space_models.insert({id, makeCoupledModel(space_model)});
       }
 
       comment("End creating space models.");
     }
     comment("End getting space models.");
     return _space_models;
+  }
+
+  /*****************************************************/
+  /**************** BIOMASS MODELS *********************/
+  /*****************************************************/
+
+  Address_t getCompartmentAddresses() {
+    Address_t result;
+
+    map<string, string> compartments = parser.getCompartments();
+
+    for (map<string, string>::const_iterator comp = compartments.cbegin(); comp != compartments.cend(); ++comp) {
+      result.push_back(comp->first + "_" + _biomass_ID);
+    }
+
+    return result;
+  }
+
+  shared_ptr<model<TIME>>& getBiomassModel() {
+    comment("Getting biomass model ...");
+
+    if (!_biomass_model) {
+      comment("Creating biomass model ...");
+
+      reaction_info_t biomass_info = parser.getBiomass();
+      Address_t addresses = this->getCompartmentAddresses();
+
+      auto biomass_model = make_atomic_ptr< 
+        biomass<TIME, MSG>,
+        const string,
+        const shared_ptr< map<string, Address_t>>,
+        const SetOfMolecules_t&,
+        const SetOfMolecules_t&,
+        const Address_t,
+        const TIME,
+        const TIME>(
+          _biomass_ID, 
+          _species_addresses,
+          biomass_info.substrate_sctry,
+          biomass_info.products_sctry,
+          addresses,
+          _bit,
+          _br
+        );
+ 
+      _biomass_model = makeCoupledModel(biomass_model);
+      comment("End creating biomass model.");
+    }
+    comment("End getting biomass model ...");
+    return _biomass_model;
+  }
+
+  shared_ptr<model<TIME>> makeCoupledModel(shared_ptr<model<TIME>> atomic_model) {
+    vm_t<TIME> models(1, atomic_model); 
+    vm_t<TIME> eic(1, atomic_model); 
+    vm_t<TIME> eoc(1, atomic_model);
+    vmp_t<TIME> ic;
+    return make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc);
+  }
+
+  /*****************************************************/
+  /************** BULKSOLUTION MODELS ******************/
+  /*****************************************************/
+
+  shared_ptr<model<TIME>>& getBulkSolutionModel(string comp) {
+    comment("Getting " + comp + " model ...");
+
+    if (_bulk_solutions.find(comp) == _bulk_solutions.end()) {
+      comment("Creating " + comp + " model ...");
+      
+      shared_ptr<model<TIME>> bulk_inner = this->getEnzymeSetModels().at(comp + "_inner");
+      shared_ptr<model<TIME>> bulk_space = this->getSpaceModels().at(comp);
+      auto bulk_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(comp);
+      auto biomass_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(comp + "_" + _biomass_ID);
+
+      vm_t<TIME> models = {bulk_inner, bulk_space, bulk_filter, biomass_filter}; 
+      vm_t<TIME> eic = {bulk_filter, biomass_filter}; 
+      vm_t<TIME> eoc = {bulk_space};
+      vmp_t<TIME> ic = {
+        {bulk_filter, bulk_space}, 
+        {biomass_filter, bulk_space}, 
+        {bulk_space, bulk_inner}, 
+        {bulk_inner, bulk_space}
+      };
+      _bulk_solutions.insert({comp, make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc)});
+
+      comment("End creating " + comp + " model.");
+    }
+    comment("End getting " + comp + " model ...");
+    return _bulk_solutions.at(comp);
+  }
+
+  /*****************************************************/
+  /*************** PERIPLASM MODELS ********************/
+  /*****************************************************/
+
+  shared_ptr<model<TIME>>& getPeriplasmModel() {
+    comment("Getting periplasm model ...");
+
+    if (!_periplasm_model) {
+      comment("Creating periplasm model ...");
+      
+      shared_ptr<model<TIME>> bulk_inner = this->getEnzymeSetModels().at("p_inner");
+      shared_ptr<model<TIME>> bulk_outer_membrane = this->getEnzymeSetModels().at("p_outer_membrane");
+      shared_ptr<model<TIME>> bulk_inner_membrane = this->getEnzymeSetModels().at("p_inner_membrane");
+      shared_ptr<model<TIME>> bulk_trans_membrane = this->getEnzymeSetModels().at("p_trans_membrane");
+      shared_ptr<model<TIME>> bulk_space = this->getSpaceModels().at("p");
+      auto bulk_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p");
+      auto biomass_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p_" + _biomass_ID);
+
+      vm_t<TIME> models = {bulk_inner, bulk_space, bulk_outer_membrane, bulk_inner_membrane, bulk_trans_membrane, bulk_filter, biomass_filter}; 
+      vm_t<TIME> eic = {bulk_filter, biomass_filter}; 
+      vm_t<TIME> eoc = {bulk_space, bulk_outer_membrane, bulk_inner_membrane, bulk_trans_membrane};
+      vmp_t<TIME> ic = {
+        {biomass_filter, bulk_space}, 
+        {bulk_filter, bulk_outer_membrane}, 
+        {bulk_filter, bulk_inner_membrane}, 
+        {bulk_filter, bulk_trans_membrane},
+        {bulk_outer_membrane, bulk_space}, 
+        {bulk_inner_membrane, bulk_space}, 
+        {bulk_trans_membrane, bulk_space},
+        {bulk_space, bulk_outer_membrane}, 
+        {bulk_space, bulk_inner_membrane}, 
+        {bulk_space, bulk_trans_membrane},
+        {bulk_space, bulk_inner}, 
+        {bulk_inner, bulk_space}
+      };
+      _periplasm_model = make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc);
+
+      comment("End creating periplasm model.");
+    }
+    comment("End getting periplasm model ...");
+    return _periplasm_model;
+  }
+
+  /*****************************************************/
+  /*************** PERIPLASM MODELS ********************/
+  /*****************************************************/
+
+  // TODO: Add organelles
+  shared_ptr<model<TIME>>& getCellModel() {
+    comment("Getting cell model ...");
+
+    if (!_cell_model) {
+      comment("Creating cell model ...");
+      
+      shared_ptr<model<TIME>> extracellular = this->getBulkSolutionModel(_e);
+      shared_ptr<model<TIME>> cytoplasm = this->getBulkSolutionModel(_c);
+      shared_ptr<model<TIME>> periplasm = this->getPeriplasmModel();
+      shared_ptr<model<TIME>> biomass = this->getBiomassModel();
+
+      vm_t<TIME> models = {extracellular, cytoplasm, periplasm, biomass}; 
+      vm_t<TIME> eic = {extracellular, periplasm, cytoplasm}; 
+      vm_t<TIME> eoc = {};
+      vmp_t<TIME> ic = {
+        {extracellular, periplasm},
+        {periplasm, extracellular},
+        {periplasm, cytoplasm},
+        {cytoplasm, periplasm},
+        {biomass, extracellular},
+        {biomass, periplasm},
+        {biomass, cytoplasm},
+        {extracellular, biomass},
+        {periplasm, biomass},
+        {cytoplasm, biomass}
+      };
+      _cell_model = make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc);
+
+      comment("End creating cell model.");
+    }
+    comment("End getting cell model ...");
+    return _cell_model;
   }
 
 };

@@ -25,6 +25,7 @@ private:
   map<string, TiXmlElement*>  _models;
   string                      _biomass_ID;
   string                      _p, _e, _c;
+  int                         _enzyme_ID_counter;
 
   // data
   list<UnitDefinition_t>            _units;

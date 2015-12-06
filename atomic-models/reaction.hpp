@@ -18,6 +18,8 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
+#define COMMENTS false
+
 template<class TIME, class MSG>
 class reaction : public pdevs::atomic<TIME, MSG>
 {
@@ -76,21 +78,25 @@ public:
   }
 
   void internal() noexcept {
+    comment("internal init.");
 
     // Updating time left
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // removing all the task made in the las out function
     this->removeFinishedTasks();
+    comment("internal end.");
   }
 
   TIME advance() const noexcept {
+    comment("advance init.");
   
     if (!_tasks.empty()) return _tasks.front().time_left;
     else                 return pdevs::atomic<TIME, MSG>::infinity;
   }
 
   vector<MSG> out() const noexcept {
+    comment("out init.");
     
     MSG new_message;
     const map<string, SetOfMolecules_t>* curr_sctry;
@@ -123,10 +129,12 @@ public:
 
     unifyMessages(result);
     
+    comment("out end.");
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
+    comment("external init.");
     // Updating time left
     this->updateTaskTimeLefts(t);
 
@@ -145,18 +153,25 @@ public:
 
     // looking for new reactions
     this->lookForNewReactions();
+    comment("external end.");
   }
 
   virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
+    comment("external init.");
     
     internal();
     external(mb, ZERO);
     
+    comment("external end.");
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
+
+  void comment(string msg) const {
+    if (COMMENTS) cout << "[reaction " << _id << "] " << msg << endl;
+  }
 
   // Decrease the time left of all the current tasks in _tasks by the parameter t.
   void updateTaskTimeLefts(TIME t){

@@ -251,11 +251,10 @@ vector<string> Parser_t::getEnzymeCompartments(const enzyme_t& en) {
 /***************************************************************/
 
 Parser_t::Parser_t(const char *filename)
-: _document(filename), _loaded(false) {
+: _document(filename), _loaded(false), _enzyme_ID_counter(0) {
 
   this->loadFile();
 };
-
 
 void Parser_t::loadExternParameters(
   Integer_t other_default_amount,
@@ -425,21 +424,9 @@ reaction_info_t Parser_t::getBiomass() {
     // setting stoichiometries
     for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
       if ((string)jt->Value() == "listOfReactants") {
-
-        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          
-          specieID    = lt->Attribute("species");
-          sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-          react.substrate_sctry.at(specieID) = this->getBiomassStoichiometryFrom(sctry_value);
-        } 
+        setReactionSctry(jt, react.substrate_sctry);
       } else if ((string)jt->Value() == "listOfProducts") {
-
-        for (TiXmlElement *lt = jt->FirstChildElement(); lt != NULL; lt = lt->NextSiblingElement()) {
-          
-          specieID    = lt->Attribute("species");
-          sctry_value = (lt->Attribute("stoichiometry") == NULL) ? 1 : stod(lt->Attribute("stoichiometry"));
-          react.substrate_sctry.at(specieID) = this->getBiomassStoichiometryFrom(sctry_value);
-        } 
+        setReactionSctry(jt, react.products_sctry);
       }
     }
 
@@ -468,21 +455,30 @@ map<string, enzyme_t>& Parser_t::getEnzymes() {
       if (reactID == _biomass_ID) continue;
 
       enzyme_hendlers = getEnzymesHandlerIDs(it);
-      for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
-        if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
+      if (!enzyme_hendlers.empty()) { 
+        for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
+          if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
 
-          enz.clear();
-          enz.id      = *enzymeID;
-          if (this->_amounts->find(enz.id) != this->_amounts->end()) 
-            enz.amount = this->_amounts->at(enz.id);
-          else 
-            enz.amount = this->_default_amount;
-          enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
-          this->_enzymes.insert({enz.id, enz});
-        } else {
+            enz.clear();
+            enz.id = *enzymeID;
+            if (this->_amounts->find(enz.id) != this->_amounts->end()) 
+              enz.amount = this->_amounts->at(enz.id);
+            else 
+              enz.amount = this->_default_amount;
+            enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+            this->_enzymes.insert({enz.id, enz});
+          } else {
 
-          this->_enzymes.at(*enzymeID).handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+            this->_enzymes.at(*enzymeID).handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+          }
         }
+      } else {
+        enz.clear();
+        enz.id = "not_handled_" + _enzyme_ID_counter;
+        enz.amount = this->_default_amount;
+        enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
+        this->_enzymes.insert({enz.id, enz});
+        ++_enzyme_ID_counter;
       }
     }
   }

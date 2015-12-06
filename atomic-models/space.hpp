@@ -22,6 +22,8 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
+#define COMMENTS false
+
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
 {
@@ -72,15 +74,17 @@ public:
 
     // just to confirm, the space and metabolites start empty.
     _tasks.clear();
+    cout << "id: " << _id << " metabolites: ";
+    for (SetOfMolecules_t::iterator i = _metabolites.begin(); i != _metabolites.end(); ++i) {
+      cout << i->first << " ";
+    }
   }
 
-  // TODO: check the correct ordering of the tasks, if there is a biomass request and a selec for reaction, the biomass request must win.
   void internal() noexcept {
-
+    comment("internal init.");
     MSG cm;
     STask_t<TIME, MSG> sr; //, sb; // sr = selected_reactants, sb = selected_biomass
     bool srah = false; // this boolean says if a SELECTING_FOR_REACTION tasks has already happen or not.
-    //bool sbah = false; // this boolean says if a SELECTING_FOR_BIOMASS task has already happen or not.
 
     _current_time += _tasks.front().time_left;
     this->updateTaskTimeLefts(_tasks.front().time_left);
@@ -90,7 +94,7 @@ public:
       
       if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
 
-        srah = true; // no more than one selection in a given time T;
+        srah = true; // no more than one selection at a time;
 
         // set a new task to send the selected metabolites.
         sr.task_kind  = SState_t::SENDING_REACTIONS;
@@ -100,45 +104,25 @@ public:
         unifyMessages(sr.msgs);
         if (!sr.msgs.empty()) this->insertTask(sr);
       } 
-      /*
-      else if ((it->task_kind == SState_t::SELECTING_FOR_BIOMAS) && !sbah) {
-        // no more than one selection in a given time T;
-        sbah = true;
-
-        // look for metabolites to send
-        cm.to = _biomass_address;
-        addMultipleMetabolites(cm.metabolites, _metabolites);
-
-        // set a new task for out() to send the selected metabolites.
-        sb.time_left  = _br;
-        sb.task_kind  = SState_t::SENDING_BIOMAS;
-        sb.msgs.push_back(cm);
-        
-        // once the metabolite are all send to biomass, there is no more metabolites in the space.
-        this->removeAllMetabolites(); // TODO this method must be implemented
-      }
-      */
     }
-
-
-    // inserting new tasks
-    //if (!sb.msgs.empty()) this->insertTask(sb);
 
     // setting new selection
     this->setNextSelection();
+    comment("internal end.");
   }
 
   TIME advance() const noexcept {
-
+    comment("advance init.");
     TIME result;
     if (!_tasks.empty()) result = _tasks.front().time_left;
     else                 result = pdevs::atomic<TIME, MSG>::infinity;
 
     return result;
+    comment("advance end.");
   }
 
   vector<MSG> out() const noexcept {
-
+    comment("out init.");
     vector<MSG> result;
     MSG b_msg;
     TIME current_time  = _tasks.front().time_left;
@@ -159,11 +143,12 @@ public:
       }
     }
 
+    comment("out end.");
     return result;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
-
+    comment("external init.");
     //STask_t<TIME, MSG> new_task;
     bool select_biomass = false;
 
@@ -172,21 +157,12 @@ public:
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-
       if (it->show_request) {
         
         this->show_metabolites();
-        //new_task.time_left = ZERO; // TODO: aks to Gabriel if it shouldn't be 0.
-        //new_task.task_kind = SState_t::SHOWING;
-        //this->insertTask(new_task);
-
       } else if (it->biomass_request) {
 
         select_biomass = true;
-        //new_task.time_left = _br; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
-        //new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
-        //this->insertTask(new_task);
-      
       } else {
 
         addMultipleMetabolites(_metabolites, it->metabolites);
@@ -197,22 +173,27 @@ public:
 
     // if some metabolites have just arrived (the third part of the if has happen), a selection task must be programed.
     this->setNextSelection();
+    comment("external end.");
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-
+    comment("confluence init.");
     external(mb, t);
     internal(); 
+    comment("confluence end.");
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
+  void comment(string msg) const {
+    if (COMMENTS) cout << "[space " << _id << "] " << msg << endl;
+  }
 
   void show_metabolites() const {
-    cout << _current_time << " ";
+    cout << _current_time << " " << _id << " ";
     for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-      cout << it->second << " ";
+      cout << it->first << " " << it->second << " ";
     }
     cout << endl;
   }
@@ -250,7 +231,11 @@ public:
   
     // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      m.at(it->first) += it->second;
+      if (m.find(it->first) != m.end()) {
+        m.at(it->first) += it->second;
+      } else {
+        m.insert({it->first, it->second});
+      }
     }
   }
 
@@ -258,7 +243,11 @@ public:
   
     // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      m.at(it->first) += it->second;
+      if (m.find(it->first) != m.end()) {
+        m.at(it->first) += it->second;
+      } else {
+        m.insert({it->first, it->second});
+      }
     }
   }
 

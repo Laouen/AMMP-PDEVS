@@ -74,18 +74,10 @@ ostream& operator<<(ostream& os, const SState_t& s) {
 ostream& operator<<(ostream& os, const BState_t& s) {
 
   switch(s) {
-    case BState_t::START:
-      os << "START";
-      break;
-    case BState_t::NOTHING:
-      os << "NOTHING";
-      break;
-    case BState_t::NOT_ENOUGH:
-      os << "NOT_ENOUGH";
-      break;
-    case BState_t::ENOUGH:
-      os << "ENOUGH";
-      break;
+    case BState_t::IDLE:        os << "IDLE";       break;
+    case BState_t::WAITING:     os << "WAITING";    break;
+    case BState_t::NOT_ENOUGH:  os << "NOT_ENOUGH"; break;
+    case BState_t::ENOUGH:      os << "ENOUGH";     break;
   }
 
   return os;

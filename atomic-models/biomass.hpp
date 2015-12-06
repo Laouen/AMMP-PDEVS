@@ -52,7 +52,7 @@ public:
   _request_addresses(other_request_addresses),
   _interval_time(other_interval_time),
   _rate(other_rate),
-  _s(BState_t::START) {
+  _s(BState_t::IDLE) {
 
     _reactants.clear();
     _rejected.clear();
@@ -73,61 +73,72 @@ public:
       it->second = 0;
     }
 
-    _s = BState_t::NOTHING;
+    _s = BState_t::IDLE;
   }
 
   TIME advance() const noexcept {
 
+    TIME advance_time;
+    switch(_s) {
+    case BState_t::WAITING: advance_time = pdevs::atomic<TIME, MSG>::infinity; break;
+    case BState_t::IDLE: advance_time = _interval_time; break;
+    case BState_t::NOT_ENOUGH: 
+    case BState_t::ENOUGH: advance_time = _rate; break;
+    }
 
-    if (_s == BState_t::START) return _interval_time;
-    else if (_s == BState_t::NOTHING) return _interval_time - (_rate + _rate);
-    else return _rate;
-
+    return advance_time;
   }
 
   vector<MSG> out() const noexcept {
 
     vector<MSG> output;
+    vector<MSG> request;
     MSG curr_message;
 
-    if (_s == BState_t::ENOUGH) {
-      for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
+    switch(_s) {
+    case BState_t::WAITING:
 
-        curr_message.to     = _addresses->at(it->first);
-        curr_message.specie = it->first;
-        curr_message.amount = it->second;
-        output.push_back(curr_message);
-      }
-    } else if (_s == BState_t::NOT_ENOUGH) {
+      break;
+    case BState_t::IDLE:
+
+      curr_message.to               = _request_addresses;
+      curr_message.show_request     = false;
+      curr_message.biomass_request  = true;
+      request.push_back(curr_message);
+      break;
+    case BState_t::NOT_ENOUGH:
+
       for (SetOfMolecules_t::const_iterator it = _reactants.cbegin(); it != _reactants.cend(); ++it) {
 
         if (it->second > 0) {
 
           curr_message.to     = _addresses->at(it->first);
-          curr_message.specie = it->first;
-          curr_message.amount = it->second;
+          curr_message.metabolites.insert({it->first, it->second});
           output.push_back(curr_message);
         }
       }
-    } else if ((_s == BState_t::START) || (_s == BState_t::NOTHING)) {
-      
-      curr_message.to               = _request_addresses;
-      curr_message.specie           = "";
-      curr_message.amount           = Integer_t(0);
-      curr_message.biomass_request  = true;
-      output.push_back(curr_message);
+      break;
+    case BState_t::ENOUGH:
+
+      for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
+        curr_message.to     = _addresses->at(it->first);
+        curr_message.metabolites.insert({it->first, it->second});
+        output.push_back(curr_message);
+      }
+      break;
     }
 
     for (SetOfMolecules_t::const_iterator it = _rejected.cbegin(); it != _rejected.cend(); ++it) {
       
       curr_message.to     = _addresses->at(it->first);
-      curr_message.specie = it->first;
-      curr_message.amount = it->second;
+      curr_message.metabolites.insert({it->first, it->second});
       output.push_back(curr_message);
     } 
 
-    return output;
+    unifyMessages(output);
+    output.insert(output.end(), request.begin(), request.end());
 
+    return output;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
@@ -136,27 +147,29 @@ public:
     bool is_needed;
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
 
-      is_needed = _reactants_sctry.find(it->specie) != _reactants_sctry.end();
-      
-      if (is_needed) {
-
-        needed_amount   = _reactants_sctry.at(it->specie) - _reactants.at(it->specie);
-        taked_amount    = min(it->amount, needed_amount);
-        this->addReactant(it->specie, taked_amount);
-
-        rejected_amount = it->amount - taked_amount;
-      } else {
+      for(SetOfMolecules_t::const_iterator specie = it->metabolites.begin(); specie != it->metabolites.end(); ++specie) {
+        is_needed = _reactants_sctry.find(specie->first) != _reactants_sctry.end();
         
-        rejected_amount = it->amount;
-      }
+        if (is_needed) {
 
-      if (rejected_amount > 0)
-        this->addRejectedMolecules(it->specie, rejected_amount);
+          needed_amount = _reactants_sctry.at(specie->first) - _reactants.at(specie->first);
+          taked_amount = min(specie->second, needed_amount);
+          this->addReactant(specie->first, taked_amount);
+
+          rejected_amount = specie->second - taked_amount;
+        } else {
+          
+          rejected_amount = specie->second;
+        }
+
+        if (rejected_amount > 0)
+          this->addRejectedMolecules(specie->first, rejected_amount);
+      }
     }
 
     if (this->thereIsEnoughReactants())     _s = BState_t::ENOUGH;
     else if (this->thereIsSomeReactants())  _s = BState_t::NOT_ENOUGH;
-    else                                    _s = BState_t::NOTHING;
+    else                                    _s = BState_t::IDLE;
 
   }
 
@@ -210,6 +223,48 @@ public:
     }
 
     return result;
+  }
+
+  void unifyMessages(vector<MSG>& m) const {
+
+    map<Address_t, MSG> unMsgs;
+
+    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
+      insertMessage(unMsgs, *it);
+    }
+
+    m.clear();
+
+    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
+      m.push_back(it->second);
+    }
+  }
+
+  void insertMessage(map<Address_t, MSG>& ms, MSG& m) const {
+
+    if (ms.find(m.to) != ms.end()) {
+      addMultipleMetabolites(ms.at(m.to).metabolites, m.metabolites);
+    } else {
+      ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
+    }
+  }
+
+  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
+  
+    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+      addMetabolite(m, it->first, it->second);
+    }
+  }
+
+  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a) const {
+
+    if (a > 0) {
+      if (m.find(n) != m.end()) {
+        m.at(n) += a;
+      } else {
+        m.insert({n, a}); // TODO: change all the initializer_list because they don't work on windows
+      }
+    }
   }
 };
 

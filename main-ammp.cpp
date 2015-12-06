@@ -39,72 +39,24 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), Time_t(1,1000), Time_t(0), true);
+  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), Time_t(1,1000), Time_t(1,1000), Time_t(0), true);
 
-  map< string, vm_t<Time_t>> reactions = mg.getReactionModels();
-  int total = 0;
-  for(map< string, vm_t<Time_t>>::iterator i = reactions.begin(); i != reactions.end(); ++i) {
-    cout << i->first << " size: " << i->second.size() << endl;
-    total += i->second.size();
-  }
-  cout << "size: " << total << endl;
+  mm_t<Time_t> ens = mg.getEnzymeSetModels();
 
-  mm_t<Time_t> enzyme_sets = mg.getEnzymeSetModels();
-  mm_t<Time_t> compartments = mg.getSpaceModels();
-
-  for (mm_t<Time_t>::iterator c = compartments.begin(); c != compartments.end(); ++c) {
-    cout << c->first << endl;
+  for (mm_t<Time_t>::iterator i = ens.begin(); i != ens.end(); ++i) {
+     cout << i->first << endl;
   }
 
-  return 0;
-}
-  /*
-  long double cell_weight   = 280 * 1e-15;  
-  Integer_t norm_number     = 1;  
-  string e                  = "e";
-  string c                  = "c";
-  string p                  = "p";
-  string biomass_ID         = "R_Ec_biomass_iJO1366_WT_53p95M";
-
-  ModelEngine<Time_t, Message_t> m(cell_weight, argv[1], e, c, p, biomass_ID, norm_number);
-  m._comment_mode = comment_mode;
-  
-  m.createSpeciesAddresses();
-
-  // adding the organelles compartments
-  for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
-    if (m.isNotSpecial(i->first)) m.addCompartmentForEnzyme(i->first);
-  }
-
-  // creating the enzymes models
-  m._comment_mode = false;
-  for (map<string, enzyme_parameter_t >::const_iterator i = m._reactions.begin(); i != m._reactions.end(); ++i) {
-      m.addEnzymeModel(i->first, BRITime(1,10), BRITime(1,100), Integer_t(100));
-  }
-  m._comment_mode = comment_mode;
-
-  m.createEnzymeAddresses();
-
-  m.createCytoplasmModel(BRITime(1,100), BRITime(1,100), 250, 1);
-
-  m.createExtraCellularModel(BRITime(1,100), BRITime(1,100), 0, 1);
-  
-  m.createPeriplasmModel(BRITime(1,100), BRITime(1,100), 15, 1);
-
-  m.createBiomassModel(BRITime(1,10), BRITime(1,100));
-
-  // creating the organelles
-  for (map<string, string> ::const_iterator i = m._compartments.begin(); i != m._compartments.end(); ++i) {
-    if (m.isNotSpecial(i->first)) m.addOrganelleModel(i->first, BRITime(1,100), BRITime(1,100), 0, 1);
-  }
-
-  m.createCellModel();
-
+  shared_ptr<model<Time_t>>& cell_model = mg.getCellModel();
 
   /*****************************************************************************************************/
   /************************************** Runing Simulation ********************************************/
   /*****************************************************************************************************/
-  /*
+  bool comment_mode = true;
+
+  Parser_t p = mg.getParser();
+  map<string, map<string, string>> species =  p.getSpecieByCompartments();
+
   if (comment_mode) cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
   string partial_input = "";
@@ -112,13 +64,11 @@ int main(int argc, char* argv[]) {
   string cp;
   for (Time_t t(1,100); t < Time_t(1,50); t += Time_t(1,100)) {
 
-    for (map<string, map<string, string>>::const_iterator i = m._species.begin(); i != m._species.end(); ++i){
-      if (i->first == "p") cp = "p_init";
-      else cp = i->first;
-      partial_input = t.toString() + " " + cp + " " + i->first + "_s | ";
+    for (map<string, map<string, string>>::const_iterator i = species.begin(); i != species.end(); ++i){
+      partial_input = t.toString() + " " + i->first + " " + i->first + "_s | ";
       
       for (map<string,string>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
-        input += partial_input + j->first + " 100000 \n ";
+        input += partial_input + j->first + " 100 \n ";
       }
     }
   }
@@ -130,8 +80,8 @@ int main(int argc, char* argv[]) {
   auto pf = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, Message_t >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
     [](const string& s, Time_t& t_next, Message_t& m_next)->void{ 
 
-    int delimiter;
-    string collector;
+    int delimiter, amount;
+    string collector, specie;
     string thrash;
     stringstream ss;
     Message_t msg_out;
@@ -146,9 +96,10 @@ int main(int argc, char* argv[]) {
       ss >>collector;
     }
 
-    ss >> msg_out.specie;
-    ss >> msg_out.amount;
+    ss >> specie;
+    ss >> amount;
 
+    msg_out.metabolites.insert({specie, amount});
     m_next = msg_out;
     ss >> thrash;
     if ( 0 != thrash.size()) throw exception();
@@ -180,6 +131,7 @@ int main(int argc, char* argv[]) {
 
     msg_out.to            = {"e", "e_s", "c", "c_s", "p_or", "p_s"};
     msg_out.show_request  = true;
+    msg_out.biomass_request  = false;
 
     m_next = msg_out;
     ss >> thrash;
@@ -188,13 +140,13 @@ int main(int argc, char* argv[]) {
 
   if (comment_mode) cout << "Coupling the input to the model" << endl;
   shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
-    {pf, so, m._cell_model}, 
+    {pf, so, cell_model}, 
     {}, 
     {
-      {pf, m._cell_model},
-      {so, m._cell_model}
+      {pf, cell_model},
+      {so, cell_model}
     }, 
-    {m._cell_model}
+    {cell_model}
   });
 
   //pdevs_tools::pdevs_coupling_diagram<Time_t, Message_t> pd{*root};
@@ -205,11 +157,12 @@ int main(int argc, char* argv[]) {
   if (comment_mode) cout << "Preparing runner" << endl;
   runner<Time_t, Message_t> r(root, Time_t(0), cout, [](ostream& os, Message_t m){  os << m; });
 
-  if (comment_mode) cout << "Starting simulation until passivate" << endl;
+  Time_t until(30000,1);
+  if (comment_mode) cout << "Starting simulation until time " << until << endl;
 
   auto start = hclock_t::now(); //to measure simulation execution time
 
-  r.runUntil(Time_t(300000, 1));
+  r.runUntil(until);
 
   auto elapsed = chrono::duration_cast< chrono::duration< double, ratio<1> > > (hclock_t::now() - start).count();
 
@@ -217,4 +170,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-*/
