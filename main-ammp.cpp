@@ -39,18 +39,22 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), true);
+  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), Time_t(1,1000), Time_t(0), true);
 
-  mg.createReactionModels();
-
-  map<string, cmm_t<Time_t, Message_t>> reactions = mg.getReactionModels();
+  map< string, vm_t<Time_t>> reactions = mg.getReactionModels();
   int total = 0;
-  for(map<string, cmm_t<Time_t, Message_t>>::iterator i = reactions.begin(); i != reactions.end(); ++i) {
+  for(map< string, vm_t<Time_t>>::iterator i = reactions.begin(); i != reactions.end(); ++i) {
     cout << i->first << " size: " << i->second.size() << endl;
     total += i->second.size();
   }
-
   cout << "size: " << total << endl;
+
+  mm_t<Time_t> enzyme_sets = mg.getEnzymeSetModels();
+  mm_t<Time_t> compartments = mg.getSpaceModels();
+
+  for (mm_t<Time_t>::iterator c = compartments.begin(); c != compartments.end(); ++c) {
+    cout << c->first << endl;
+  }
 
   return 0;
 }

@@ -49,6 +49,7 @@ public:
     const string                  other_id,
     const TIME                    other_it,
     const TIME                    other_br,
+    const TIME                    other_ct,
     const Address_t&              other_biomass_address,
     const SetOfMolecules_t        other_metabolites,
     const map<string, enzyme_t>&  other_enzymes,
@@ -57,6 +58,7 @@ public:
   _id(other_id),
   _it(other_it),
   _br(other_br),
+  _current_time(other_ct),
   _biomass_address(other_biomass_address),
   _metabolites(other_metabolites),
   _enzymes(other_enzymes),
@@ -209,7 +211,7 @@ public:
 
   void show_metabolites() const {
     cout << _current_time << " ";
-    for (SetOfMolecules_t::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
       cout << it->second << " ";
     }
     cout << endl;
@@ -228,16 +230,31 @@ public:
     send_biomas.msgs.push_back(cm);
     
     // once the metabolite are all send to biomass, there is no more metabolites in the space.
-    this->removeAllMetabolites(); // TODO this method must be implemented
+    this->removeAllMetabolites(); 
     
     this->insertTask(send_biomas);
   }
+
+  void removeAllMetabolites() {
+    for (SetOfMolecules_t::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+      it->second = 0;
+    }
+  } 
+
 
   /************** addMultipleMetabolites ****************************/
 
   // TODO: generate test of all the helper functions
   // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
   void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  
+    // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
+    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+      m.at(it->first) += it->second;
+    }
+  }
+
+  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
   
     // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
@@ -446,6 +463,8 @@ public:
       }
     }
   }
+
+  /************ remove all metabolites *****************************/
 
   /*****************************************************************/
 

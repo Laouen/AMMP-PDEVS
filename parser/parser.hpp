@@ -52,7 +52,7 @@ private:
   vector<string> getEnzymesHandlerIDs(TiXmlElement *r);
   vector<string> proccesExpresion(vector<string>& tokens, int start, int end);
   int getSubExpresion(const vector<string>& tokens, int start);
-  void getEnzymeCompartments(const enzyme_t& en, vector<string>& compartments);
+  vector<string> getEnzymeCompartments(const enzyme_t& en);
 
 public:
   // Constructors
@@ -83,6 +83,7 @@ public:
   vector<string> getReactionIDs();
   reaction_info_t getBiomass();
   map<string, map<string, enzyme_t>> getEnzymesByCompartments();
+  SetOfMolecules_t getCompartmentMetabolites(string comp);
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

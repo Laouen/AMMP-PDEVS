@@ -40,6 +40,7 @@ string Parser_t::specieComp(string id) {
   return res;
 }
 
+// For the moment this funtion is not considering organelles
 pair<string, string> Parser_t::getCompAndSubComp(const SetOfMolecules_t& st, const SetOfMolecules_t& pt) {
   assert(this->_loaded);
 
@@ -228,8 +229,8 @@ bool Parser_t::loadFile() {
   return this->_loaded;
 }
 
-void Parser_t::getEnzymeCompartments(const enzyme_t& en, vector<string>& compartments) {
-
+vector<string> Parser_t::getEnzymeCompartments(const enzyme_t& en) {
+  vector<string> compartments;
   for (map<string, reaction_info_t>::const_iterator r = en.handled_reactions.cbegin(); r != en.handled_reactions.cend(); ++r) {
     for (SetOfMolecules_t::const_iterator substrate = r->second.substrate_sctry.begin(); substrate != r->second.substrate_sctry.end(); ++substrate) {
       compartments.push_back(this->specieComp(substrate->first));
@@ -241,6 +242,8 @@ void Parser_t::getEnzymeCompartments(const enzyme_t& en, vector<string>& compart
       }
     }
   }
+
+  return compartments;
 }
 
 /***************************************************************/
@@ -492,20 +495,26 @@ map<string, map<string, enzyme_t>> Parser_t::getEnzymesByCompartments() {
   vector<string> compartments;
 
   map<string, enzyme_t> enzymes = this->getEnzymes();
-  map<string, string> compts = this->getCompartments();
-
-  // initilization of the compartment maps.This maps are filled up in the next for
-  for (map<string, string>::iterator comp = compts.begin(); comp != compts.end(); ++comp) {
-    map<string, enzyme_t> empty_map;
-    result.insert({comp->first, empty_map});
-  }
 
   for (map<string, enzyme_t>::iterator en = enzymes.begin(); en != enzymes.end(); ++en) {
-    this->getEnzymeCompartments(en->second, compartments);
+    compartments = this->getEnzymeCompartments(en->second);
     for (vector<string>::iterator comp = compartments.begin(); comp != compartments.end(); ++comp) {
+      if (result.find(*comp) == result.end()) {
+        map<string, enzyme_t> empty_entry;
+        result.insert({*comp, empty_entry});
+      }
       result.at(*comp).insert({en->first, en->second});
     }
   }
 
+  return result;
+}
+
+SetOfMolecules_t Parser_t::getCompartmentMetabolites(string comp) {
+  SetOfMolecules_t result;
+  map<string, string> species = this->getSpecieByCompartments().at(comp); 
+  for (map<string, string>::iterator s = species.begin(); s != species.end(); ++s) {
+    result.insert({s->first, 0});
+  } 
   return result;
 }
