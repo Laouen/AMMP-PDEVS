@@ -35,6 +35,7 @@ private:
   bool                              _loaded;
 
   // extern parameters
+  Integer_t                          _default_amount;
   shared_ptr<map<string, Integer_t>> _amounts;
   shared_ptr<map<string, Integer_t>> _konSTPs;
   shared_ptr<map<string, Integer_t>> _konPTSs;
@@ -44,13 +45,14 @@ private:
   // private methods
   Integer_t getBiomassStoichiometryFrom(double);
   Integer_t getStoichiometryFrom(double);
-  string specieComp(string);
-  pair<string, string> getCompAndSubComp(const SetOfMolecules_t&, const SetOfMolecules_t&);
   Address_t getReactionAddress(const SetOfMolecules_t&, const SetOfMolecules_t&, string);
   bool loadFile(const char *);
   void setReactionSctry(TiXmlElement *, SetOfMolecules_t&);
-  string getGAStringParameter(TiXmlElement *);
+  string getGAValue(TiXmlElement *);
   vector<string> getEnzymesHandlerIDs(TiXmlElement *r);
+  vector<string> proccesExpresion(vector<string>& tokens, int start, int end);
+  int getSubExpresion(const vector<string>& tokens, int start);
+  void getEnzymeCompartments(const enzyme_t& en, vector<string>& compartments);
 
 public:
   // Constructors
@@ -58,6 +60,7 @@ public:
   
   bool loadFile();
   void loadExternParameters(
+    Integer_t other_default_amount,
     shared_ptr<map<string, Integer_t>> other_amounts,
     shared_ptr<map<string, Integer_t>> other_konSTPs,
     shared_ptr<map<string, Integer_t>> other_konPTSs,
@@ -70,6 +73,8 @@ public:
   );
 
   // methods to get the information from the current SBML file.
+  string specieComp(string);
+  pair<string, string> getCompAndSubComp(const SetOfMolecules_t&, const SetOfMolecules_t&);
   list<UnitDefinition_t>& getUnitDefinitions();
   map<string, string>& getCompartments();
   map<string, map<string, string>>& getSpecieByCompartments();
@@ -77,6 +82,7 @@ public:
   map<string, enzyme_t>& getEnzymes();
   vector<string> getReactionIDs();
   reaction_info_t getBiomass();
+  map<string, map<string, enzyme_t>> getEnzymesByCompartments();
 };
 
 #endif // BOOST_SIMULATION_PDEVS_PARSER_H

@@ -13,7 +13,7 @@
 #include <boost/simulation.hpp>
 
 // model engine
-#include "model-engine.hpp"
+#include "model_generator/model_generator.hpp"
 
 // include vendors
 #include "vendors/pdevs_tools.hpp"
@@ -34,43 +34,23 @@ using hclock_t = chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
 
-  map<string, map<string, string>> s;
-  map<string, reaction_info_t> r;
-
-  shared_ptr<map<string, Integer_t>> amounts(new map<string, Integer_t>());
-  shared_ptr<map<string, Integer_t>> konSTPs(new map<string, Integer_t>());
-  shared_ptr<map<string, Integer_t>> konPTSs(new map<string, Integer_t>());
-
-  bool comment_mode = true;
-  
   if (argc <= 1){
     cout << "An SBML file is required." << endl;
     exit(1);
   }
 
-  Parser_t p(argv[1]);
+  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), true);
 
-  // TODO this is a temporal parametrization
-  vector<string> reactID = p.getReactionIDs();
-  for (vector<string>::iterator i = reactID.begin(); i != reactID.end(); ++i) {
-    amounts->insert({*i, 100});
-    konSTPs->insert({*i, 1});
-    konPTSs->insert({*i, 1});
+  mg.createReactionModels();
+
+  map<string, cmm_t<Time_t, Message_t>> reactions = mg.getReactionModels();
+  int total = 0;
+  for(map<string, cmm_t<Time_t, Message_t>>::iterator i = reactions.begin(); i != reactions.end(); ++i) {
+    cout << i->first << " size: " << i->second.size() << endl;
+    total += i->second.size();
   }
 
-  p.loadExternParameters(amounts, konSTPs, konPTSs, 1, 1, "p", "e", "c", "R_Ec_biomass_iJO1366_WT_53p95M");
-  
-  s = p.getSpecieByCompartments();
-  r = p.getReactions();
-
-  cout << "reaction amount: " << reactID.size() << endl;
-
-  for (map<string, map<string, string>>::iterator i = s.begin(); i != s.end(); ++i) {
-    cout << "comp: " << i->first << endl;
-    cout << "species: " << i->second.size() << endl;
-  }
-
-  p.getEnzymes();
+  cout << "size: " << total << endl;
 
   return 0;
 }

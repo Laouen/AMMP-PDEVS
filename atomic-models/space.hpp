@@ -27,8 +27,9 @@ class space : public pdevs::atomic<TIME, MSG>
 {
 private:
   string                  _id;
-  TIME                    _it;
-  TIME                    _br;
+  TIME                    _it; // it = interval time
+  TIME                    _br; // br = biomass request
+  TIME                    _current_time;
   Address_t               _biomass_address;
   SetOfMolecules_t        _metabolites;
   map<string, enzyme_t>   _enzymes;
@@ -43,15 +44,15 @@ private:
 
 public:
 
-  // precondition: the setOfMetabolites_t given as parameter must contain all the metabolites in the space defined
+  // precondition: the SetOfMolecules_t given as parameter must contain all the getReactionIDs metabolites in the space
   explicit space(
-    const string                          other_id,
-    const TIME                            other_it,
-    const TIME                            other_br,
-    const Address_t&                      other_biomass_address,
-    const SetOfMolecules_t                other_metabolites,
-    const map<string, reaction_info_t>&   other_enzymes,
-    const double                          other_volume
+    const string                  other_id,
+    const TIME                    other_it,
+    const TIME                    other_br,
+    const Address_t&              other_biomass_address,
+    const SetOfMolecules_t        other_metabolites,
+    const map<string, enzyme_t>&  other_enzymes,
+    const double                  other_volume
     ) noexcept :
   _id(other_id),
   _it(other_it),
@@ -75,10 +76,11 @@ public:
   void internal() noexcept {
 
     MSG cm;
-    STask_t<TIME, MSG> sr, sb; // sr = selected_reactants, sb = selected_biomass
+    STask_t<TIME, MSG> sr; //, sb; // sr = selected_reactants, sb = selected_biomass
     bool srah = false; // this boolean says if a SELECTING_FOR_REACTION tasks has already happen or not.
-    bool sbah = false; // this boolean says if a SELECTING_FOR_BIOMASS task has already happen or not.
+    //bool sbah = false; // this boolean says if a SELECTING_FOR_BIOMASS task has already happen or not.
 
+    _current_time += _tasks.front().time_left;
     this->updateTaskTimeLefts(_tasks.front().time_left);
 
     // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is ZERO.
@@ -94,7 +96,10 @@ public:
 
         this->selectMetalobitesToReact(sr.msgs);
         unifyMessages(sr.msgs);
-      } else if ((it->task_kind == SState_t::SELECTING_FOR_BIOMAS) && !sbah) {
+        if (!sr.msgs.empty()) this->insertTask(sr);
+      } 
+      /*
+      else if ((it->task_kind == SState_t::SELECTING_FOR_BIOMAS) && !sbah) {
         // no more than one selection in a given time T;
         sbah = true;
 
@@ -110,12 +115,12 @@ public:
         // once the metabolite are all send to biomass, there is no more metabolites in the space.
         this->removeAllMetabolites(); // TODO this method must be implemented
       }
+      */
     }
 
 
     // inserting new tasks
-    if (!sr.msgs.empty()) this->insertTask(sr);
-    if (!sb.msgs.empty()) this->insertTask(sb);
+    //if (!sb.msgs.empty()) this->insertTask(sb);
 
     // setting new selection
     this->setNextSelection();
@@ -157,8 +162,10 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
 
-    STask_t<TIME, MSG> new_task;
+    //STask_t<TIME, MSG> new_task;
+    bool select_biomass = false;
 
+    _current_time += t;
     this->updateTaskTimeLefts(t);
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
@@ -166,21 +173,25 @@ public:
 
       if (it->show_request) {
         
-        new_task.time_left = ZERO; // TODO: aks to Gabriel if it shouldn't be 0.
-        new_task.task_kind = SState_t::SHOWING;
-        this->insertTask(new_task);
+        this->show_metabolites();
+        //new_task.time_left = ZERO; // TODO: aks to Gabriel if it shouldn't be 0.
+        //new_task.task_kind = SState_t::SHOWING;
+        //this->insertTask(new_task);
 
       } else if (it->biomass_request) {
 
-        new_task.time_left = _br; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
-        new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
-        this->insertTask(new_task);
+        select_biomass = true;
+        //new_task.time_left = _br; // NOTE: There was ZERO before, and ZERO it's an error (generate zero-time loops), in the other model there is the same error.
+        //new_task.task_kind = SState_t::SELECTING_FOR_BIOMAS;
+        //this->insertTask(new_task);
       
       } else {
 
         addMultipleMetabolites(_metabolites, it->metabolites);
       }
     }
+
+    if (select_biomass) this->selectForBiomass();
 
     // if some metabolites have just arrived (the third part of the if has happen), a selection task must be programed.
     this->setNextSelection();
@@ -196,14 +207,40 @@ public:
   ********* helper functions *************
   ***************************************/
 
+  void show_metabolites() const {
+    cout << _current_time << " ";
+    for (SetOfMolecules_t::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+      cout << it->second << " ";
+    }
+    cout << endl;
+  }
+
+  void selectForBiomass() {
+    MSG cm;
+    STask_t<TIME, MSG> send_biomas;
+    // look for metabolites to send
+    cm.to = _biomass_address;
+    addMultipleMetabolites(cm.metabolites, _metabolites);
+
+    // set a new task for out() to send the selected metabolites.
+    send_biomas.time_left  = _br;
+    send_biomas.task_kind  = SState_t::SENDING_BIOMAS;
+    send_biomas.msgs.push_back(cm);
+    
+    // once the metabolite are all send to biomass, there is no more metabolites in the space.
+    this->removeAllMetabolites(); // TODO this method must be implemented
+    
+    this->insertTask(send_biomas);
+  }
+
   /************** addMultipleMetabolites ****************************/
 
   // TODO: generate test of all the helper functions
   // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
   void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
   
+    // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      // if the metabolite isn't defined in the compartment is not from there and an error ocurre.
       m.at(it->first) += it->second;
     }
   }

@@ -23,7 +23,7 @@ class reaction : public pdevs::atomic<TIME, MSG>
 {
 
 private:
-  // enzyme information
+  // reaction information
   string                                _id;
   shared_ptr< map<string, Address_t> >  _addresses;
   bool                                  _reversible;
@@ -314,14 +314,14 @@ public:
     }
   }
 
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
   
     for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
       addMetabolite(m, it->first, it->second);
     }
   }
 
-  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a){
+  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a) const {
 
     if (a > 0) {
       if (m.find(n) != m.end()) {

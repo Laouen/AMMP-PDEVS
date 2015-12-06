@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
@@ -119,7 +120,8 @@ void Parser_t::setReactionSctry(TiXmlElement * p, SetOfMolecules_t& sctry) {
   } 
 }
 
-string Parser_t::getGAStringParameter(TiXmlElement *r) {
+// GA = Gene association
+string Parser_t::getGAValue(TiXmlElement *r) {
 
   TiXmlElement *body;
   TiXmlElement *p;
@@ -137,33 +139,77 @@ string Parser_t::getGAStringParameter(TiXmlElement *r) {
 
 vector<string> Parser_t::getEnzymesHandlerIDs(TiXmlElement *r) {
 
-  string ga = getGAStringParameter(r);
-  cout << ga << endl;
-  vector<string> dropGA, tokens, result;
-  boost::split(dropGA, ga, boost::regex("GENE_ASSOCIATION"));
-    
-  for (int i = 0; i < dropGA.size(); ++i)
-  {
-    cout << dropGA[i] << "-";
+  string ga = getGAValue(r);
+  vector<string> tokens;
+  boost::split(tokens, ga, boost::is_any_of(" "));
+
+  return proccesExpresion(tokens, 1, tokens.size()-1);;
+}
+
+vector<string> Parser_t::proccesExpresion(vector<string>& tokens, int start, int end) {
+  int i, j;
+  vector<vector<string>> processed_tokens;
+  vector<string> subExpresion, result; 
+
+  i = start;
+
+  while(i <= end) {
+    if (tokens[i].front() != '(') {
+      processed_tokens.push_back({tokens[i]});
+      ++i;
+    } else {
+      j = getSubExpresion(tokens, i);
+      tokens[i].erase(0,1);
+      tokens[j].erase(tokens[j].size()-1);
+      processed_tokens.push_back(proccesExpresion(tokens, i, j));
+      i = j+1;
+    }
   }
 
-  cout << dropGA.size() << endl;
-  boost::split(tokens, ga, boost::is_any_of("(|)"));
+  while(processed_tokens.size() > 1) {
+    subExpresion.clear();
+    if (processed_tokens[1].front() == "or") {
+      for (i = 0; i < processed_tokens[0].size(); ++i) {
+        subExpresion.push_back(processed_tokens[0][i]);
+      }
+      for (i = 0; i < processed_tokens[2].size(); ++i) {
+        subExpresion.push_back(processed_tokens[2][i]);
+      }
+    } else if (processed_tokens[1].front() == "and") {
+      for (i = 0; i < processed_tokens[0].size(); ++i) {
+        for (j = 0; j < processed_tokens[2].size(); ++j) {
+          subExpresion.push_back(processed_tokens[0][i] + "-" + processed_tokens[2][j]);
+        }
+      }
+    }
 
-  for (vector<string>::iterator t = tokens.begin(); t != tokens.end(); ++t) {
-    
-    if ((*t) == "or") continue;
-    if ((*t) == "and") continue;
-    if ((*t) == "GENE_ASSOCIATION: ") continue;
-
-    if ((*t)[0] == '(') (*t).erase(0,1);
-    if ((*t)[(*t).size()-1] == ')') (*t).erase((*t).size()-1,1);
-
-    result.push_back(*t);
-    //cout << *t << endl;
+    processed_tokens.erase(processed_tokens.begin(),processed_tokens.begin()+3);
+    processed_tokens.insert(processed_tokens.begin(),subExpresion);
   }
 
+  if (!processed_tokens.empty()) result = processed_tokens.front();
   return result;
+}
+
+int Parser_t::getSubExpresion(const vector<string>& tokens, int start) {
+  assert(tokens[start].front() == '(');
+  int i, to_close, end;
+
+  to_close = 0;
+  end = start-1;
+  do {
+    ++end;
+    for (i=0; i<tokens[end].length(); ++i) {
+      if (tokens[end].at(i) == '(') ++to_close;
+      else break;
+    }
+    for (i=tokens[end].length()-1; i>=0; --i) {
+      if (tokens[end].at(i) == ')') --to_close;
+      else break;
+    }
+  } while(to_close > 0);
+
+  return end;
 }
 
 bool Parser_t::loadFile() {
@@ -182,6 +228,21 @@ bool Parser_t::loadFile() {
   return this->_loaded;
 }
 
+void Parser_t::getEnzymeCompartments(const enzyme_t& en, vector<string>& compartments) {
+
+  for (map<string, reaction_info_t>::const_iterator r = en.handled_reactions.cbegin(); r != en.handled_reactions.cend(); ++r) {
+    for (SetOfMolecules_t::const_iterator substrate = r->second.substrate_sctry.begin(); substrate != r->second.substrate_sctry.end(); ++substrate) {
+      compartments.push_back(this->specieComp(substrate->first));
+    }
+
+    if (r->second.reversible) {
+      for (SetOfMolecules_t::const_iterator product = r->second.products_sctry.begin(); product != r->second.products_sctry.end(); ++product) {
+        compartments.push_back(this->specieComp(product->first));
+      }
+    }
+  }
+}
+
 /***************************************************************/
 /******************* END HELPER FUNCTIONS **********************/
 /***************************************************************/
@@ -194,6 +255,7 @@ Parser_t::Parser_t(const char *filename)
 
 
 void Parser_t::loadExternParameters(
+  Integer_t other_default_amount,
   shared_ptr<map<string, Integer_t>> other_amounts,
   shared_ptr<map<string, Integer_t>> other_konSTPs,
   shared_ptr<map<string, Integer_t>> other_konPTSs,
@@ -205,6 +267,7 @@ void Parser_t::loadExternParameters(
   string other_bID
 ) {
   
+  _default_amount = other_default_amount;
   _amounts = other_amounts;
   _konSTPs = other_konSTPs;
   _konPTSs = other_konPTSs;
@@ -397,26 +460,52 @@ map<string, enzyme_t>& Parser_t::getEnzymes() {
 
   if (this->_enzymes.empty()) {
     for (TiXmlElement *it = _models["listOfReactions"]->FirstChildElement(); it != NULL; it = it->NextSiblingElement()) {
-
+      
       reactID = it->Attribute("id");
       if (reactID == _biomass_ID) continue;
 
       enzyme_hendlers = getEnzymesHandlerIDs(it);
-      /*for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
+      for (vector<string>::iterator enzymeID = enzyme_hendlers.begin(); enzymeID != enzyme_hendlers.end(); ++enzymeID) {
         if (this->_enzymes.find(*enzymeID) == this->_enzymes.end()) {
 
           enz.clear();
           enz.id      = *enzymeID;
-          enz.amount  = this->_amounts->at(enz.id);
+          if (this->_amounts->find(enz.id) != this->_amounts->end()) 
+            enz.amount = this->_amounts->at(enz.id);
+          else 
+            enz.amount = this->_default_amount;
           enz.handled_reactions.insert({reactID, this->_reactions.at(reactID)});
           this->_enzymes.insert({enz.id, enz});
         } else {
 
           this->_enzymes.at(*enzymeID).handled_reactions.insert({reactID, this->_reactions.at(reactID)});
         }
-      } */
+      }
     }
   }
 
   return this->_enzymes;
+}
+
+map<string, map<string, enzyme_t>> Parser_t::getEnzymesByCompartments() {
+  map<string, map<string, enzyme_t>> result;
+  vector<string> compartments;
+
+  map<string, enzyme_t> enzymes = this->getEnzymes();
+  map<string, string> compts = this->getCompartments();
+
+  // initilization of the compartment maps.This maps are filled up in the next for
+  for (map<string, string>::iterator comp = compts.begin(); comp != compts.end(); ++comp) {
+    map<string, enzyme_t> empty_map;
+    result.insert({comp->first, empty_map});
+  }
+
+  for (map<string, enzyme_t>::iterator en = enzymes.begin(); en != enzymes.end(); ++en) {
+    this->getEnzymeCompartments(en->second, compartments);
+    for (vector<string>::iterator comp = compartments.begin(); comp != compartments.end(); ++comp) {
+      result.at(*comp).insert({en->first, en->second});
+    }
+  }
+
+  return result;
 }

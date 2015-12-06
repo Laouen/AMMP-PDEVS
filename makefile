@@ -5,7 +5,7 @@ INCLUDEBCDPP=-I /home/lao/cdboost/include
 MODELSHEADERS=atomic-models/reaction.hpp atomic-models/filter.hpp atomic-models/space.hpp atomic-models/biomass.hpp
 TINYHEADERS=tinyXML/tinyxml.h tinyXML/tinystr.h
 STRUCTUREHEADERS=data-structures/types.hpp data-structures/randomNumbers.hpp data-structures/unit_definition.hpp data-structures/britime.hpp
-ME=model-engine.hpp
+ME=model_generator/model_generator.hpp
 PARSERHEADERS=parser/parser.hpp
 VENDORHEADERS=vendors/pdevs_tools.hpp
 
