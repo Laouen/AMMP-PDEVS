@@ -282,13 +282,6 @@ public:
           _compartment_volums.at(id)
         );
 
-        SetOfMolecules_t met = parser.getCompartmentMetabolites(id);
-        cout << "id: " << id << " metabolites: ";
-        for (SetOfMolecules_t::iterator i = met.begin(); i != met.end(); ++i) {
-          cout << i->first << " ";
-        }
-        cout << endl;
-
         _space_models.insert({id, makeCoupledModel(space_model)});
       }
 
