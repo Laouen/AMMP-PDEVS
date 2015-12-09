@@ -40,6 +40,8 @@ private:
   shared_ptr<map<string, Integer_t>> _amounts;
   shared_ptr<map<string, Integer_t>> _konSTPs;
   shared_ptr<map<string, Integer_t>> _konPTSs;
+  shared_ptr<map<string, Integer_t>> _koffSTPs;
+  shared_ptr<map<string, Integer_t>> _koffPTSs;
   Integer_t                          _cell_weight;
   long double                        _normalization;
 
@@ -65,6 +67,8 @@ public:
     shared_ptr<map<string, Integer_t>> other_amounts,
     shared_ptr<map<string, Integer_t>> other_konSTPs,
     shared_ptr<map<string, Integer_t>> other_konPTSs,
+    shared_ptr<map<string, Integer_t>> other_koffSTPs,
+    shared_ptr<map<string, Integer_t>> other_koffPTSs,
     long double other_cw,
     Integer_t other_n,
     string other_p,

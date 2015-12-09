@@ -16,7 +16,7 @@ main-ammp.o: main-ammp.cpp $(MODELSHEADERS) $(TINYHEADERS) $(STRUCTUREHEADERS) $
 	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) main-ammp.cpp -o main-ammp.o
 
 tinyXML/tinyxml.o: tinyXML/tinyxml.cpp $(TINYHEADERS)
-	$(CC) -c tinyXML/tinyxml.cpp -o tinyXML/tinyxml.o
+	$(CC) -g -c tinyXML/tinyxml.cpp -o tinyXML/tinyxml.o
 
 tinyXML/tinyxmlerror.o: tinyXML/tinyxmlerror.cpp $(TINYHEADERS)
 	$(CC) -g -c tinyXML/tinyxmlerror.cpp -o tinyXML/tinyxmlerror.o

@@ -18,8 +18,6 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
-#define COMMENTS false
-
 template<class TIME, class MSG>
 class reaction : public pdevs::atomic<TIME, MSG>
 {
@@ -74,7 +72,6 @@ public:
     // The random atributes is initilized with a random generator
     random_device real_rd; // Random generator engine
     _real_random.seed(real_rd());
-
   }
 
   void internal() noexcept {
@@ -90,9 +87,14 @@ public:
 
   TIME advance() const noexcept {
     comment("advance init.");
-  
-    if (!_tasks.empty()) return _tasks.front().time_left;
-    else                 return pdevs::atomic<TIME, MSG>::infinity;
+    
+    TIME result;
+    if (!_tasks.empty()) result = _tasks.front().time_left;
+    else                 result = pdevs::atomic<TIME, MSG>::infinity;
+    
+    if (result <= TIME(0,1)) cout << _id << " " << result << endl;
+    comment("advance time result " + result.toStringAsDouble());
+    return result;
   }
 
   vector<MSG> out() const noexcept {
@@ -107,8 +109,7 @@ public:
     for (typename RTaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
 
       if (it->task_kind == RState_t::REACTING) {
-
-        
+    
         if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
         else curr_sctry = &_substrate_sctry;
 
@@ -118,7 +119,7 @@ public:
             new_message.clear();
             new_message.to = _addresses->at(mt->first);
             new_message.metabolites.insert({mt->first, it->amount*mt->second});
-            result.push_back(new_message); 
+            result.push_back(new_message);
           }
         }
       } else {
@@ -209,6 +210,7 @@ public:
   }
 
   bool aceptedMetabolites(double k) {
+    //if (_id == (string)"A_from_extracellular_space_to_periplasm") cout << _real_random.drawNumber(0.0, 1.0) << " " << k << endl; 
 
     return (_real_random.drawNumber(0.0, 1.0) > k);
   }

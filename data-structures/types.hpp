@@ -22,7 +22,7 @@ using namespace boost::simulation::pdevs::basic_models;
 /******************************************/
 
 enum class RState_t { REJECTING = 1, REACTING = 0 };
-enum class SState_t { SHOWING = 0, SELECTING_FOR_BIOMAS = 1, SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4 };
+enum class SState_t { SELECTING_FOR_REACTION = 2, SENDING_BIOMAS = 3, SENDING_REACTIONS = 4 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, IDLE = 2, WAITING = 3 };
 enum class Way_t { STP, PTS };
 
@@ -261,6 +261,8 @@ struct reaction_info_t {
   SetOfMolecules_t  products_sctry;
   double            konSTP;
   double            konPTS;
+  double            koffPTS;
+  double            koffSTP;
   bool              reversible;
 
   reaction_info_t()
@@ -273,11 +275,13 @@ struct reaction_info_t {
     const SetOfMolecules_t& other_products_sctry,
     double                  other_konSTP,
     double                  other_konPTS,
+    double                  other_koffSTP,
+    double                  other_koffPTS,
     bool                    other_reversible
-    ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), reversible(other_reversible) {}
+    ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), koffPTS(other_koffPTS), koffSTP(other_koffSTP), reversible(other_reversible) {}
 
   reaction_info_t(const reaction_info_t& other)
-  : id(other.id), location(other.location), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), reversible(other.reversible) {}
+  : id(other.id), location(other.location), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), koffPTS(other.koffPTS), koffSTP(other.koffSTP), reversible(other.reversible) {}
 
   void clear() {
     id = "";
@@ -315,6 +319,9 @@ struct enzyme_t {
 
   enzyme_t(string other_id, const Integer_t& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
   : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
+
+  enzyme_t(const enzyme_t& other)
+  : id(other.id), amount(other.amount), handled_reactions(other.handled_reactions) {}
 
   void clear() {
     id = "";

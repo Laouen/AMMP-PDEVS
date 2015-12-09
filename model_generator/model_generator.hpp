@@ -14,6 +14,8 @@
 // Boost simalator include
 #include <boost/simulation.hpp>
 
+#define COMMENTS false
+
 // atomic model includes
 #include "../atomic-models/filter.hpp"
 #include "../atomic-models/reaction.hpp"
@@ -48,6 +50,8 @@ public:
     shared_ptr<map<string, Integer_t>> amounts(new map<string, Integer_t>());
     shared_ptr<map<string, Integer_t>> konSTPs(new map<string, Integer_t>());
     shared_ptr<map<string, Integer_t>> konPTSs(new map<string, Integer_t>());
+    shared_ptr<map<string, Integer_t>> koffSTPs(new map<string, Integer_t>());
+    shared_ptr<map<string, Integer_t>> koffPTSs(new map<string, Integer_t>());
 
     // TODO this is a temporal parametrization
     vector<string> reactID = parser.getReactionIDs();
@@ -55,6 +59,8 @@ public:
       amounts->insert({*i, 100});
       konSTPs->insert({*i, 1});
       konPTSs->insert({*i, 1});
+      koffSTPs->insert({*i, 0});
+      koffPTSs->insert({*i, 0});
     }
 
     _p = "p"; 
@@ -63,7 +69,7 @@ public:
     _biomass_ID = "R_Ec_biomass_iJO1366_WT_53p95M";
 
     // data initialization
-    parser.loadExternParameters(100, amounts, konSTPs, konPTSs, 1, 1, _p, _e, _c, _biomass_ID);
+    parser.loadExternParameters(100, amounts, konSTPs, konPTSs, koffSTPs, koffPTSs, 1, 1, _p, _e, _c, _biomass_ID);
     map<string, string> places = parser.getCompartments();
     parser.getSpecieByCompartments();
     parser.getReactions();
@@ -71,7 +77,7 @@ public:
 
     map<string, string> compartments = parser.getCompartments();
     for (map<string, string>::iterator comp = compartments.begin(); comp != compartments.end(); ++comp) {
-      _compartment_volums.insert({comp->first, 0});
+      _compartment_volums.insert({comp->first, 0.000000000000000000000000001});
     }
     comment("End init.");
 	}
@@ -127,8 +133,8 @@ public:
           splitStoichiometryByCmpartments(r->second.products_sctry),
           getStoichiometryCompartments(r->second.substrate_sctry),
           getStoichiometryCompartments(r->second.products_sctry),
-          r->second.konSTP,
-          r->second.konPTS,
+          r->second.koffSTP,
+          r->second.koffPTS,
           _it,
           _rt
         );
@@ -171,11 +177,14 @@ public:
       
       na.clear();
       na.push_back(i->first);
-      na.push_back(i->first + "_s");
+      //na.push_back(i->first + "_space");
       for (map<string, string>::const_iterator j = i->second.cbegin(); j != i->second.cend(); ++j) {
+        na.push_back(j->first);
         _species_addresses->insert({j->first, na});
+        na.pop_back();
       }
     }
+
     comment("End getting specie addresses.");
   }
 
@@ -281,8 +290,17 @@ public:
           comp->second,
           _compartment_volums.at(id)
         );
+        auto space_model_coupled = makeCoupledModel(space_model);
 
-        _space_models.insert({id, makeCoupledModel(space_model)});
+        auto space_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(id);
+        auto space_filter_coupled = makeCoupledModel(space_filter);
+
+        vm_t<TIME> models = {space_model_coupled, space_filter_coupled}; 
+        vm_t<TIME> eic = {space_filter_coupled}; 
+        vmp_t<TIME> ic = {{space_filter_coupled, space_model_coupled}};
+        vm_t<TIME> eoc = {space_model_coupled};
+
+        _space_models.insert({id, make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc)});
       }
 
       comment("End creating space models.");
@@ -295,15 +313,25 @@ public:
   /**************** BIOMASS MODELS *********************/
   /*****************************************************/
 
-  Address_t getCompartmentAddresses() {
+  Address_t getCompartmentAddressesFromBiomass() {
     Address_t result;
 
     map<string, string> compartments = parser.getCompartments();
 
     for (map<string, string>::const_iterator comp = compartments.cbegin(); comp != compartments.cend(); ++comp) {
+      result.push_back(comp->first);
       result.push_back(comp->first + "_" + _biomass_ID);
     }
 
+    return result;
+  }
+
+  map<string, bool> getCollaborationsMap() {
+    map<string, bool> result;
+    map<string, string> comps = parser.getCompartments();
+    for (map<string,string>::iterator c = comps.begin(); c != comps.end(); ++c) {
+      result.insert({c->first, false});
+    }
     return result;
   }
 
@@ -313,8 +341,8 @@ public:
     if (!_biomass_model) {
       comment("Creating biomass model ...");
 
+
       reaction_info_t biomass_info = parser.getBiomass();
-      Address_t addresses = this->getCompartmentAddresses();
 
       auto biomass_model = make_atomic_ptr< 
         biomass<TIME, MSG>,
@@ -329,12 +357,22 @@ public:
           _species_addresses,
           biomass_info.substrate_sctry,
           biomass_info.products_sctry,
-          addresses,
+          this->getCompartmentAddressesFromBiomass(),
           _bit,
-          _br
+          _br,
+          this->getCollaborationsMap()
         );
- 
-      _biomass_model = makeCoupledModel(biomass_model);
+      auto biomass_model_coupled = makeCoupledModel(biomass_model);
+
+      auto biomass_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(parser.getBiomass().location.front());
+      auto biomass_filter_coupled = makeCoupledModel(biomass_filter);
+      
+      vm_t<TIME> models = {biomass_model_coupled, biomass_filter_coupled}; 
+      vm_t<TIME> eic = {biomass_filter_coupled}; 
+      vmp_t<TIME> ic = {{biomass_filter_coupled, biomass_model_coupled}};
+      vm_t<TIME> eoc = {biomass_model_coupled};
+
+      _biomass_model = make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc);
       comment("End creating biomass model.");
     }
     comment("End getting biomass model ...");
@@ -363,13 +401,15 @@ public:
       shared_ptr<model<TIME>> bulk_space = this->getSpaceModels().at(comp);
       auto bulk_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(comp);
       auto biomass_filter = make_atomic_ptr<filter<TIME, MSG>, const string>(comp + "_" + _biomass_ID);
+      auto bulk_filter_coupled = makeCoupledModel(bulk_filter);
+      auto biomass_filter_coupled = makeCoupledModel(biomass_filter);
 
-      vm_t<TIME> models = {bulk_inner, bulk_space, bulk_filter, biomass_filter}; 
-      vm_t<TIME> eic = {bulk_filter, biomass_filter}; 
+      vm_t<TIME> models = {bulk_inner, bulk_space, bulk_filter_coupled, biomass_filter_coupled}; 
+      vm_t<TIME> eic = {bulk_filter_coupled, biomass_filter_coupled}; 
       vm_t<TIME> eoc = {bulk_space};
       vmp_t<TIME> ic = {
-        {bulk_filter, bulk_space}, 
-        {biomass_filter, bulk_space}, 
+        {bulk_filter_coupled, bulk_space}, 
+        {biomass_filter_coupled, bulk_space}, 
         {bulk_space, bulk_inner}, 
         {bulk_inner, bulk_space}
       };
@@ -391,30 +431,37 @@ public:
     if (!_periplasm_model) {
       comment("Creating periplasm model ...");
       
-      shared_ptr<model<TIME>> bulk_inner = this->getEnzymeSetModels().at("p_inner");
-      shared_ptr<model<TIME>> bulk_outer_membrane = this->getEnzymeSetModels().at("p_outer_membrane");
-      shared_ptr<model<TIME>> bulk_inner_membrane = this->getEnzymeSetModels().at("p_inner_membrane");
-      shared_ptr<model<TIME>> bulk_trans_membrane = this->getEnzymeSetModels().at("p_trans_membrane");
-      shared_ptr<model<TIME>> bulk_space = this->getSpaceModels().at("p");
-      auto bulk_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p");
+      shared_ptr<model<TIME>> periplasm_inner = this->getEnzymeSetModels().at("p_inner");
+      shared_ptr<model<TIME>> periplasm_outer_membrane = this->getEnzymeSetModels().at("p_outer_membrane");
+      shared_ptr<model<TIME>> periplasm_inner_membrane = this->getEnzymeSetModels().at("p_inner_membrane");
+      shared_ptr<model<TIME>> periplasm_trans_membrane = this->getEnzymeSetModels().at("p_trans_membrane");
+      shared_ptr<model<TIME>> periplasm_space = this->getSpaceModels().at("p");
+      
+      auto periplasm_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p");
       auto biomass_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p_" + _biomass_ID);
+      auto show_filter = make_atomic_ptr<filter<TIME, MSG>, const string>("p_show_request");
 
-      vm_t<TIME> models = {bulk_inner, bulk_space, bulk_outer_membrane, bulk_inner_membrane, bulk_trans_membrane, bulk_filter, biomass_filter}; 
-      vm_t<TIME> eic = {bulk_filter, biomass_filter}; 
-      vm_t<TIME> eoc = {bulk_space, bulk_outer_membrane, bulk_inner_membrane, bulk_trans_membrane};
+      auto periplasm_filter_coupled = makeCoupledModel(periplasm_filter);
+      auto biomass_filter_coupled = makeCoupledModel(biomass_filter);
+      auto show_filter_coupled = makeCoupledModel(show_filter);
+
+      vm_t<TIME> models = {periplasm_inner, periplasm_space, periplasm_outer_membrane, periplasm_inner_membrane, periplasm_trans_membrane, periplasm_filter_coupled, biomass_filter_coupled, show_filter_coupled}; 
+      vm_t<TIME> eic = {periplasm_filter_coupled, biomass_filter_coupled, show_filter_coupled}; 
+      vm_t<TIME> eoc = {periplasm_space, periplasm_outer_membrane, periplasm_inner_membrane, periplasm_trans_membrane};
       vmp_t<TIME> ic = {
-        {biomass_filter, bulk_space}, 
-        {bulk_filter, bulk_outer_membrane}, 
-        {bulk_filter, bulk_inner_membrane}, 
-        {bulk_filter, bulk_trans_membrane},
-        {bulk_outer_membrane, bulk_space}, 
-        {bulk_inner_membrane, bulk_space}, 
-        {bulk_trans_membrane, bulk_space},
-        {bulk_space, bulk_outer_membrane}, 
-        {bulk_space, bulk_inner_membrane}, 
-        {bulk_space, bulk_trans_membrane},
-        {bulk_space, bulk_inner}, 
-        {bulk_inner, bulk_space}
+        {biomass_filter_coupled, periplasm_space}, 
+        {show_filter_coupled, periplasm_space}, 
+        {periplasm_filter_coupled, periplasm_outer_membrane}, 
+        {periplasm_filter_coupled, periplasm_inner_membrane}, 
+        {periplasm_filter_coupled, periplasm_trans_membrane},
+        {periplasm_outer_membrane, periplasm_space}, 
+        {periplasm_inner_membrane, periplasm_space}, 
+        {periplasm_trans_membrane, periplasm_space},
+        {periplasm_space, periplasm_outer_membrane}, 
+        {periplasm_space, periplasm_inner_membrane}, 
+        {periplasm_space, periplasm_trans_membrane},
+        {periplasm_space, periplasm_inner}, 
+        {periplasm_inner, periplasm_space}
       };
       _periplasm_model = make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc);
 

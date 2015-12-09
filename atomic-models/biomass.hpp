@@ -10,7 +10,6 @@
 
 #include "../data-structures/types.hpp"
 
-
 using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
@@ -30,6 +29,7 @@ private:
   TIME                                  _interval_time;
   TIME                                  _rate;
   BState_t                              _s;
+  map<string, bool>                     _compartments;
 
   // constant values
   TIME                                  ZERO;
@@ -43,7 +43,8 @@ public:
     const SetOfMolecules_t&                     other_products_sctry,
     const Address_t                             other_request_addresses,
     const TIME                                  other_interval_time,
-    const TIME                                  other_rate
+    const TIME                                  other_rate,
+    const map<string, bool>                     other_compartments
     ) noexcept :
   _id(other_id),
   _addresses(other_addresses),
@@ -52,6 +53,7 @@ public:
   _request_addresses(other_request_addresses),
   _interval_time(other_interval_time),
   _rate(other_rate),
+  _compartments(other_compartments),
   _s(BState_t::IDLE) {
 
     _reactants.clear();
@@ -61,44 +63,50 @@ public:
       _reactants.insert({it->first, 0});
     }
 
+    this->restartCompartments();
+
     // Constant values;
     ZERO = TIME(0);
   }
 
   void internal() noexcept {
-
+    comment("internal init.");
     _rejected.clear();
     
     for (SetOfMolecules_t::iterator it = _reactants.begin(); it != _reactants.end(); ++it) {
       it->second = 0;
     }
 
-    _s = BState_t::IDLE;
+    this->restartCompartments();
+    if (_s == BState_t::IDLE) _s = BState_t::WAITING;
+    else if ((_s == BState_t::ENOUGH) || (_s == BState_t::NOT_ENOUGH)) _s = BState_t::IDLE;
+    comment("internal end.");
   }
 
   TIME advance() const noexcept {
+    comment("advance init.");
 
-    TIME advance_time;
+    TIME result;
     switch(_s) {
-    case BState_t::WAITING: advance_time = pdevs::atomic<TIME, MSG>::infinity; break;
-    case BState_t::IDLE: advance_time = _interval_time; break;
-    case BState_t::NOT_ENOUGH: 
-    case BState_t::ENOUGH: advance_time = _rate; break;
+    case BState_t::WAITING: result = pdevs::atomic<TIME, MSG>::infinity; break;
+    case BState_t::IDLE: result = _interval_time; break;
+    case BState_t::NOT_ENOUGH:
+    case BState_t::ENOUGH: result = _rate; break;
     }
 
-    return advance_time;
+    if (result <= TIME(0,1)) cout << _id << " " << result << endl;
+    comment("advance time result " + result.toStringAsDouble());
+    return result;
   }
 
   vector<MSG> out() const noexcept {
+    comment("out init.");
 
     vector<MSG> output;
     vector<MSG> request;
     MSG curr_message;
 
     switch(_s) {
-    case BState_t::WAITING:
-
-      break;
     case BState_t::IDLE:
 
       curr_message.to               = _request_addresses;
@@ -109,7 +117,6 @@ public:
     case BState_t::NOT_ENOUGH:
 
       for (SetOfMolecules_t::const_iterator it = _reactants.cbegin(); it != _reactants.cend(); ++it) {
-
         if (it->second > 0) {
 
           curr_message.to     = _addresses->at(it->first);
@@ -119,7 +126,6 @@ public:
       }
       break;
     case BState_t::ENOUGH:
-
       for (SetOfMolecules_t::const_iterator it = _products_sctry.cbegin(); it != _products_sctry.cend(); ++it) {
         curr_message.to     = _addresses->at(it->first);
         curr_message.metabolites.insert({it->first, it->second});
@@ -138,14 +144,19 @@ public:
     unifyMessages(output);
     output.insert(output.end(), request.begin(), request.end());
 
+    comment("out end.");
+
     return output;
   }
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
+    comment("external init.");
 
     Integer_t needed_amount, taked_amount, rejected_amount;
     bool is_needed;
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+
+      _compartments.at(it->from) = true;
 
       for(SetOfMolecules_t::const_iterator specie = it->metabolites.begin(); specie != it->metabolites.end(); ++specie) {
         is_needed = _reactants_sctry.find(specie->first) != _reactants_sctry.end();
@@ -167,22 +178,41 @@ public:
       }
     }
 
-    if (this->thereIsEnoughReactants())     _s = BState_t::ENOUGH;
-    else if (this->thereIsSomeReactants())  _s = BState_t::NOT_ENOUGH;
-    else                                    _s = BState_t::IDLE;
-
+    if (this->thereIsEnoughReactants()) _s = BState_t::ENOUGH;
+    else if (this->noMoreCompartmentsToWait()) _s = BState_t::NOT_ENOUGH;
+    comment("external end.");
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
+    comment("confluece init.");
 
     internal();
     external(mb, ZERO);
     
+    comment("confluece end.");
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
+
+  void comment(string msg) const {
+    if (COMMENTS) cout << "[biomass " << _id << "] " << msg << endl;
+  }
+
+  bool noMoreCompartmentsToWait() const {
+    bool result = true;
+    for (map<string, bool>::const_iterator c = _compartments.cbegin(); c != _compartments.cend(); ++c) {
+      result = result && c->second;
+    }
+    return result;
+  }
+
+  void restartCompartments() {
+    for (map<string, bool>::iterator c = _compartments.begin(); c != _compartments.end(); ++c) {
+      c->second = false;
+    }
+  }
 
   void addReactant(const string& e, const Integer_t& a) {
 

@@ -9,6 +9,7 @@
 
 #include "../data-structures/types.hpp" /* Address_t */
 
+#define MINIMUM_TIME_FOR_FILTER TIME(1,1000);
 
 using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
@@ -22,9 +23,6 @@ private:
   string      _accepted_input;
   vector<MSG> _filtered_input;
 
-  // constant values
-  TIME ZERO;
-
 public:
 
   explicit filter(const string other_accepted_input) noexcept :
@@ -32,51 +30,55 @@ public:
 
     _filtered_input.clear();
 
-    // Constant values;
-    ZERO = TIME(0);
   }
 
   void internal() noexcept {
-    //if (_accepted_input == "output") cout << "internal" << endl;
+    comment("internal init.");
     _filtered_input.clear();
+    comment("internal end.");
   }
 
   TIME advance() const noexcept {
-    //if (_accepted_input == "output") cout << "advance " << endl;
+    comment("advance init.");
+    TIME result;
+    if (_filtered_input.empty()) result = pdevs::atomic<TIME, MSG>::infinity;
+    else result = MINIMUM_TIME_FOR_FILTER;
 
-    TIME result = (!_filtered_input.empty()) ? ZERO : pdevs::atomic<TIME, MSG>::infinity;
-    //if (_accepted_input == "output")  cout << "advance return: " << result << endl;
+    if (result <= TIME(0,1)) cout << _accepted_input << " " << result << endl;
+    comment("advance time result " + result.toStringAsDouble());
     return result;
   }
 
   vector<MSG> out() const noexcept {
-    //if (_accepted_input == "output") cout << "out" << endl;
+    comment("out init.");
     return _filtered_input; 
   }
 
   void external(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    //if (_accepted_input == "output") cout << "external "  << endl;
+    comment("external init.");
     
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it){
-      //if (_accepted_input == "output")  cout << "input " << it->to << endl;
       if (isAcceptedInpunt(_accepted_input, it->to)) {
-
         _filtered_input.push_back(*it);
       }
     }
 
-    //if (_accepted_input == "output") cout << "end external" << endl;
+    comment("external end.");
   }
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    //if (_accepted_input == "output") cout << "confluence "  << endl;
+    comment("conluence init.");
     internal();
     external(mb, ZERO);
+    comment("conluence end.");
   }
 
   /***************************************
   ********* helper functions *************
   ***************************************/
+  void comment(string msg) const {
+    if (COMMENTS) cout << "[filter " << _accepted_input << "] " << msg << endl;
+  }
 
   bool isAcceptedInpunt(string a, Address_t to) {
 

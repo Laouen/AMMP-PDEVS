@@ -39,19 +39,14 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), Time_t(1,1000), Time_t(1,1000), Time_t(0), true);
-
-  mm_t<Time_t> ens = mg.getEnzymeSetModels();
-
-  for (mm_t<Time_t>::iterator i = ens.begin(); i != ens.end(); ++i) {
-     cout << i->first << endl;
-  }
-
+  ModelGenerator<Time_t,Message_t> mg(argv[1], Time_t(1,1), Time_t(1,1000), Time_t(1,100), Time_t(1,1000), Time_t(1,1), Time_t(0,1), true);
   shared_ptr<model<Time_t>>& cell_model = mg.getCellModel();
 
   /*****************************************************************************************************/
   /************************************** Runing Simulation ********************************************/
   /*****************************************************************************************************/
+
+  //TODO(lao) emprolijar y modularizar este codigo. parametrizar los valores como input
   bool comment_mode = true;
 
   Parser_t p = mg.getParser();
@@ -59,9 +54,10 @@ int main(int argc, char* argv[]) {
 
   if (comment_mode) cout << "Creating the model to insert the input from stream" << endl;
   auto piss = make_shared<istringstream>();
+  string input = "1/10000 e e_input | A_e 100 \n 2/1 e e_input | A_e 200 ";
+  //string input = "";
+  /*
   string partial_input = "";
-  string input = "";
-  string cp;
   for (Time_t t(1,100); t < Time_t(1,50); t += Time_t(1,100)) {
 
     for (map<string, map<string, string>>::const_iterator i = species.begin(); i != species.end(); ++i){
@@ -75,6 +71,7 @@ int main(int argc, char* argv[]) {
   input.pop_back();
   input.pop_back();
   input.pop_back();
+  */
   piss->str(input);
 
   auto pf = make_atomic_ptr<input_stream<Time_t, Message_t, Time_t, Message_t >, shared_ptr<istringstream>, Time_t>(piss, Time_t(0),
@@ -105,12 +102,14 @@ int main(int argc, char* argv[]) {
     if ( 0 != thrash.size()) throw exception();
   });
 
+  auto coupled_pf = mg.makeCoupledModel(pf);
+
 
   if (comment_mode) cout << "Creating the model to show the space state from stream" << endl;
   piss = make_shared<istringstream>();
   input = "";
 
-  for (Time_t i(1,1000); i <= Time_t(300); i += Time_t(1,1000)) {
+  for (Time_t i(1,1); i <= Time_t(30000); i += Time_t(1,1)) {
 
     input += i.toString() + " \n ";
   }
@@ -129,24 +128,26 @@ int main(int argc, char* argv[]) {
     ss.str(s);
     ss >> t_next;
 
-    msg_out.to            = {"e", "e_s", "c", "c_s", "p_or", "p_s"};
-    msg_out.show_request  = true;
-    msg_out.biomass_request  = false;
+    msg_out.to = {"e", "c", "p", "p_show_request"};
+    msg_out.show_request = true;
+    msg_out.biomass_request = false;
 
     m_next = msg_out;
     ss >> thrash;
     if ( 0 != thrash.size()) throw exception();
   });
 
+  auto coupled_so = mg.makeCoupledModel(so);
+
   if (comment_mode) cout << "Coupling the input to the model" << endl;
   shared_ptr< flattened_coupled<Time_t, Message_t> > root( new flattened_coupled<Time_t, Message_t>{
-    {pf, so, cell_model}, 
+    {coupled_pf, coupled_so, cell_model}, 
     {}, 
     {
-      {pf, cell_model},
-      {so, cell_model}
+      {coupled_pf, cell_model},
+      {coupled_so, cell_model}
     }, 
-    {cell_model}
+    {}
   });
 
   //pdevs_tools::pdevs_coupling_diagram<Time_t, Message_t> pd{*root};

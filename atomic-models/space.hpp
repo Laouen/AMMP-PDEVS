@@ -22,7 +22,7 @@ using namespace boost::simulation::pdevs;
 using namespace boost::simulation;
 using namespace std;
 
-#define COMMENTS false
+#define TIME_TO_SEND_FOR_REACTION TIME(1,100000)
 
 template<class TIME, class MSG>
 class space : public pdevs::atomic<TIME, MSG>
@@ -71,13 +71,8 @@ public:
     _real_random.seed(real_rd());
     random_device integer_rd;
     _integer_random.seed(integer_rd());
-
     // just to confirm, the space and metabolites start empty.
     _tasks.clear();
-    cout << "id: " << _id << " metabolites: ";
-    for (SetOfMolecules_t::iterator i = _metabolites.begin(); i != _metabolites.end(); ++i) {
-      cout << i->first << " ";
-    }
   }
 
   void internal() noexcept {
@@ -92,14 +87,14 @@ public:
     // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is ZERO.
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && !srah) {
+      if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
 
-        srah = true; // no more than one selection at a time;
+      if (!srah) {
+        srah = true;
 
         // set a new task to send the selected metabolites.
         sr.task_kind  = SState_t::SENDING_REACTIONS;
-        sr.time_left  = ZERO;
-
+        sr.time_left  = TIME_TO_SEND_FOR_REACTION;
         this->selectMetalobitesToReact(sr.msgs);
         unifyMessages(sr.msgs);
         if (!sr.msgs.empty()) this->insertTask(sr);
@@ -117,8 +112,9 @@ public:
     if (!_tasks.empty()) result = _tasks.front().time_left;
     else                 result = pdevs::atomic<TIME, MSG>::infinity;
 
+    if (result <= TIME(0,1)) cout << _id << " " << result << endl;
+    comment("advance time result " + result.toStringAsDouble());
     return result;
-    comment("advance end.");
   }
 
   vector<MSG> out() const noexcept {
@@ -128,19 +124,9 @@ public:
     TIME current_time  = _tasks.front().time_left;
 
     // for all the tasks that ocurr in the current time. These tasks are processed now.
-    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {
-
-      if ((it->task_kind == SState_t::SENDING_BIOMAS) || (it->task_kind == SState_t::SENDING_REACTIONS)) {
-
-        result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend()); //TODO: test this method of insert with constant iterators.
-
-      } else if (it->task_kind == SState_t::SHOWING) {
-
-        // Send all the current free metabolites in the space
-        b_msg.to  = {"output", _id};
-        addMultipleMetabolites(b_msg.metabolites, _metabolites);
-        result.push_back(b_msg);
-      }
+    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {    
+      if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
+      result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
     }
 
     comment("out end.");
@@ -151,15 +137,15 @@ public:
     comment("external init.");
     //STask_t<TIME, MSG> new_task;
     bool select_biomass = false;
+    bool show_metabolites = false;
 
     _current_time += t;
     this->updateTaskTimeLefts(t);
 
     for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-
       if (it->show_request) {
         
-        this->show_metabolites();
+        show_metabolites = true;
       } else if (it->biomass_request) {
 
         select_biomass = true;
@@ -169,6 +155,7 @@ public:
       }
     }
 
+    if (show_metabolites) this->show_metabolites();
     if (select_biomass) this->selectForBiomass();
 
     // if some metabolites have just arrived (the third part of the if has happen), a selection task must be programed.
@@ -178,8 +165,8 @@ public:
 
   virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
     comment("confluence init.");
-    external(mb, t);
     internal(); 
+    external(mb, ZERO);
     comment("confluence end.");
   }
 
@@ -193,7 +180,7 @@ public:
   void show_metabolites() const {
     cout << _current_time << " " << _id << " ";
     for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-      cout << it->first << " " << it->second << " ";
+      if (it->second > 0) cout << it->first << " " << it->second << " ";
     }
     cout << endl;
   }
@@ -203,6 +190,7 @@ public:
     STask_t<TIME, MSG> send_biomas;
     // look for metabolites to send
     cm.to = _biomass_address;
+    cm.from = _id;
     addMultipleMetabolites(cm.metabolites, _metabolites);
 
     // set a new task for out() to send the selected metabolites.
@@ -342,10 +330,10 @@ public:
       }
     }
 
-    if (consentration = 0.0) 
+    if (consentration == 0.0) 
       return 0.0;
 
-    return exp(-(1.0 / (consentration*kon)));;
+    return exp(-(1.0 / (consentration*kon)));
   }
 
   // TODO for testing
@@ -381,6 +369,8 @@ public:
     shuffleEnzymes(enzyme_IDs); // the enzymes are iterated randomly
 
     for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
+      partial = 0.0; total = 0.0, rv = 0.0;
+      sons.clear(); pons.clear(); re.clear(); en.clear();
       en = _enzymes.at(*it);
 
       collectOns(en.handled_reactions, sons, pons);
@@ -399,7 +389,6 @@ public:
       // depending on which of those sub-interval rv belongs, the enzyme triggers the correct reaction or do nothing.
 
       rv = _real_random.drawNumber(0.0, 1.0);
-      partial = 0;
       
       for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
         
@@ -414,13 +403,14 @@ public:
           cm.react_amount = 1;
           m.push_back(cm);
           break;
-        } 
+        }
       }
 
       // update the metabolite amount in the space
       if (!re.empty()) {
         for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
           if (_metabolites.find(it->first) != _metabolites.end()) {
+            assert(_metabolites.at(it->first) >= it->second);
             _metabolites.at(it->first) -= it->second;
           }
         }
@@ -445,6 +435,7 @@ public:
         if (!re.empty()) {
           for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
             if (_metabolites.find(it->first) != _metabolites.end()) {
+              assert(_metabolites.at(it->first) >= it->second);
               _metabolites.at(it->first) -= it->second;
             }
           }

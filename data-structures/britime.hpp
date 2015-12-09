@@ -39,7 +39,17 @@ public:
     }
 
     string toString() {
-        return to_string(_value.numerator()) + "/" + to_string(_value.denominator());  
+        string result;
+        if (this->_is_inf) result = "inf";
+        else result = to_string(this->_value.numerator()) + "/" + to_string(this->_value.denominator());
+        return result;
+    }
+
+    string toStringAsDouble() {
+        string result;
+        if (this->_is_inf) result = "inf";
+        else result = to_string((long double)this->_value.numerator()/(long double)this->_value.denominator());
+        return result;
     }
 
     static BRITime infinity() noexcept {

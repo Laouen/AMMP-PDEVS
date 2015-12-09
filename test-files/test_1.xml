@@ -16,44 +16,16 @@
       <compartment id="p" name="Periplasm"/>
     </listOfCompartments>
     <listOfSpecies>
-      <species id="A_e" name="A_e" compartment="e">
-      </species>
-      <species id="B_e" name="B_e" compartment="e">
-      </species>
-      <species id="A_p" name="A_p" compartment="p">
-      </species>
-      <species id="A_c" name="A_c" compartment="c">
-      </species>
-      <species id="B_c" name="B_c" compartment="c">
-      </species>
-      <species id="C_c" name="C_c" compartment="c">
-      </species>
-      <species id="D_c" name="D_c" compartment="c">
-      </species>
-      <species id="E_c" name="E_c" compartment="c">
-      </species>
-      <species id="F_c" name="F_c" compartment="c">
-      </species>
+      <species id="A_e" name="A_extracellular" compartment="e"></species>
+      <species id="B_e" name="B_extracellular" compartment="e"></species>
+      <species id="A_p" name="A_periplasm" compartment="p"></species>
+      <species id="B_p" name="B_periplasm" compartment="p"></species>
+      <species id="A_c" name="A_cytoplasm" compartment="c"></species>
+      <species id="B_c" name="B_cytoplasm" compartment="c"></species>
     </listOfSpecies>
     <listOfReactions>
 
-      <reaction id="A_from_e_to_p" name="transport A from extra cellular space to Periplasm" reversible="false">
-        <notes>
-          <body xmlns="http://www.w3.org/1999/xhtml">
-            <p>GENE_ASSOCIATION: b0001</p>
-            <p>SUBSYSTEM: </p>
-            <p>EC Number: </p>
-          </body>
-        </notes>
-        <listOfReactants>
-          <speciesReference species="A_e"/>
-        </listOfReactants>
-        <listOfProducts>
-          <speciesReference species="A_p"/>
-        </listOfProducts>
-      </reaction>
-
-      <reaction id="in_e_one_A_to_one_B" name="reaction from A to B in the extracellular space" reversible="false">
+      <reaction id="A_from_extracellular_space_to_periplasm" name="transport A from extra cellular space to Periplasm" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
             <p>GENE_ASSOCIATION: b0000</p>
@@ -65,50 +37,14 @@
           <speciesReference species="A_e"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="B_e"/>
-        </listOfProducts>
-      </reaction>
-
-      <reaction id="TRANS" name="reaction from A to B in the extracellular space" reversible="false">
-        <notes>
-          <body xmlns="http://www.w3.org/1999/xhtml">
-            <p>GENE_ASSOCIATION: b0008</p>
-            <p>SUBSYSTEM: </p>
-            <p>EC Number: </p>
-          </body>
-        </notes>
-        <listOfReactants>
-          <speciesReference species="A_e"/>
-          <speciesReference species="A_p"/>
-          <speciesReference species="B_c"/>
-        </listOfReactants>
-        <listOfProducts>
-          <speciesReference species="A_e"/>
-          <speciesReference species="A_p"/>
-          <speciesReference species="B_c"/>
-        </listOfProducts>
-      </reaction>
-
-      <reaction id="PERIPLASM" name="reaction from A to B in the extracellular space" reversible="false">
-        <notes>
-          <body xmlns="http://www.w3.org/1999/xhtml">
-            <p>GENE_ASSOCIATION: b0009</p>
-            <p>SUBSYSTEM: </p>
-            <p>EC Number: </p>
-          </body>
-        </notes>
-        <listOfReactants>
-          <speciesReference species="A_p"/>
-        </listOfReactants>
-        <listOfProducts>
           <speciesReference species="A_p"/>
         </listOfProducts>
       </reaction>
 
-      <reaction id="A_from_p_to_c" name="transport A from Periplasm to Cytoplasm" reversible="false">
+      <reaction id="A_from_periplasm_space_to_cytoplasm" name="transport A from Periplasm to Cytoplasm" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
-            <p>GENE_ASSOCIATION: b0002</p>
+            <p>GENE_ASSOCIATION: b0001</p>
             <p>SUBSYSTEM: </p>
             <p>EC Number: </p>
           </body>
@@ -121,7 +57,23 @@
         </listOfProducts>
       </reaction>
 
-      <reaction id="B_from_e_to_c" name="transport B from extra cellular space to Cytoplasm" reversible="false">
+      <reaction id="A_to_2A_in_cytoplasm" name="reaction from A to B in the extracellular space" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0002</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="A_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="B_to_B_in_extracellular_space" name="reaction from B to B in the extracellular space" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
             <p>GENE_ASSOCIATION: b0003</p>
@@ -133,11 +85,11 @@
           <speciesReference species="B_e"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="B_c"/>
+          <speciesReference species="B_e"/>
         </listOfProducts>
       </reaction>
 
-      <reaction id="A_B_to_2C_4D" name="transform one of A and one of B to two of C and 4 of D" reversible="false">
+      <reaction id="B_to_B_in_periplasm" name="reaction from B to B in the periplasm space" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
             <p>GENE_ASSOCIATION: b0004</p>
@@ -146,16 +98,14 @@
           </body>
         </notes>
         <listOfReactants>
-          <speciesReference species="A_c"/>
-          <speciesReference species="B_c"/>
+          <speciesReference species="B_p"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="C_c" stoichiometry="2"/>
-          <speciesReference species="D_c" stoichiometry="4"/>
+          <speciesReference species="B_p"/>
         </listOfProducts>
       </reaction>
 
-      <reaction id="2D_to_2E_4F" name="transform two of D to two of E and 4 of F" reversible="false">
+      <reaction id="B_to_B_in_trans_membrane" name="reaction from B to B in the trans membrane" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
             <p>GENE_ASSOCIATION: b0005</p>
@@ -164,15 +114,18 @@
           </body>
         </notes>
         <listOfReactants>
-          <speciesReference species="D_c" stoichiometry="2"/>
+          <speciesReference species="B_e"/>
+          <speciesReference species="B_p"/>
+          <speciesReference species="B_c"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="E_c" stoichiometry="2"/>
-          <speciesReference species="F_c" stoichiometry="4"/>
+          <speciesReference species="B_e"/>
+          <speciesReference species="B_p"/>
+          <speciesReference species="B_c"/>
         </listOfProducts>
       </reaction>
 
-      <reaction id="D_to_2F_A_B" name="transform one of D to two of F and one of A and one of B" reversible="false">
+      <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
         <notes>
           <body xmlns="http://www.w3.org/1999/xhtml">
             <p>GENE_ASSOCIATION: b0006</p>
@@ -181,28 +134,11 @@
           </body>
         </notes>
         <listOfReactants>
-          <speciesReference species="D_c"/>
+          <speciesReference species="A_c" stoichiometry="1000"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="A_c" />
-          <speciesReference species="B_c" />
+          <speciesReference species="A_c"/>
         </listOfProducts>
-      </reaction>
-
-      <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
-        <notes>
-          <body xmlns="http://www.w3.org/1999/xhtml">
-            <p>GENE_ASSOCIATION: b0007</p>
-            <p>SUBSYSTEM: </p>
-            <p>EC Number: </p>
-          </body>
-        </notes>
-        <listOfReactants>
-          <speciesReference species="C_c" stoichiometry="240" />
-          <speciesReference species="D_c" stoichiometry="100"/>
-          <speciesReference species="E_c" stoichiometry="230"/>
-          <speciesReference species="F_c" stoichiometry="490"/>
-        </listOfReactants>
       </reaction>
 
     </listOfReactions>

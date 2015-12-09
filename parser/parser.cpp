@@ -102,7 +102,7 @@ Address_t Parser_t::getReactionAddress(const SetOfMolecules_t& st, const SetOfMo
   pair<string, string> places = this->getCompAndSubComp(st, pt);
 
   to.push_back(places.first);
-  to.push_back(places.second);
+  to.push_back(places.first + "_" + places.second);
   to.push_back(e);
 
   return to;
@@ -261,6 +261,8 @@ void Parser_t::loadExternParameters(
   shared_ptr<map<string, Integer_t>> other_amounts,
   shared_ptr<map<string, Integer_t>> other_konSTPs,
   shared_ptr<map<string, Integer_t>> other_konPTSs,
+  shared_ptr<map<string, Integer_t>> other_koffSTPs,
+  shared_ptr<map<string, Integer_t>> other_koffPTSs,
   long double other_cw,
   Integer_t other_n,
   string other_p,
@@ -273,6 +275,8 @@ void Parser_t::loadExternParameters(
   _amounts = other_amounts;
   _konSTPs = other_konSTPs;
   _konPTSs = other_konPTSs;
+  _koffSTPs = other_koffSTPs;
+  _koffPTSs = other_koffPTSs;
   _cell_weight = other_cw;
   _normalization = other_n;
   _p = other_p;
@@ -371,8 +375,8 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
       react.clear();
 
       // Setting reversibilty
-      if ((it->Attribute("reversible") == NULL) || ((string)it->Attribute("reversible") == "false")) react.reversible = true;
-      else react.reversible = false;
+      if ((it->Attribute("reversible") == NULL) || ((string)it->Attribute("reversible") == "false")) react.reversible = false;
+      else react.reversible = true;
 
       // setting stoichiometries
       for (TiXmlElement *jt = it->FirstChildElement(); jt != NULL; jt = jt->NextSiblingElement()) {
@@ -388,6 +392,8 @@ map<string, reaction_info_t>& Parser_t::getReactions() {
       react.location = this->getReactionAddress(react.substrate_sctry, react.products_sctry, it->Attribute("id"));
       react.konSTP = this->_konSTPs->at(it->Attribute("id"));
       react.konPTS = this->_konPTSs->at(it->Attribute("id"));
+      react.koffSTP = this->_koffSTPs->at(it->Attribute("id"));
+      react.koffPTS = this->_koffPTSs->at(it->Attribute("id"));
 
       // insert the new reaction to the reactions map;
       this->_reactions.insert({reactID, react});
