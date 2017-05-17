@@ -1,112 +1,167 @@
-#ifndef BOOST_SIMULATION_PDEVS_REACTION_H
-#define BOOST_SIMULATION_PDEVS_REACTION_H
+/**
+ * Copyright (c) 2017, Laouen Mayal Louan Belloli
+ * Carleton University
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef PMGBBP_PDEVS_REACTION_ATOMIC_MODEL_HPP
+#define PMGBBP_PDEVS_REACTION_ATOMIC_MODEL_HPP
+
+#include <limits> // numeric_limits
+#include <stddef.h>
 #include <string>
+#include <fstream>
+
 #include <vector>
 #include <list>
 #include <map>
 #include <utility> // pair
 #include <algorithm> // min, max, lowe_bound
 #include <memory> // shared_ptr
-#include <limits> // numeric_limits
+#include <limits> 
 
-#include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+#include <cadmium/modeling/ports.hpp>
+#include <cadmium/modeling/message_bag.hpp>
 
 #include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
-using namespace boost::simulation::pdevs;
-using namespace boost::simulation;
 using namespace std;
 
-template<class TIME, class MSG>
-class reaction : public pdevs::atomic<TIME, MSG>
-{
+template<typename MSG>
+struct reaction_defs{
+    // custom ports
+    struct out : public out_port<MSG> {};
+    struct in : public in_port<MSG> {};
+};
 
-private:
-  // reaction information
-  string                                _id;
-  shared_ptr< map<string, Address_t> >  _addresses;
-  bool                                  _reversible;
-  TIME                                  _rate;
-  map<string, SetOfMolecules_t>         _substrate_sctry; // the stoichiometry is separated by compartments
-  map<string, SetOfMolecules_t>         _products_sctry; // the stoichiometry is separated by compartments
-  map<string, Integer_t>                _substrate_comps;
-  map<string, Integer_t>                _product_comps;
-  double                                _koff_STP;
-  double                                _koff_PTS;
-  TIME                                  _it;
-  TIME                                  _rt;
-  RTaskQueue_t<TIME, MSG>               _tasks;
-  // used for uniform random number 
-  RealRandom_t<double>                  _real_random;
+template<class MSG, class TIME>
+class reaction {
+  using defs=reaction_defs<MSG>;
 
 public:
 
-  explicit reaction(
-    const string                                other_id,
-    const shared_ptr< map<string, Address_t> >  other_addresses,
-    const bool                                  other_reversible,
-    const TIME                                  other_rate,
-    const map<string, SetOfMolecules_t>&        other_substrate_sctry,
-    const map<string, SetOfMolecules_t>&        other_products_sctry,
-    const map<string, Integer_t>                other_substrate_comps,
-    const map<string, Integer_t>                other_product_comps,
-    const double                                other_koff_STP,
-    const double                                other_koff_PTS,
-    const TIME                                  other_it, // Interval Time
-    const TIME                                  other_rt // Rejecting Time
-  ) noexcept :
-  _id(other_id),
-  _addresses(other_addresses),
-  _reversible(other_reversible),
-  _rate(other_rate),
-  _substrate_sctry(other_substrate_sctry),
-  _products_sctry(other_products_sctry),
-  _substrate_comps(other_substrate_comps),
-  _product_comps(other_product_comps),
-  _koff_STP(other_koff_STP),
-  _koff_PTS(other_koff_PTS),
-  _it(other_it),
-  _rt(other_rt) {
+  /**
+   * @brief Default constructor
+   * @details Construct a new instance of a reaction model using the state passed
+   * as parameter to initialize the new instance.
+   * 
+   * @param initialized_state A reaction::state_type already initialized.
+   */
+  constexpr reaction(const state_type& initialized_state) noexcept {
+    
+    this.state = initialized_state;
 
-    // The random atributes is initilized with a random generator
+    // state.real_random is initilized with a random generator engine
     random_device real_rd; // Random generator engine
-    _real_random.seed(real_rd());
+    state.real_random.seed(real_rd());  
   }
 
-  void internal() noexcept {
-    comment("internal init.");
+  /**
+   * 
+   * @author Laouen Mayal Louan Belloli
+   * @date 16 May 2017
+   * 
+   * @struct reaction::state_type reaction.hpp
+   * 
+   * @brief This struct stores all the variables related with the state of a 
+   * reaction atomic model.
+   * 
+   */
+  struct state_type{
+    string                                id;
+    shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
+    bool                                  reversible;
+    TIME                                  rate;
+    map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
+    map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
+    map<string, Integer_t>                substrate_comps;
+    map<string, Integer_t>                product_comps;
+    double                                koff_STP;
+    double                                koff_PTS;
+    TIME                                  interval_time;
+    TIME                                  reject_time;
+    RTaskQueue_t<TIME, MSG>               tasks;
+    RealRandom_t<double>                  real_random; // used for uniform random number 
+  };
+
+  state_type state;
+
+  // ports definition
+  using input_ports=std::tuple<typename defs::in>;
+  using output_ports=std::tuple<typename defs::out>;
+
+  void internal_transition() {
+    cout << "reaction::internal function." << endl;
 
     // Updating time left
-    this->updateTaskTimeLefts(_tasks.front().time_left);
+    this->updateTaskTimeLefts(state.tasks.front().time_left);
 
-    // removing all the task made in the las out function
+    // Removing all the task made in the las out function
     this->removeFinishedTasks();
-    comment("internal end.");
   }
 
-  TIME advance() const noexcept {
-    comment("advance init.");
-    
-    TIME result;
-    if (!_tasks.empty()) result = _tasks.front().time_left;
-    else                 result = pdevs::atomic<TIME, MSG>::infinity;
-    
-    if (result <= TIME(0,1)) cout << _id << " " << result << endl;
-    comment("advance time result " + result.toStringAsDouble());
-    return result;
+  void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+    cout << "reaction::external_transition function." << endl;
+
+    // Updating time left
+    this->updateTaskTimeLefts(e);
+
+    // Inserting new acepted metabolites 
+    map<string, pair<int, int>> rejected = {}; // first = STP, second = PTS
+    this->bindMetabolits(mbs, rejected);
+
+    // Puting the rejected metabolites in msg to be send it.
+    vector<MSG> rejected_task;
+    collectInMessage(rejected, rejected_task);
+    unifyMessages(rejected_task);
+
+    // Adding a task for the rejected metabolites
+    RTask_t<TIME, MSG> new_task(state.reject_time, rejected_task);
+    insertTask(new_task);
+
+    // looking for new reactions
+    this->lookForNewReactions();
   }
 
-  vector<MSG> out() const noexcept {
-    comment("out init.");
+  void confluence_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+    cout << "reaction::confluence function" << endl;
+    internal_transition();
+    external_transition(TIME(0), mbs);
+  }
+
+  typename make_message_bags<output_ports>::type output() const {
+    cout << "reaction::output function." << endl;
     
+    typename make_message_bags<output_ports>::type bags;
     MSG new_message;
     const map<string, SetOfMolecules_t>* curr_sctry;
 
     vector<MSG> result = {};
-    TIME current_time  = _tasks.front().time_left;
+    TIME current_time = state.tasks.front().time_left;
 
-    for (typename RTaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.cend()) && (it->time_left == current_time); ++it) {
+    typename RTaskQueue_t<TIME, MSG>::const_iterator it;
+    for (it = state.tasks.cbegin(); (it != state.tasks.cend()) && (it->time_left == current_time); ++it) {
 
       if (it->task_kind == RState_t::REACTING) {
     
@@ -117,54 +172,36 @@ public:
           
           for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
             new_message.clear();
-            new_message.to = _addresses->at(mt->first);
+            new_message.to = _addresses->at(mt->first); // TODO: change this by ports routing
             new_message.metabolites.insert({mt->first, it->amount*mt->second});
             result.push_back(new_message);
           }
         }
       } else {
-
         result.insert(result.end(), it->toSend.begin(), it->toSend.end());
       }
     }
 
-    unifyMessages(result);
+    this->unifyMessages(result);
+    for (vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
+      cadmium::get_messages<typename defs::out>(bags).emplace_back(*it);
+    }
     
-    comment("out end.");
+    cout << "out end." << endl;
+    return bags;
+  }
+
+  TIME time_advance() const {
+    cout << "reaction::time_advance function." << endl;
+    
+    TIME result;
+    if (!state.tasks.empty()) result = state.tasks.front().time_left;
+    else result = TIME("inf");
+    
     return result;
   }
 
-  void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    comment("external init.");
-    // Updating time left
-    this->updateTaskTimeLefts(t);
-
-    // inserting new acepted metabolites 
-    map<string, pair<int, int>> rejected = {}; // first = STP, second = PTS
-    this->bindMetabolits(mb, rejected);
-
-    // puting the rejected metabolites in msg to be send it.
-    vector<MSG> ts;
-    collectInMessage(rejected, ts);
-    unifyMessages(ts);
-
-    // adding task for the rejected metabolites
-    RTask_t<TIME, MSG> new_task(_rt, ts);
-    insertTask(new_task);
-
-    // looking for new reactions
-    this->lookForNewReactions();
-    comment("external end.");
-  }
-
-  virtual void confluence(const vector<MSG>& mb, const TIME& t) noexcept {
-    comment("external init.");
-    
-    internal();
-    external(mb, ZERO);
-    
-    comment("external end.");
-  }
+  friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<MSG,TIME>::state_type& i) {}
 
   /***************************************
   ********* helper functions *************
@@ -174,36 +211,36 @@ public:
     if (COMMENTS) cout << "[reaction " << _id << "] " << msg << endl;
   }
 
-  // Decrease the time left of all the current tasks in _tasks by the parameter t.
+  // Decreases the time left of all the current tasks in state.tasks by the parameter t.
   void updateTaskTimeLefts(TIME t){
 
-    for (typename RTaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
+    for (typename RTaskQueue_t<TIME, MSG>::iterator it = state.tasks.begin(); it != state.tasks.end(); ++it) {
       it->time_left -= t;
     }
   }
 
   void removeFinishedTasks() {
 
-    while(!_tasks.empty() && (_tasks.front().time_left == ZERO)) {
-      _tasks.pop_front();
+    while(!state.tasks.empty() && (state.tasks.front().time_left <= TIME(0))) {
+      state.tasks.pop_front();
     }
   }
 
-  void bindMetabolits(const vector<MSG>& mb, map<string, pair<int, int>>& r) {
+  void bindMetabolits(typename make_message_bags<input_ports>::type mbs, map<string, pair<int, int>>& r) {
 
-    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
+    for (const auto &x : get_messages<typename defs::in>(mbs)) {
 
-      if (it->react_direction == Way_t::STP) {
+      if (x.react_direction == Way_t::STP) {
 
-        for (int i = 0; i < it->react_amount; ++i) {
-          if (aceptedMetabolites(_koff_STP)) _substrate_comps.at(it->from) += 1;
-          else increaseRejected(r, it->from, Way_t::STP); // r.first = STP, r.second = PTS
+        for (int i = 0; i < x.react_amount; ++i) {
+          if (aceptedMetabolites(_koff_STP)) _substrate_comps.at(x.from) += 1;
+          else increaseRejected(r, x.from, Way_t::STP); // r.first = STP, r.second = PTS
         }
       } else {
 
-        for (int i = 0; i < it->react_amount; ++i) {
-          if (aceptedMetabolites(_koff_PTS)) _product_comps.at(it->from) += 1;
-          else increaseRejected(r, it->from, Way_t::PTS); // r.first = STP, r.second = PTS
+        for (int i = 0; i < x.react_amount; ++i) {
+          if (aceptedMetabolites(_koff_PTS)) _product_comps.at(x.from) += 1;
+          else increaseRejected(r, x.from, Way_t::PTS); // r.first = STP, r.second = PTS
         }
       }
     }
@@ -303,8 +340,8 @@ public:
 
   void insertTask(const RTask_t<TIME, MSG>& t) {
 
-    typename RTaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
-    _tasks.insert(it, t);
+    typename RTaskQueue_t<TIME, MSG>::iterator it = lower_bound(state.tasks.begin(), state.tasks.end(), t);
+    state.tasks.insert(it, t);
   }
 
   void unifyMessages(vector<MSG>& m) const {
@@ -350,4 +387,4 @@ public:
   }
 };
 
-#endif // BOOST_SIMULATION_PDEVS_REACTION_H
+#endif
