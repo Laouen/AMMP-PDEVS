@@ -36,8 +36,47 @@
 
 #include <NDTime.hpp>
 
+#include "atomic-models/reaction.hpp"
+#include "data-structures/message_types.hpp"
+
+using namespace std;
+
+using hclock=chrono::high_resolution_clock;
+
+/****** Reaction atomic model definition *********/
+
+using out_p = reaction_defs<string>::out;
+
+template<typename TIME>
+class reaction_test : public reaction<messages::Metabolites,TIME> {
+public:
+    reaction_test(): iestream_string<TIME>(state_type<messages::Metabolites,TIME>()) {};
+};
+
+/*******************************************/
+
+/****** Reaction coupled model definition *********/
+
+using iports = std::tuple<>;
+using oports = std::tuple<>;
+using submodels=cadmium::modeling::models_tuple<reaction_test>;
+using eics=std::tuple<>;
+using eocs=std::tuple<>;
+using ics=std::tuple<>;
+
+template<typename TIME>
+using top_model=cadmium::modeling::coupled_model<TIME, iports, oports, submodels, eics, eocs, ics>;
+
+/*******************************************/
+
 int main() {
 
-  std::cout << "Hello world" << std::endl;
+  auto start = hclock::now(); //to measure simulation execution time
+
+  cadmium::engine::runner<NDTime, top_model> r{0};
+  r.runUntil(3000);
+
+  auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(hclock::now() - start).count();
+  cout << "Simulation took:" << elapsed << "sec" << endl;
   return 0;
 }

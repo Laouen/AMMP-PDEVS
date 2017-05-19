@@ -7,15 +7,7 @@
 #include <vector>
 #include <map>
 
-#include <boost/simulation.hpp>
-
-#include "britime.hpp"
-
-
 using namespace std;
-using namespace boost::simulation;
-using namespace boost::simulation::pdevs;
-using namespace boost::simulation::pdevs::basic_models;
 
 /******************************************/
 /********** Enums and renames *************/
@@ -39,7 +31,6 @@ using SetOfMolecules_t  = map<string, Integer_t>;
 
 const long double L = 6.0221413e+23L;
 const long double MOL = 1e-6;
-const BRITime ZERO(0);
 
 /******************************************/
 /************ End Constants ***************/
@@ -48,6 +39,9 @@ const BRITime ZERO(0);
 /******************************************/
 /************** models type ***************/
 /******************************************/
+
+/*
+DEPRECATED
 
 template<class TIME>
 using vm_t  = vector<shared_ptr< model<TIME>>>;
@@ -59,6 +53,7 @@ template<class TIME,class MSG>
 using vcm_t = vector< shared_ptr<flattened_coupled<TIME, MSG>>>;
 template<class TIME,class MSG>
 using cmm_t = map<string, shared_ptr<flattened_coupled<TIME, MSG>>>;
+*/
 
 /******************************************/
 /************ End models type *************/

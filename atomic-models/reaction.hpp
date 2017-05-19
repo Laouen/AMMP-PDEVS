@@ -47,12 +47,43 @@
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace std;
+using namespace cadmium;
 
 template<typename MSG>
 struct reaction_defs{
     // custom ports
-    struct out : public out_port<MSG> {};
-    struct in : public in_port<MSG> {};
+    struct out : public out_port<MSG> {
+    };
+    struct in : public in_port<MSG> {
+    };
+};
+
+/**
+ * 
+ * @author Laouen Mayal Louan Belloli
+ * @date 16 May 2017
+ * 
+ * @struct reaction::state_type reaction.hpp
+ * 
+ * @brief This struct stores all the variables related with the state of a 
+ * reaction atomic model.
+ * 
+ */
+template<class MSG, class TIME>
+struct state_type{
+  string                                id;
+  shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
+  bool                                  reversible; // TODO: check where is this field used
+  TIME                                  rate;
+  map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
+  map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
+  map<string, Integer_t>                substrate_comps;
+  map<string, Integer_t>                product_comps;
+  double                                koff_STP;
+  double                                koff_PTS;
+  TIME                                  interval_time; // TODO: Chekc where is this field used
+  TIME                                  reject_time;
+  RTaskQueue_t<TIME, MSG>               tasks;
 };
 
 template<class MSG, class TIME>
@@ -68,51 +99,24 @@ public:
    * 
    * @param initialized_state A reaction::state_type already initialized.
    */
-  constexpr reaction(const state_type& initialized_state) noexcept {
+  constexpr reaction(const state_type<MSG,TIME>& initialized_state) noexcept {
     
     this.state = initialized_state;
 
-    // state.real_random is initilized with a random generator engine
+    // real_random is initilized with a random generator engine
     random_device real_rd; // Random generator engine
-    state.real_random.seed(real_rd());  
+    real_random.seed(real_rd());  
   }
 
-  /**
-   * 
-   * @author Laouen Mayal Louan Belloli
-   * @date 16 May 2017
-   * 
-   * @struct reaction::state_type reaction.hpp
-   * 
-   * @brief This struct stores all the variables related with the state of a 
-   * reaction atomic model.
-   * 
-   */
-  struct state_type{
-    string                                id;
-    shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
-    bool                                  reversible;
-    TIME                                  rate;
-    map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
-    map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
-    map<string, Integer_t>                substrate_comps;
-    map<string, Integer_t>                product_comps;
-    double                                koff_STP;
-    double                                koff_PTS;
-    TIME                                  interval_time;
-    TIME                                  reject_time;
-    RTaskQueue_t<TIME, MSG>               tasks;
-    RealRandom_t<double>                  real_random; // used for uniform random number 
-  };
-
-  state_type state;
+  RealRandom_t<double> real_random; // used for uniform random number
+  state_type<MSG,TIME> state;
 
   // ports definition
   using input_ports=std::tuple<typename defs::in>;
   using output_ports=std::tuple<typename defs::out>;
 
   void internal_transition() {
-    cout << "reaction::internal function." << endl;
+    comment("reaction::internal function.");
 
     // Updating time left
     this->updateTaskTimeLefts(state.tasks.front().time_left);
@@ -122,7 +126,7 @@ public:
   }
 
   void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
-    cout << "reaction::external_transition function." << endl;
+    comment("reaction::external_transition function.");
 
     // Updating time left
     this->updateTaskTimeLefts(e);
@@ -145,13 +149,13 @@ public:
   }
 
   void confluence_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
-    cout << "reaction::confluence function" << endl;
+    comment("reaction::confluence function");
     internal_transition();
     external_transition(TIME(0), mbs);
   }
 
   typename make_message_bags<output_ports>::type output() const {
-    cout << "reaction::output function." << endl;
+    comment("reaction::output function.");
     
     typename make_message_bags<output_ports>::type bags;
     MSG new_message;
@@ -165,14 +169,14 @@ public:
 
       if (it->task_kind == RState_t::REACTING) {
     
-        if (it->direction == Way_t::STP) curr_sctry = &_products_sctry;
-        else curr_sctry = &_substrate_sctry;
+        if (it->direction == Way_t::STP) curr_sctry = &state.products_sctry;
+        else curr_sctry = &state.substrate_sctry;
 
         for (map<string, SetOfMolecules_t>::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
           
           for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
             new_message.clear();
-            new_message.to = _addresses->at(mt->first); // TODO: change this by ports routing
+            new_message.to = state.addresses->at(mt->first); // TODO: change this by ports routing
             new_message.metabolites.insert({mt->first, it->amount*mt->second});
             result.push_back(new_message);
           }
@@ -183,16 +187,15 @@ public:
     }
 
     this->unifyMessages(result);
-    for (vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
+    for (typename vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
       cadmium::get_messages<typename defs::out>(bags).emplace_back(*it);
     }
     
-    cout << "out end." << endl;
     return bags;
   }
 
   TIME time_advance() const {
-    cout << "reaction::time_advance function." << endl;
+    comment("reaction::time_advance function.");
     
     TIME result;
     if (!state.tasks.empty()) result = state.tasks.front().time_left;
@@ -208,7 +211,7 @@ public:
   ***************************************/
 
   void comment(string msg) const {
-    if (COMMENTS) cout << "[reaction " << _id << "] " << msg << endl;
+    cout << "[reaction " << state.id << "] " << msg << endl;
   }
 
   // Decreases the time left of all the current tasks in state.tasks by the parameter t.
@@ -232,14 +235,16 @@ public:
 
       if (x.react_direction == Way_t::STP) {
 
+        // TODO: replace this by a single step using uniform distribution to calculate the rejected and acepted amount
         for (int i = 0; i < x.react_amount; ++i) {
-          if (aceptedMetabolites(_koff_STP)) _substrate_comps.at(x.from) += 1;
+          if (aceptedMetabolites(state.koff_STP)) state.substrate_comps.at(x.from) += 1;
           else increaseRejected(r, x.from, Way_t::STP); // r.first = STP, r.second = PTS
         }
       } else {
 
+        // TODO: replace this by a single step using uniform distribution to calculate the rejected and acepted amount
         for (int i = 0; i < x.react_amount; ++i) {
-          if (aceptedMetabolites(_koff_PTS)) _product_comps.at(x.from) += 1;
+          if (aceptedMetabolites(state.koff_PTS)) state.product_comps.at(x.from) += 1;
           else increaseRejected(r, x.from, Way_t::PTS); // r.first = STP, r.second = PTS
         }
       }
@@ -247,9 +252,8 @@ public:
   }
 
   bool aceptedMetabolites(double k) {
-    //if (_id == (string)"A_from_extracellular_space_to_periplasm") cout << _real_random.drawNumber(0.0, 1.0) << " " << k << endl; 
 
-    return (_real_random.drawNumber(0.0, 1.0) > k);
+    return (real_random.drawNumber(0.0, 1.0) > k);
   }
 
   void increaseRejected(map<string, pair<int, int>>& r, string f, Way_t w) {
@@ -277,24 +281,24 @@ public:
     for (map<string, pair<int, int> >::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
 
       if (it->second.first > 0) {
-        assert(_substrate_sctry.find(it->first) != _substrate_sctry.end());
+        assert(state.substrate_sctry.find(it->first) != state.substrate_sctry.end());
         
-        for (SetOfMolecules_t::const_iterator jt = _substrate_sctry.at(it->first).cbegin(); jt != _substrate_sctry.at(it->first).cend(); ++jt) {
+        for (SetOfMolecules_t::const_iterator jt = state.substrate_sctry.at(it->first).cbegin(); jt != state.substrate_sctry.at(it->first).cend(); ++jt) {
           
           m.clear();
-          m.to = _addresses->at(jt->first);
+          m.to = state.addresses->at(jt->first);
           m.metabolites.insert({jt->first, it->second.first*jt->second});
           ts.push_back(m); 
         }
       }
 
       if (it->second.second > 0) {
-        assert(_products_sctry.find(it->first) != _products_sctry.end());
+        assert(state.products_sctry.find(it->first) != state.products_sctry.end());
         
-        for (SetOfMolecules_t::const_iterator jt = _products_sctry.at(it->first).cbegin(); jt != _products_sctry.at(it->first).cend(); ++jt) {
+        for (SetOfMolecules_t::const_iterator jt = state.products_sctry.at(it->first).cbegin(); jt != state.products_sctry.at(it->first).cend(); ++jt) {
           
           m.clear();
-          m.to = _addresses->at(jt->first);
+          m.to = state.addresses->at(jt->first);
           m.metabolites.insert({jt->first, it->second.second*jt->second});
           ts.push_back(m); 
         }
@@ -304,19 +308,19 @@ public:
 
   void lookForNewReactions() {
     
-    Integer_t stp_ready = totalReadyFor(_substrate_comps); 
-    Integer_t pts_ready = totalReadyFor(_product_comps);
+    Integer_t stp_ready = totalReadyFor(state.substrate_comps); 
+    Integer_t pts_ready = totalReadyFor(state.product_comps);
 
     if (stp_ready > 0) {
-      RTask_t<TIME, MSG> stp_task(_rate, Way_t::STP, stp_ready);
+      RTask_t<TIME, MSG> stp_task(state.rate, Way_t::STP, stp_ready);
       this->insertTask(stp_task);
-      this->removeMetabolites(_substrate_comps, stp_ready);
+      this->removeMetabolites(state.substrate_comps, stp_ready);
     }
 
     if (pts_ready > 0) {
-      RTask_t<TIME, MSG> pts_task(_rate, Way_t::STP, pts_ready);
+      RTask_t<TIME, MSG> pts_task(state.rate, Way_t::STP, pts_ready);
       this->insertTask(pts_task);
-      this->removeMetabolites(_product_comps, pts_ready);
+      this->removeMetabolites(state.product_comps, pts_ready);
     }
   }
 
@@ -364,7 +368,7 @@ public:
     if (ms.find(m.to) != ms.end()) {
       addMultipleMetabolites(ms.at(m.to).metabolites, m.metabolites);
     } else {
-      ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
+      ms.insert({m.to, m});
     }
   }
 
@@ -381,7 +385,7 @@ public:
       if (m.find(n) != m.end()) {
         m.at(n) += a;
       } else {
-        m.insert({n, a}); // TODO: change all the initializer_list because they don't work on windows
+        m.insert({n, a});
       }
     }
   }
