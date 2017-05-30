@@ -48,9 +48,12 @@ using hclock=chrono::high_resolution_clock;
 using out_p = reaction_defs<string>::out;
 
 template<typename TIME>
-class reaction_test : public reaction<messages::Metabolites,TIME> {
+using reaction_metabolite=reaction<msg_event::Metabolites,TIME>;
+
+template<class TIME>
+class reaction_test : public reaction_metabolite<TIME> {
 public:
-    reaction_test(): iestream_string<TIME>(state_type<messages::Metabolites,TIME>()) {};
+    reaction_test(): reaction_metabolite<TIME>(typename reaction_metabolite<TIME>::state_type()) {};
 };
 
 /*******************************************/

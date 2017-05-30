@@ -58,39 +58,45 @@ struct reaction_defs{
     };
 };
 
-/**
- * 
- * @author Laouen Mayal Louan Belloli
- * @date 16 May 2017
- * 
- * @struct reaction::state_type reaction.hpp
- * 
- * @brief This struct stores all the variables related with the state of a 
- * reaction atomic model.
- * 
- */
-template<class MSG, class TIME>
-struct state_type{
-  string                                id;
-  shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
-  bool                                  reversible; // TODO: check where is this field used
-  TIME                                  rate;
-  map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
-  map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
-  map<string, Integer_t>                substrate_comps;
-  map<string, Integer_t>                product_comps;
-  double                                koff_STP;
-  double                                koff_PTS;
-  TIME                                  interval_time; // TODO: Chekc where is this field used
-  TIME                                  reject_time;
-  RTaskQueue_t<TIME, MSG>               tasks;
-};
-
 template<class MSG, class TIME>
 class reaction {
+
   using defs=reaction_defs<MSG>;
 
 public:
+
+  /**
+   * 
+   * @author Laouen Mayal Louan Belloli
+   * @date 16 May 2017
+   * 
+   * @struct reaction::state_type reaction.hpp
+   * 
+   * @brief This struct stores all the variables related with the state of a 
+   * reaction atomic model.
+   * 
+   */
+  struct state_type{
+    string                                id;
+    shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
+    bool                                  reversible; // TODO: check where is this field used
+    TIME                                  rate;
+    map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
+    map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
+    map<string, Integer_t>                substrate_comps;
+    map<string, Integer_t>                product_comps;
+    double                                koff_STP;
+    double                                koff_PTS;
+    TIME                                  interval_time; // TODO: Chekc where is this field used
+    TIME                                  reject_time;
+    RTaskQueue_t<TIME, MSG>               tasks;
+  };
+
+  constexpr reaction() noexcept {
+    // real_random is initilized with a random generator engine
+    random_device real_rd; // Random generator engine
+    real_random.seed(real_rd());
+  }
 
   /**
    * @brief Default constructor
@@ -99,17 +105,17 @@ public:
    * 
    * @param initialized_state A reaction::state_type already initialized.
    */
-  constexpr reaction(const state_type<MSG,TIME>& initialized_state) noexcept {
+  constexpr reaction(const state_type& initialized_state) noexcept {
     
-    this.state = initialized_state;
+    this->state = initialized_state;
 
     // real_random is initilized with a random generator engine
     random_device real_rd; // Random generator engine
-    real_random.seed(real_rd());  
+    real_random.seed(real_rd());
   }
 
   RealRandom_t<double> real_random; // used for uniform random number
-  state_type<MSG,TIME> state;
+  state_type state;
 
   // ports definition
   using input_ports=std::tuple<typename defs::in>;

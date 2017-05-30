@@ -17,6 +17,6 @@ data-structures/types.o: data-structures/types.cpp data-structures/types.hpp
 	$(CC) -g -c $(CFLAGS) $(INCLUDEBOOST) $(INCLUDEBCDPP) data-structures/types.cpp -o data-structures/types.o
 
 clean:
-	rm -f ammp *.o *~
+	rm -f model *.o *~
 	-for d in data-structures; do (cd $$d; rm -f *.o *~ ); done
 	-for d in atomic-models; do (cd $$d; rm -f *.o *~ ); done

@@ -9,8 +9,7 @@
 
 using namespace std;
 
-namespace messages {
-
+namespace msg_event {
   struct Metabolites {
 
     Address_t to;
