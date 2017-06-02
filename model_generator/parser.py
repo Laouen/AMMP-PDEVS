@@ -18,7 +18,8 @@ if __name__ == '__main__':
     print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
     sys.exit(1)
 
+  ns = {"sbml": "http://www.sbml.org/sbml/level2"}
   tree = etree.parse(FLAGS.smbl_file)
-  print(tree.xpath("/model"))
-  for specie in tree.xpath("/model/listOfSpecies/species"):
-    print(specie.id)
+  
+  for specie in tree.xpath("//sbml:species", namespaces=ns):
+    print(specie.get("name"))
