@@ -1,30 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""@package docstring
-Documentation for SBMLParser module.
-"""
+
+## @package pyexample
+# Documentation for SBMLParser module.
+# This module is a wrapper for lxml: http://lxml.de/xpathxslt.html#the-xpath-method
+
 
 from lxml import etree
 import gflags
 import sys
 
 class SBMLParser:
-  """ This class parses and retrieve the SBML information to generate a 
-      CADMIUM P-DEVS model """
+  ##  This class parses, retrieve SBML information and generate a 
+  #   CADMIUM P-DEVS model
 
   def __init__(self, sbml_file, namespaces):
-    """ SBMLParser constructor
+    ## SBMLParser constructor
+    # It parses the sbml_file and saves the namespaces for future use.
+    # @param sbml_file The SBML xml file path.
+    # @param namespaces The xmlns attribute  of the <sbml> tag.
 
-    It parses the sbml_file and saves the namespaces to future use.
-    """
     self.namespace = {'sbml': namespaces}
     self.tree = etree.parse(sbml_file)
 
+
   def getNodes(self, tag_name):
-    """ SBMLParser constructor
-    
-    It parses the sbml_file and saves the namespaces to future use.
-    """
+    ## SBMLParser constructor
+    # It parses the sbml_file and saves the namespaces for future use.
+    # @param tag_name The tags name to return.
+    # @return [nodes]
+
     return self.tree.xpath('//sbml:'+tag_name, namespaces=self.namespace)
 
 if __name__ == '__main__':
