@@ -75,11 +75,20 @@ class SBMLParser:
         return self.speciesByCompartments
 
     def getGeneAssociation(self, reaction):
+        ## Gets the GENE_ASSOCIATION: text informations from a xml reaction node.
+        #  If there is no associated enzymes, it returns an empty list, if there is some associated
+        #  enzymes, it returns a list of all of them.
+        #  @param reaction: lxml Element - The reaction node from the SBML xml file
+
         return [x.text.replace('GENE_ASSOCIATION: ', '')
                 for x in reaction.xpath('.//w3:p', namespaces=self.w3_namespace)
                 if 'GENE_ASSOCIATION' in x.text and any(char.isdigit() for char in x.text)]
 
     def getEnzymesHandlerIDs(self, reaction):
+        ## Returns all the reaction associated enzymes, all the associated enzymes are the enzymes responsables to
+        #  handle the reaction.
+        #  @param reaction: lxml Element - The reaction node from the SBML xml file
+
         gene_association = self.getGeneAssociation(reaction)
 
         if len(gene_association) > 0:
@@ -90,6 +99,9 @@ class SBMLParser:
         return res
 
     def getEnzymesFromGaneAssociation(self, gene_association):
+        ## Returns a list of enzymes from a gene_association logic expresion as the one specified in the SBML files
+        #  @param gene_association: string - The gene association logical expresion
+
         gene_association = map(lambda x: x.replace('(', '[').replace(')', ']').replace(' ', ','), gene_association)
         gene_association = map(lambda x: re.sub(r'([a-z]+[0-9]+)', r'"\1"', x), gene_association)
         gene_association = map(lambda x: re.sub(r'(and|or)', r'"\1"', x), gene_association)
@@ -99,7 +111,7 @@ class SBMLParser:
 
     def parseLogicalGeneAssociation(self, enzymes):
         ## Parses a gene association expresion of a reaction to get all the responzable enzymes for the reaction
-        # @param [gene_association_expresion]: The expresion to parse
+        # @param enzymes: [string] - A list of gene association expresions to parse
         # @return [gene_names]
 
         if type(enzymes) is unicode or type(enzymes) is str:
@@ -128,6 +140,8 @@ class SBMLParser:
         return enzymes[0]
 
     def getEnzymes(self):
+        ## Returns a map of all the needed enzyme information to intianciate the space models.
+
         if not self.enzymes == {}:
             return self.enzymes
 
@@ -150,10 +164,14 @@ class SBMLParser:
                     self.enzymes[enzyme_handler]['handled_reacions'][reaction_id] = self.reactions[reaction_id]
 
     def getReactionIDs(self, biomassIDs):
+        ## Returns a list with all the SBML reaction IDs
+        #  @param biomassIDs: [string] - A list of biomass reaction IDs to not be included in the returned list.
         return [reaction.get('id') for reaction in self.getNodes('reaction')
                 if reaction.get('id') not in biomassIDs]
 
     def getReactions(self):
+        ## Returns a map with all the reaction atomic model parameters aready to instanciate them.
+
         if not self.reactions == {}:
             return self.reactions
 
@@ -174,6 +192,10 @@ class SBMLParser:
             }
 
     def getReactionSctry(self, reaction, list_name):
+        ## returns the stoichiometry number of the reaction.
+        #  @param reaction: lxml Element - The reaction node to gete the stoichiometry.
+        #  @param list_name: string - One of listOfReactants or listOfProduct in order to retrieve the
+        #  reactant or product stoichiometry respectively.
         sctries = reaction.xpath('.//sbml:{}/sbml:speciesReference'.format(list_name), namespaces=self.sbml_namespace)
 
         return {s.get('species'): 1.0
