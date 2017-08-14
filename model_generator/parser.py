@@ -18,8 +18,10 @@ import sys
 
 
 class SBMLParser:
-    ## This class parses, retrieve SBML information and generate a
-    #  CADMIUM P-DEVS model
+    '''
+    Parses and retrieve SBML information to generate a CADMIUM P-DEVS model
+
+    '''
 
     def __init__(self, sbml_file):
         '''
@@ -33,13 +35,13 @@ class SBMLParser:
 
         self.unnamed_enzymes_amount = 0
 
-        self.enzyme_amounts = defaultdict(lambda: 0)
         self.compartments_species = {}
         self.compartments = {}
         self.reactions = {}
         self.enzymes = {}
 
         # Not in the SBML model parameters
+        self.enzyme_amounts = defaultdict(lambda: 0)
         self.konSTPs = defaultdict(lambda: 0)
         self.konPTSs = defaultdict(lambda: 0)
         self.koffSTPs = defaultdict(lambda: 0)
@@ -58,49 +60,58 @@ class SBMLParser:
         return 'biomass' in eid.lower()
 
     def get_compartments(self):
-        ## Returns a dictionary with the compartment ids as keys and the
-        # compartment names as values
-        # @return {compartment_id: compartment_name}:
+        '''
+        Returns a dictionary with the compartment ids as keys and the
+        compartment names as values
+        :return: compartment_id
+        :rtype: dictionary
+        '''
 
         if not self.compartments == {}:
             return self.compartments
 
-        for compartment in self.getNodes('compartment'):
-            self.compartments[compartment['id']] = compartment['name']
+        for compartment in self.model.findAll('compartment'):
+            self.compartments[compartment.get('id')] = compartment.get('name')
 
     def get_specie_by_compartments(self):
         ## Returns a dictionary with the compartment ids as keys and dictionaries
         # of the compartment species id and name as value.
         # @return {compartment_id: {specie_id: specie_name}}:
 
-        if self.compartments_species:
-            return self.compartments_species
+        if self.compartment_species:
+            return self.compartment_species
 
-        self.compartments_species = {k: {} for k in self.getCompartments().keys()}
+        self.compartment_species = {k: {} for k in self.getCompartments().keys()}
 
-        for specie in self.getNodes('species'):
-            id = specie['id']
-            compartment = specie['compartment']
-            name = specie['name']
+        for specie in self.model.findAll('species'):
+            id = specie.get('id')
+            compartment = specie.get('compartment')
+            name = specie.get('name')
 
-            self.compartments_species[compartment][id] = name
-        return self.compartments_species
+            self.compartment_species[compartment][id] = name
+
+        return self.compartment_species
 
     def get_gene_association(self, reaction):
         ## Gets the GENE_ASSOCIATION: text informations from a xml reaction node.
         #  If there is no associated enzymes, it returns an empty list, if there is some associated
         #  enzymes, it returns a list of all of them.
         #  @param reaction: lxml Element - The reaction node from the SBML xml file
-        # return: A list of logical gene associations
+        #  @return: A list of logical gene associations
 
         return [x.text.replace('GENE_ASSOCIATION: ', '')
                 for x in reaction.notes.body.findAll('p')
                 if 'GENE_ASSOCIATION' in x.text and any(char.isdigit() for char in x.text)]
 
     def get_enzymes_handler_ids(self, reaction):
-        ## Returns all the reaction associated enzymes, all the associated enzymes are the enzymes responsables to
-        #  handle the reaction.
-        #  @param reaction: lxml Element - The reaction node from the SBML xml file
+        '''
+        Returns all the reaction associated enzymes, all the associated enzymes are the enzymes responsables to
+        handle the reaction.
+        :param: reaction:
+        :ptype: BeautifulSoup reaction node
+        :return: the enzyme handler ids
+        :rtype: List of string
+        '''
 
         gene_association = self.get_gene_association(reaction)
 
@@ -160,59 +171,80 @@ class SBMLParser:
         if not self.enzymes == {}:
             return self.enzymes
 
-        if self.reactions == {}:
-            self.get_reactions()
-
-        for reaction in self.reactions:
-            rid = reaction['id']
-            if rid in self.biomassIDs:
+        for reaction in self.model.findAll('reaction'):
+            rid = reaction.get('id')
+            if self.is_biomass(rid):
                 continue
 
-            for enzyme_handler in self.get_enzymes_handler_ids(reaction):
-                if enzyme_handler not in self.enzymes.keys():
-                    self.enzymes[enzyme_handler] = {
-                        'id': enzyme_handler,
-                        'amount': self.enzyme_amounts[enzyme_handler],
-                        'handled_reacions': {rid: self.reactions[rid]}
+            for ehid in self.get_enzymes_handler_ids(reaction):
+                if ehid not in self.enzymes.keys():
+                    self.enzymes[ehid] = {
+                        'id': ehid,
+                        'amount': self.enzyme_amounts[ehid],
+                        'handled_reacions': {rid: self.get_reactions()[rid]}
                     }
                 else:
-                    self.enzymes[enzyme_handler]['handled_reacions'][rid] = self.reactions[rid]
+                    self.enzymes[ehid]['handled_reacions'][rid] = self.get_reactions()[rid]
 
     def get_reaction_ids(self):
         ## Returns a list with all the SBML reaction IDs
         #  @param biomassIDs: [string] - A list of biomass reaction IDs to not be included in the returned list.
-        return [reaction['id'] for reaction in self.getNodes('reaction') if not self.is_biomass(reaction['id'])]
+
+        return [reaction.get('id')
+                for reaction in self.model.findAll('reaction')
+                if not self.is_biomass(reaction.get('id'))]
 
     def get_reactions(self):
-        ## Returns a map with all the reaction atomic model parameters aready to instanciate them.
-
+        '''
+        Returns a map with all the reaction atomic model parameters ready to be instanciated.
+        :return: self.reactions
+        :rtype: dictionary of reaction id and parameters
+        '''
         if not self.reactions == {}:
             return self.reactions
 
-        for reaction in self.getNodes('reaction'):
-            rid = reaction['id']
-            if rid in self.biomassIDs:
+        for reaction in self.model.findAll('reaction'):
+            rid = reaction.get('id')
+            if self.is_biomass(rid):
                 continue
 
             self.reactions[rid] = {
-                'reversible': False if reaction['reversible'] == 'false' else True,
-                'substrate_sctry': self.get_reaction_sctry(reaction, 'listOfReactants'),
-                'products_sctry': self.get_reaction_sctry(reaction, 'listOfProducts'),
-                'location': '',  # TODO: implement the method to get the location
+                'reversible': False if reaction.get('reversible') == 'false' else True,
+                'substrate_sctry': self.get_reaction_sctry(rid, 'listOfReactants'),
+                'products_sctry': self.get_reaction_sctry(rid, 'listOfProducts'),
+                'location': self.get_reaction_location(rid),
                 'konSTP': self.konSTPs[rid],
                 'konPTS': self.konPTSs[rid],
                 'koffSTP': self.koffSTPs[rid],
                 'koffPTS': self.koffPTSs[rid]
             }
 
-    def get_reaction_sctry(self, reaction, list_name):
-        ## returns the stoichiometry number of the reaction.
-        #  @param reaction: lxml Element - The reaction node to gete the stoichiometry.
-        #  @param list_name: string - One of listOfReactants or listOfProduct in order to retrieve the
-        #  reactant or product stoichiometry respectively.
-        sctries = reaction.xpath('.//sbml:{}/sbml:speciesReference'.format(list_name), namespaces=self.sbml_namespace)
+    # TODO: implement this method
+    def get_reaction_location(self, rid):
 
-        return {s['species']: 1.0 if s['stoichiometry'] is None else float(s['stoichiometry']) for s in sctries}
+        return ''
+
+    def get_reaction_sctry(self, rid, list_name):
+        '''
+        Calculates stoichiometry numbers of the reaction reactants or products respectively.
+
+        :param: rid, The reaction id to gete the stoichiometry.
+        :ptype: String
+        :param: list_name, string - One of listOfReactants or listOfProduct in order to retrieve the
+        :ptype: String
+        :return: The products/reactants stoichiometry
+        :rtype: dictionary
+        '''
+
+        sctries = self.model.sbml.model \
+            .find('reaction', {'id': rid}) \
+            .find(list_name) \
+            .findAll('speciesReference')
+
+        return {s.get('species'): 1.0
+                if s.get('stoichiometry') is None
+                else float(s.get('stoichiometry'))
+                for s in sctries}
 
 
 if __name__ == '__main__':

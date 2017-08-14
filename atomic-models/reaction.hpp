@@ -28,7 +28,7 @@
 #define PMGBBP_PDEVS_REACTION_ATOMIC_MODEL_HPP
 
 #include <limits> // numeric_limits
-#include <stddef.h>
+#include <cstddef>
 #include <string>
 #include <fstream>
 
@@ -87,7 +87,7 @@ public:
     map<string, Integer_t>                product_comps;
     double                                koff_STP;
     double                                koff_PTS;
-    TIME                                  interval_time; // TODO: Chekc where is this field used
+    TIME                                  interval_time; // TODO: Check where is this field used
     TIME                                  reject_time;
     RTaskQueue_t<TIME, MSG>               tasks;
   };
@@ -241,14 +241,14 @@ public:
 
       if (x.react_direction == Way_t::STP) {
 
-        // TODO: replace this by a single step using uniform distribution to calculate the rejected and acepted amount
+        // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
         for (int i = 0; i < x.react_amount; ++i) {
           if (aceptedMetabolites(state.koff_STP)) state.substrate_comps.at(x.from) += 1;
           else increaseRejected(r, x.from, Way_t::STP); // r.first = STP, r.second = PTS
         }
       } else {
 
-        // TODO: replace this by a single step using uniform distribution to calculate the rejected and acepted amount
+        // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
         for (int i = 0; i < x.react_amount; ++i) {
           if (aceptedMetabolites(state.koff_PTS)) state.product_comps.at(x.from) += 1;
           else increaseRejected(r, x.from, Way_t::PTS); // r.first = STP, r.second = PTS
@@ -337,7 +337,7 @@ public:
     }
   }
 
-  // TODO test this function specially
+  // TODO: test this function specially
   Integer_t totalReadyFor(const map<string, Integer_t>& comp) {
 
     Integer_t result = comp.cbegin()->second;
