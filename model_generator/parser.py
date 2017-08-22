@@ -1,11 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-## @package pyexample
-# Documentation for SBMLParser module.
-# This module is a wrapper for lxml: http://lxml.de/xpathxslt.html#the-xpath-method
-
-
 # NOTES AND LINKS:
 # python SBML parser: https://github.com/linsalrob/PyFBA/blob/master/PyFBA/parse/SBML.py
 
@@ -13,8 +8,11 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 import json
 import re
-import gflags
-import sys
+# TODO: make all the method camel case
+
+
+class IlegalCompartmentCombination(Exception):
+    pass
 
 
 class SBMLParser:
@@ -23,7 +21,7 @@ class SBMLParser:
 
     '''
 
-    def __init__(self, sbml_file):
+    def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id):
         '''
         SBMLParser constructor
 
@@ -33,12 +31,18 @@ class SBMLParser:
         :rtype: None
         '''
 
+        # Special values
+        self.extra_cellular_id = extra_cellular_id
+        self.periplasm_id = periplasm_id
+        self.cytoplasm_id = cytoplasm_id
+
         self.unnamed_enzymes_amount = 0
 
         self.compartments_species = {}
         self.compartments = {}
         self.reactions = {}
         self.enzymes = {}
+        self.reaction_locations = {}
 
         # Not in the SBML model parameters
         self.enzyme_amounts = defaultdict(lambda: 0)
@@ -165,7 +169,7 @@ class SBMLParser:
 
         return enzymes[0]
 
-    def get_enzymes(self):
+    def get_enzymes_parameters(self):
         ## Returns a map of all the needed enzyme information to intianciate the space models.
 
         if not self.enzymes == {}:
@@ -185,6 +189,8 @@ class SBMLParser:
                     }
                 else:
                     self.enzymes[ehid]['handled_reacions'][rid] = self.get_reactions()[rid]
+
+        return self.enzymes
 
     def get_reaction_ids(self):
         ## Returns a list with all the SBML reaction IDs
@@ -210,21 +216,18 @@ class SBMLParser:
 
             self.reactions[rid] = {
                 'reversible': False if reaction.get('reversible') == 'false' else True,
-                'substrate_sctry': self.get_reaction_sctry(rid, 'listOfReactants'),
-                'products_sctry': self.get_reaction_sctry(rid, 'listOfProducts'),
-                'location': self.get_reaction_location(rid),
+                'substrate_sctry': self.getReactionSctry(rid, 'listOfReactants'),
+                'products_sctry': self.getReactionSctry(rid, 'listOfProducts'),
+                'routing_table': self.get_reaction_routing_table(rid),  # TODO: implement this
                 'konSTP': self.konSTPs[rid],
                 'konPTS': self.konPTSs[rid],
                 'koffSTP': self.koffSTPs[rid],
                 'koffPTS': self.koffPTSs[rid]
             }
 
-    # TODO: implement this method
-    def get_reaction_location(self, rid):
+        self.reactions
 
-        return ''
-
-    def get_reaction_sctry(self, rid, list_name):
+    def getReactionSctry(self, rid, list_name):
         '''
         Calculates stoichiometry numbers of the reaction reactants or products respectively.
 
@@ -236,28 +239,65 @@ class SBMLParser:
         :rtype: dictionary
         '''
 
-        sctries = self.model.sbml.model \
-            .find('reaction', {'id': rid}) \
-            .find(list_name) \
-            .findAll('speciesReference')
+        sctries = self.model.find('reaction', {'id': rid}).find(list_name)
 
-        return {s.get('species'): 1.0
-                if s.get('stoichiometry') is None
-                else float(s.get('stoichiometry'))
-                for s in sctries}
+        if sctries is not None:
+            return {s.get('species'): 1.0
+                    if s.get('stoichiometry') is None
+                    else float(s.get('stoichiometry'))
+                    for s in sctries.findAll('speciesReference')}
+        else:
+            return {}
 
+    def newLocation(self, compartment_id, enzyme_set):
+        return {'compartment': compartment_id, 'enzyme_set': enzyme_set}
 
-if __name__ == '__main__':
+    def get_bulk_reactions(self, compartment_id, enzyme_set):
+        location = self.newLocation(compartment_id, enzyme_set)
+        reaction_ids = [r.get('id') for r in self.model.findAll('reaction')]
+        return [r for r in reaction_ids if self.get_reaction_location(r) == location]
 
-    gflags.DEFINE_string('sbml_file', None, 'The SBML file path to parse', short_name='f')
+    def get_reaction_location(self, rid):
+        # TODO: Get a more general and flexible implementation for this in order to
+        # accept different structures. An option is to load a map of str(set<compartment>) as the key
+        # and the location as the value. The map can be loaded from a file allowing different
+        # compartment combination interpretations.
 
-    gflags.MarkFlagAsRequired('sbml_file')
-    FLAGS = gflags.FLAGS
+        if rid in self.reaction_locations.keys():
+            return self.reaction_locations[rid]
 
-    try:
-        argv = FLAGS(sys.argv)  # parse flags
-    except gflags.FlagsError, e:
-        print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
-        sys.exit(1)
+        reactants = self.getReactionSctry(rid, 'listOfReactants').keys()
+        products = self.getReactionSctry(rid, 'listOfProducts').keys()
 
-    my_parser = SBMLParser(FLAGS.sbml_file)
+        compartments = set([self.specieCompartment(s) for s in set(products + reactants)])
+
+        location = None
+        if len(compartments) == 1:
+            location = self.newLocation(compartments.pop(), 'bulk')
+
+        elif len(compartments) == 2:
+            if self.periplasm_id in compartments:  # Periplasm inner or outer membrane
+
+                compartments.discard(self.periplasm_id)
+                enzyme_sets = {self.extra_cellular_id: 'outer', self.cytoplasm_id: 'inner'}
+                location = self.newLocation(self.periplasm_id, enzyme_sets[compartments.pop()])
+            elif self.cytoplasm_id in compartments:
+
+                compartments.discard(self.cytoplasm_id)
+                if self.extra_cellular_id in compartments:  # Periplasm trans membrane
+                    location = self.newLocation(self.periplasm_id, 'trans')
+                else:  # Organelle membrane to cytoplasm
+                    location = self.newLocation(compartments.pop(), 'membrane')
+
+        elif len(compartments) == 3:  # Periplasm trans membrane
+            if set([self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id]) == compartments:
+                location = self.newLocation(self.periplasm_id, 'trans')
+
+        if location is not None:
+            self.reaction_locations[rid] = location
+            return location
+        else:
+            raise IlegalCompartmentCombination('Ilegal compartment combination')
+
+    def specieCompartment(self, specie_id):
+        return self.model.find('species', {'id': specie_id}).get('compartment')
