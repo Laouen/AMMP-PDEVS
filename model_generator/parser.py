@@ -169,7 +169,7 @@ class SBMLParser:
 
         return enzymes[0]
 
-    def get_enzymes_parameters(self):
+    def getEnzymesInformation(self):
         ## Returns a map of all the needed enzyme information to intianciate the space models.
 
         if not self.enzymes == {}:
@@ -185,47 +185,55 @@ class SBMLParser:
                     self.enzymes[ehid] = {
                         'id': ehid,
                         'amount': self.enzyme_amounts[ehid],
-                        'handled_reacions': {rid: self.get_reactions()[rid]}
+                        'handled_reacions': {rid: self.getReactionParameter(rid)}
                     }
                 else:
-                    self.enzymes[ehid]['handled_reacions'][rid] = self.get_reactions()[rid]
+                    self.enzymes[ehid]['handled_reacions'][rid] = self.getReactionParameter(rid)
 
         return self.enzymes
 
-    def get_reaction_ids(self):
-        ## Returns a list with all the SBML reaction IDs
-        #  @param biomassIDs: [string] - A list of biomass reaction IDs to not be included in the returned list.
+    def getReactionIds(self):
+        '''
+        :param:
+        :return: All the SBML reaction IDs without including the biomass reaction
+        :rtype: List of SBML reaction IDs
+        '''
 
         return [reaction.get('id')
                 for reaction in self.model.findAll('reaction')
                 if not self.is_biomass(reaction.get('id'))]
 
-    def get_reactions(self):
+    def getReactionParameter(self, rid):
         '''
-        Returns a map with all the reaction atomic model parameters ready to be instanciated.
-        :return: self.reactions
-        :rtype: dictionary of reaction id and parameters
+        :return: The atomic model parameters ready to be instanciated for the reaction with id rid.
+        :rtype: Dictionary of reaction id and parameters
         '''
-        if not self.reactions == {}:
-            return self.reactions
+        print 'getReactionParameter: ', rid
 
-        for reaction in self.model.findAll('reaction'):
-            rid = reaction.get('id')
-            if self.is_biomass(rid):
-                continue
+        if rid in self.reactions.keys():
+            return self.reactions[rid]
 
-            self.reactions[rid] = {
-                'reversible': False if reaction.get('reversible') == 'false' else True,
-                'substrate_sctry': self.getReactionSctry(rid, 'listOfReactants'),
-                'products_sctry': self.getReactionSctry(rid, 'listOfProducts'),
-                'routing_table': self.get_reaction_routing_table(rid),  # TODO: implement this
-                'konSTP': self.konSTPs[rid],
-                'konPTS': self.konPTSs[rid],
-                'koffSTP': self.koffSTPs[rid],
-                'koffPTS': self.koffPTSs[rid]
-            }
+        reaction = self.model.find('reaction', {'id': rid})
+        self.reactions[rid] = {
+            # TODO(Routing): location is currently not used in the atomic model,
+            # but should be used to determine which port to send the metabolites
+            'location': self.getReactionLocation(rid),
+            'reversible': False if reaction.get('reversible') == 'false' else True,
+            'substrate_sctry': self.getReactionSctry(rid, 'listOfReactants'),
+            'products_sctry': self.getReactionSctry(rid, 'listOfProducts'),
+            'routing_table': self.getReactionRoutingTable(rid),
+            'konSTP': self.konSTPs[rid],
+            'konPTS': self.konPTSs[rid],
+            'koffSTP': self.koffSTPs[rid],
+            'koffPTS': self.koffPTSs[rid]
+        }
 
-        self.reactions
+        return self.reactions[rid]
+
+    def getReactionRoutingTable(self, rid):
+        species = [s.get('species') for s in self.model.find('reaction', {'id': rid}).findAll('speciesReference')]
+        compartment = self.getReactionLocation(rid)['compartment']
+        return {s: 0 if compartment == self.specieCompartment(s) else 1 for s in species}
 
     def getReactionSctry(self, rid, list_name):
         '''
@@ -249,15 +257,15 @@ class SBMLParser:
         else:
             return {}
 
-    def newLocation(self, compartment_id, enzyme_set):
-        return {'compartment': compartment_id, 'enzyme_set': enzyme_set}
+    def newLocation(self, compartment_id, reaction_set):
+        return {'compartment': compartment_id, 'reaction_set': reaction_set}
 
-    def get_bulk_reactions(self, compartment_id, enzyme_set):
-        location = self.newLocation(compartment_id, enzyme_set)
+    def getReactionSetIds(self, compartment_id, reaction_set):
+        location = self.newLocation(compartment_id, reaction_set)
         reaction_ids = [r.get('id') for r in self.model.findAll('reaction')]
-        return [r for r in reaction_ids if self.get_reaction_location(r) == location]
+        return [r for r in reaction_ids if self.getReactionLocation(r) == location]
 
-    def get_reaction_location(self, rid):
+    def getReactionLocation(self, rid):
         # TODO: Get a more general and flexible implementation for this in order to
         # accept different structures. An option is to load a map of str(set<compartment>) as the key
         # and the location as the value. The map can be loaded from a file allowing different
@@ -279,8 +287,8 @@ class SBMLParser:
             if self.periplasm_id in compartments:  # Periplasm inner or outer membrane
 
                 compartments.discard(self.periplasm_id)
-                enzyme_sets = {self.extra_cellular_id: 'outer', self.cytoplasm_id: 'inner'}
-                location = self.newLocation(self.periplasm_id, enzyme_sets[compartments.pop()])
+                reaction_sets = {self.extra_cellular_id: 'outer', self.cytoplasm_id: 'inner'}
+                location = self.newLocation(self.periplasm_id, reaction_sets[compartments.pop()])
             elif self.cytoplasm_id in compartments:
 
                 compartments.discard(self.cytoplasm_id)

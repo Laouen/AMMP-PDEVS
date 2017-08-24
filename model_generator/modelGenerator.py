@@ -12,6 +12,7 @@ class ModelGenerator:
     """
 
     def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id):
+
         self.parser = SBMLParser(sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id)
         self.periplasm = {'id': periplasm_id}
         self.extra_cellular = {'id': extra_cellular_id}
@@ -19,12 +20,12 @@ class ModelGenerator:
         self.organelles = []
 
     def generateStructure(self):
-        self.generatePeriplasm()
+        self.generatePeriplasmStructure()
 
-    def generatePeriplasm(self):
-        # All the membrane and the bulk are enzymes set that sends/receives
+    def generatePeriplasmStructure(self):
+        # All the membrane and the bulk are reaction set that sends/receives
         # metabolites to compartment spaces.
-        bulks = ['outer', 'inner', 'trans', 'bulk']
+        reaction_sets = ['outer', 'inner', 'trans', 'bulk']
 
         # Building routing table for periplasm, each reaction can be reached using the port
         # that the routing table indicates. Each port communicates the periplasm space with
@@ -32,19 +33,22 @@ class ModelGenerator:
         next_port = 0
         comp_id = self.periplasm['id']
         self.periplasm['routing_table'] = {}
-        for bulk in bulks:
-            self.periplasm['routing_table'][(comp_id, bulk)] = next_port
+        for reaction_set in reaction_sets:
+            self.periplasm['routing_table'][(comp_id, reaction_set)] = next_port
             next_port += 1
 
-        # Building the periplasm bulk structures
-        self.periplasm['bulks'] = {}
-        for bulk in bulks:
-            reactions = self.parser.get_bulk_reactions(comp_id, bulk)
-            self.periplasm['bulks'][bulk] = self.generateBulk(reactions)
+        # Building the periplasm reaction_sets structures
+        self.periplasm['reaction_sets'] = {}
+        for reaction_set in reaction_sets:
+            reaction_ids = self.parser.getReactionSetIds(comp_id, reaction_set)
+            self.periplasm['reaction_sets'][reaction_set] = self.getReactionSetStructure(reaction_ids)
 
-    # TODO: implement this method
-    def generateBulk(self, reactions):
-        return len(reactions)
+        # TODO: implement the space parameters
+
+    def getReactionSetStructure(self, reaction_ids):
+
+        reaction_set = {rid: self.parser.getReactionParameter(rid) for rid in reaction_ids}
+        return reaction_set
 
 
 if __name__ == '__main__':
