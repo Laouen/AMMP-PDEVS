@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# NOTES AND LINKS:
-# python SBML parser: https://github.com/linsalrob/PyFBA/blob/master/PyFBA/parse/SBML.py
+'''
+NOTES AND LINKS:
+python SBML parser: https://github.com/linsalrob/PyFBA/blob/master/PyFBA/parse/SBML.py
+'''
 
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import json
 import re
-# TODO: make all the method camel case
-
+import progressbar
 
 class IlegalCompartmentCombination(Exception):
     pass
@@ -51,22 +52,26 @@ class SBMLParser:
         self.koffSTPs = defaultdict(lambda: 0)
         self.koffPTSs = defaultdict(lambda: 0)
 
-        self.parse_sbml_file(sbml_file)
+        self.parseSbmlFile(sbml_file)
+        self.parseReactions()
 
-    def parse_sbml_file(self, sbml_file):
+    def parseSbmlFile(self, sbml_file):
         self.model = BeautifulSoup(open(sbml_file, 'r'), 'xml')
 
-        # Parse de compartments
-        # Parse de reactions
-        # Parse de enzymes
+        '''
+        TODO: Parse de compartments
+        TODO: Parse de reactions
+        TODO: Parse de enzymes
+        '''
 
-    def is_biomass(eid):
-        return 'biomass' in eid.lower()
+    def isBiomass(self, rid):
+        return 'biomass' in rid.lower()
 
-    def get_compartments(self):
+    def getCompartments(self):
         '''
         Returns a dictionary with the compartment ids as keys and the
         compartment names as values
+
         :return: compartment_id
         :rtype: dictionary
         '''
@@ -77,11 +82,11 @@ class SBMLParser:
         for compartment in self.model.findAll('compartment'):
             self.compartments[compartment.get('id')] = compartment.get('name')
 
-    def get_specie_by_compartments(self):
-        ## Returns a dictionary with the compartment ids as keys and dictionaries
-        # of the compartment species id and name as value.
-        # @return {compartment_id: {specie_id: specie_name}}:
-
+    def getSpecieByCompartments(self):
+        '''
+        :return: A dictionary of compartment ids as keys and dictionaries of (specie_id, specie_name) as values 
+        :rtype: diccionary<int, dictionary<int, string>>
+        '''
         if self.compartment_species:
             return self.compartment_species
 
@@ -96,51 +101,64 @@ class SBMLParser:
 
         return self.compartment_species
 
-    def get_gene_association(self, reaction):
-        ## Gets the GENE_ASSOCIATION: text informations from a xml reaction node.
-        #  If there is no associated enzymes, it returns an empty list, if there is some associated
-        #  enzymes, it returns a list of all of them.
-        #  @param reaction: lxml Element - The reaction node from the SBML xml file
-        #  @return: A list of logical gene associations
+    def getGeneAssociation(self, reaction):
+        '''
+        Gets the GENE_ASSOCIATION: text informations from a xml reaction node.
+        If there is no associated enzymes, it returns an empty list, if there 
+        is some associated enzymes, it returns a list of all of them.
 
+        :param reaction: The reaction node from the SBML xml file
+        :type: lxml Element.
+        :return: A list of logical gene associations.
+        :rtype: List<string>
+        '''
         return [x.text.replace('GENE_ASSOCIATION: ', '')
                 for x in reaction.notes.body.findAll('p')
                 if 'GENE_ASSOCIATION' in x.text and any(char.isdigit() for char in x.text)]
 
-    def get_enzymes_handler_ids(self, reaction):
+    def getEnzymeHandlersIds(self, reaction):
         '''
         Returns all the reaction associated enzymes, all the associated enzymes are the enzymes responsables to
         handle the reaction.
+
         :param: reaction:
         :ptype: BeautifulSoup reaction node
         :return: the enzyme handler ids
         :rtype: List of string
         '''
 
-        gene_association = self.get_gene_association(reaction)
+        gene_association = self.getGeneAssociation(reaction)
 
         if len(gene_association) > 0:
-            return self.get_enzymes_from_gane_association(gene_association)
+            return self.getEnzymesFromGaneAssociation(gene_association)
 
         res = ["unnamed_" + str(self.unnamed_enzymes_amount)]
         self.unnamed_enzymes_amount += 1
         return res
 
-    def get_enzymes_from_gane_association(self, gene_association):
-        ## Returns a list of enzymes from a gene_association logic expresion as the one specified in the SBML files
-        #  @param gene_association: string - The gene association logical expresion
-
+    def getEnzymesFromGaneAssociation(self, gene_association):
+        '''
+        :param gene_association: The gene association logical expresion
+        :type: string
+        :return: A list of enzyme ids from a gene_association logic expresion as the one specified in the SBML files
+        :rtype: List<string>
+        '''
         gene_association = map(lambda x: x.replace('(', '[').replace(')', ']').replace(' ', ','), gene_association)
         gene_association = map(lambda x: re.sub(r'([a-z]+[0-9]+)', r'"\1"', x), gene_association)
         gene_association = map(lambda x: re.sub(r'(and|or)', r'"\1"', x), gene_association)
         gene_association = map(lambda x: json.loads(x), gene_association)
-        enzymes = map(lambda x: self.parse_logical_gene_association(x), gene_association)
+        enzymes = map(lambda x: self.parseLogicalGeneAssociation(x), gene_association)
         return [handler for handler_list in enzymes for handler in handler_list]
 
-    def parse_logical_gene_association(self, enzymes):
-        ## Parses a gene association expresion of a reaction to get all the responzable enzymes for the reaction
-        # @param enzymes: [string] - A list of gene association expresions to parse
-        # @return [gene_names]
+    def parseLogicalGeneAssociation(self, enzymes):
+        '''
+        Parses a gene association expresion of a reaction to get all the responzable enzymes for the reaction
+
+        :param enzymes: A list of gene association expresions to parse
+        :type: list<string>
+        :return: All the gene names associated to the enzymes
+        :rtype: list<string>
+        '''
 
         # base cases
         if type(enzymes) in [unicode, str]:
@@ -150,7 +168,7 @@ class SBMLParser:
                 return [enzymes]
 
         # recursive cases
-        enzymes = [self.parse_logical_gene_association(expresion) for expresion in enzymes]
+        enzymes = [self.parseLogicalGeneAssociation(expresion) for expresion in enzymes]
 
         while len(enzymes) >= 3:
             left = enzymes[0]
@@ -170,28 +188,32 @@ class SBMLParser:
         return enzymes[0]
 
     def getEnzymesInformation(self):
-        ## Returns a map of all the needed enzyme information to intianciate the space models.
+        '''
+        :returns: A dictionary of all needed enzyme information to intianciate the space models.
+        :rtype: dictionary<int, enzyme_information>
+        '''
 
         if not self.enzymes == {}:
             return self.enzymes
 
         for reaction in self.model.findAll('reaction'):
             rid = reaction.get('id')
-            if self.is_biomass(rid):
+            if self.isBiomass(rid):
                 continue
 
-            for ehid in self.get_enzymes_handler_ids(reaction):
+            for ehid in self.getEnzymeHandlersIds(reaction):
                 if ehid not in self.enzymes.keys():
                     self.enzymes[ehid] = {
                         'id': ehid,
                         'amount': self.enzyme_amounts[ehid],
-                        'handled_reacions': {rid: self.getReactionParameter(rid)}
+                        'handled_reacions': {rid: self.reactions[rid]} # TODO: check what is the correct information to put here
                     }
                 else:
-                    self.enzymes[ehid]['handled_reacions'][rid] = self.getReactionParameter(rid)
+                    self.enzymes[ehid]['handled_reacions'][rid] = self.reactions[rid] # TODO: check what is the correct information to put here
 
         return self.enzymes
 
+    # NOT USED
     def getReactionIds(self):
         '''
         :param:
@@ -201,81 +223,104 @@ class SBMLParser:
 
         return [reaction.get('id')
                 for reaction in self.model.findAll('reaction')
-                if not self.is_biomass(reaction.get('id'))]
+                if not self.isBiomass(reaction.get('id'))]
 
-    def getReactionParameter(self, rid):
-        '''
-        :return: The atomic model parameters ready to be instanciated for the reaction with id rid.
-        :rtype: Dictionary of reaction id and parameters
-        '''
-        print 'getReactionParameter: ', rid
+    ##### REACTIONS ######
+    ## Implemented optimized methods where all re resources are acceded at once
 
-        if rid in self.reactions.keys():
-            return self.reactions[rid]
+    def getReactionSetIds(self, compartment_id, reaction_set):
+        location = self.newLocation(compartment_id, reaction_set)
+        return [r for r, p in self.reactions.items() if v['location'] == location]
 
-        reaction = self.model.find('reaction', {'id': rid})
-        self.reactions[rid] = {
-            # TODO(Routing): location is currently not used in the atomic model,
-            # but should be used to determine which port to send the metabolites
-            'location': self.getReactionLocation(rid),
-            'reversible': False if reaction.get('reversible') == 'false' else True,
-            'substrate_sctry': self.getReactionSctry(rid, 'listOfReactants'),
-            'products_sctry': self.getReactionSctry(rid, 'listOfProducts'),
-            'routing_table': self.getReactionRoutingTable(rid),
-            'konSTP': self.konSTPs[rid],
-            'konPTS': self.konPTSs[rid],
-            'koffSTP': self.koffSTPs[rid],
-            'koffPTS': self.koffPTSs[rid]
-        }
+    def parseReactions(self):
 
-        return self.reactions[rid]
+        print '[Parser] Start parsing reactions.'
+        self.reactions = {}
+        reactions = self.model.findAll('reaction')
+        
+        bar = progressbar.ProgressBar(maxval=len(reactions))
+        bar.start()
+        done = 0
 
-    def getReactionRoutingTable(self, rid):
-        species = [s.get('species') for s in self.model.find('reaction', {'id': rid}).findAll('speciesReference')]
-        compartment = self.getReactionLocation(rid)['compartment']
-        return {s: 0 if compartment == self.specieCompartment(s) else 1 for s in species}
+        for reaction in reactions:
 
-    def getReactionSctry(self, rid, list_name):
-        '''
-        Calculates stoichiometry numbers of the reaction reactants or products respectively.
+            rid = reaction.get('id')
+            if self.isBiomass(rid):
+                continue
 
-        :param: rid, The reaction id to gete the stoichiometry.
-        :ptype: String
-        :param: list_name, string - One of listOfReactants or listOfProduct in order to retrieve the
-        :ptype: String
-        :return: The products/reactants stoichiometry
-        :rtype: dictionary
-        '''
+            bar.update(done)
+            done += 1
 
-        sctries = self.model.find('reaction', {'id': rid}).find(list_name)
-
-        if sctries is not None:
-            return {s.get('species'): 1.0
-                    if s.get('stoichiometry') is None
-                    else float(s.get('stoichiometry'))
-                    for s in sctries.findAll('speciesReference')}
-        else:
-            return {}
+            stoichiometry = self.parseStoichiometry(reaction)
+            location = self.getLocation(stoichiometry['listOfReactants'].keys(),
+                                        stoichiometry['listOfProducts'].keys())
+            routing_table = self.getReactionRoutingTable(reaction,
+                                                         location['compartment'])
+            parameters = {
+                # TODO(Routing): location is currently not used in the atomic model,
+                # but should be used to determine which port to send the metabolites
+                'location': location,
+                'reversible': False if reaction.get('reversible') == 'false' else True,
+                'substrate_sctry': stoichiometry['listOfReactants'],
+                'products_sctry': stoichiometry['listOfProducts'],
+                'routing_table': routing_table,
+                'konSTP': self.konSTPs[rid],
+                'konPTS': self.konPTSs[rid],
+                'koffSTP': self.koffSTPs[rid],
+                'koffPTS': self.koffPTSs[rid]
+            }
+            self.reactions[rid] = parameters
+        
+        print '[Parser] End parsing reactions.'
 
     def newLocation(self, compartment_id, reaction_set):
         return {'compartment': compartment_id, 'reaction_set': reaction_set}
 
-    def getReactionSetIds(self, compartment_id, reaction_set):
-        location = self.newLocation(compartment_id, reaction_set)
-        reaction_ids = [r.get('id') for r in self.model.findAll('reaction')]
-        return [r for r in reaction_ids if self.getReactionLocation(r) == location]
+    def specieCompartment(self, specie_id):
+        return self.model.find('species', {'id': specie_id}).get('compartment')
 
-    def getReactionLocation(self, rid):
-        # TODO: Get a more general and flexible implementation for this in order to
-        # accept different structures. An option is to load a map of str(set<compartment>) as the key
-        # and the location as the value. The map can be loaded from a file allowing different
-        # compartment combination interpretations.
+    def getReactionRoutingTable(self, reaction, compartment):
+        species = [s.get('species') for s in reaction.findAll('speciesReference')]
+        return {s: 0 if compartment == self.specieCompartment(s) else 1 for s in species}
 
-        if rid in self.reaction_locations.keys():
-            return self.reaction_locations[rid]
+    def parseStoichiometry(self, reaction):
+        stoichiometry = {}
 
-        reactants = self.getReactionSctry(rid, 'listOfReactants').keys()
-        products = self.getReactionSctry(rid, 'listOfProducts').keys()
+        # parsing reactants
+        sctries = reaction.find('listOfReactants')
+        if sctries is not None:
+            reactants = {
+                s.get('species'): 1.0
+                if s.get('stoichiometry') is None
+                else float(s.get('stoichiometry'))
+                for s in sctries.findAll('speciesReference')
+            }
+        else:
+            reactants = {}
+
+        # parsing products
+        sctries = reaction.find('listOfProducts')
+        if sctries is not None:
+            products = {
+                s.get('species'): 1.0
+                if s.get('stoichiometry') is None
+                else float(s.get('stoichiometry'))
+                for s in sctries.findAll('speciesReference')
+            }
+        else:
+            products = {}
+        
+        stoichiometry['listOfReactants'] = reactants
+        stoichiometry['listOfProducts'] = products
+        return stoichiometry
+
+    def getLocation(self, reactants, products):
+        '''
+        TODO: Get a more general and flexible implementation for this in order to
+        accept different structures. An option is to load a map of str(set<compartment>) as the key
+        and the location as the value. The map can be loaded from a file allowing different
+        compartment combination interpretations.
+        '''
 
         compartments = set([self.specieCompartment(s) for s in set(products + reactants)])
 
@@ -301,11 +346,8 @@ class SBMLParser:
             if set([self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id]) == compartments:
                 location = self.newLocation(self.periplasm_id, 'trans')
 
-        if location is not None:
-            self.reaction_locations[rid] = location
-            return location
-        else:
-            raise IlegalCompartmentCombination('Ilegal compartment combination')
+        if location is None:
+            raise IlegalCompartmentCombination('Ilegal compartment combination ' + str(compartments))
+        
+        return location
 
-    def specieCompartment(self, specie_id):
-        return self.model.find('species', {'id': specie_id}).get('compartment')

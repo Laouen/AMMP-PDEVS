@@ -7,9 +7,9 @@ import sys
 
 
 class ModelGenerator:
-    """
-    Generate a model structure from a SBML file using the SBMLParser to get the information
-    """
+    '''
+    Generates a model structure from a SBML file using the SBMLParser to get the information
+    '''
 
     def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id):
 
@@ -47,7 +47,7 @@ class ModelGenerator:
 
     def getReactionSetStructure(self, reaction_ids):
 
-        reaction_set = {rid: self.parser.getReactionParameter(rid) for rid in reaction_ids}
+        reaction_set = {rid: self.parser.reactions[rid] for rid in reaction_ids}
         return reaction_set
 
 
@@ -71,3 +71,8 @@ if __name__ == '__main__':
                                FLAGS.extra_cellular,
                                FLAGS.periplasm,
                                FLAGS.cytoplasm)
+
+    print 'start geting stoichiometries'
+    generator.parser.parseStoichiometries()
+    print 'end geting stoichiometries'
+    generator.generateStructure()
