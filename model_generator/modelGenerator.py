@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from parser import SBMLParser
-import gflags
-import sys
-
 
 class ModelGenerator:
     '''
@@ -41,38 +38,13 @@ class ModelGenerator:
         self.periplasm['reaction_sets'] = {}
         for reaction_set in reaction_sets:
             reaction_ids = self.parser.getReactionSetIds(comp_id, reaction_set)
-            self.periplasm['reaction_sets'][reaction_set] = self.getReactionSetStructure(reaction_ids)
+            reaction_set = {rid: self.parser.reactions[rid] for rid in reaction_ids}
+            self.periplasm['reaction_sets'][reaction_set] = reaction_set
 
-        # TODO: implement the space parameters
-
-    def getReactionSetStructure(self, reaction_ids):
-
-        reaction_set = {rid: self.parser.reactions[rid] for rid in reaction_ids}
-        return reaction_set
-
-
-if __name__ == '__main__':
-
-    gflags.DEFINE_string('sbml_file', None, 'The SBML file path to parse', short_name='f')
-    gflags.DEFINE_string('extra_cellular', 'e', 'The extra cellular space ID in the SBML file', short_name='e')
-    gflags.DEFINE_string('cytoplasm', 'c', 'The cytoplasm space ID in the SBML file', short_name='c')
-    gflags.DEFINE_string('periplasm', 'p', 'The periplasm space ID in the SBML file', short_name='p')
-
-    gflags.MarkFlagAsRequired('sbml_file')
-    FLAGS = gflags.FLAGS
-
-    try:
-        argv = FLAGS(sys.argv)  # parse flags
-    except gflags.FlagsError, e:
-        print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
-        sys.exit(1)
-
-    generator = ModelGenerator(FLAGS.sbml_file,
-                               FLAGS.extra_cellular,
-                               FLAGS.periplasm,
-                               FLAGS.cytoplasm)
-
-    print 'start geting stoichiometries'
-    generator.parser.parseStoichiometries()
-    print 'end geting stoichiometries'
-    generator.generateStructure()
+        # Building the space structure
+        reaction_locations = self.parser.getRelatedReactions(comp_id)
+        self.periplasm['space'] = {
+            'species': self.parser.getSpecieByCompartments()[comp_id].keys(),
+            'reaction_locations': reaction_locations,
+            'enzymes': self.parser.getRelatedEnzymes(set(reaction_locations.keys()))
+        }
