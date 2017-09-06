@@ -1,10 +1,6 @@
-from unittest import TestCase
-from SBMLParser import SBMLParser
+import unittest
 
-class TestSBMLParser(TestCase):
-
-    def setUp(self):
-        self.parser = SBMLParser('test.xml', 'e', 'p', 'c')
+class TestSBMLParser(unittest.TestCase):
 
     def test_loadSbmlFile(self):
         self.fail()
@@ -62,3 +58,6 @@ class TestSBMLParser(TestCase):
 
     def test_parseReaction(self):
         self.fail()
+
+if __name__ == '__main__':
+	unittest.main()
