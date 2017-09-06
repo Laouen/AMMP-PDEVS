@@ -1,36 +1,36 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 NOTES AND LINKS:
 python SBML parser: https://github.com/linsalrob/PyFBA/blob/master/PyFBA/parse/SBML.py
-'''
+"""
 
-from bs4 import BeautifulSoup
-from collections import defaultdict
 import json
+import progressbar # sudo pip install progressbar
 import re
-import progressbar
+from bs4 import BeautifulSoup # sudo pip install beautifulsoup, lxml
+from collections import defaultdict
+
 
 class IlegalCompartmentCombination(Exception):
     pass
 
-
 class SBMLParser:
-    '''
+    """
     Parses and retrieve SBML information to generate a CADMIUM P-DEVS model
+    """
 
-    '''
-
-    def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id):
-        '''
+    def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id, reactions={}, enzymes={}):
+        """
+        class SBMLParser:
         SBMLParser constructor
 
         :param sbml_file: The SBML xml file path.
         :type sbml_file: string
         :return: None
         :rtype: None
-        '''
+        """
 
         # Special values
         self.extra_cellular_id = extra_cellular_id
@@ -41,8 +41,8 @@ class SBMLParser:
 
         self.compartments_species = {}
         self.compartments = {}
-        self.reactions = {}
-        self.enzymes = {}
+        self.reactions = reactions
+        self.enzymes = enzymes
         self.reaction_locations = {}
 
         # Not in the SBML model parameters
@@ -52,10 +52,12 @@ class SBMLParser:
         self.koffSTPs = defaultdict(lambda: 0)
         self.koffPTSs = defaultdict(lambda: 0)
 
-        self.parseSbmlFile(sbml_file)
-        self.parseReactions()
+        self.loadSbmlFile(sbml_file)
 
-    def parseSbmlFile(self, sbml_file):
+        if self.reactions == {} and self.enzymes == {}:
+            self.parseReactions()
+
+    def loadSbmlFile(self, sbml_file):
         self.model = BeautifulSoup(open(sbml_file, 'r'), 'xml')
 
         '''
@@ -100,18 +102,6 @@ class SBMLParser:
             self.compartment_species[compartment][id] = name
 
         return self.compartment_species
-
-    # NOT USED
-    def getReactionIds(self):
-        '''
-        :param:
-        :return: All the SBML reaction IDs without including the biomass reaction
-        :rtype: List of SBML reaction IDs
-        '''
-
-        return [reaction.get('id')
-                for reaction in self.model.findAll('reaction')
-                if not self.isBiomass(reaction.get('id'))]
 
     ##### SPACE ######
     def getRelatedReactionsLocations(self, comp_id):
@@ -237,18 +227,17 @@ class SBMLParser:
                     # TODO: the amount should be in the model generator and 
                     # should be per compartments
                     'amount': self.enzyme_amounts[eid],
-                    'handled_reacions': [rid]
+                    'handled_reactions': [rid]
                 }
             else:
-                self.enzymes[eid]['handled_reacions'].append(rid)
-
+                self.enzymes[eid]['handled_reactions'].append(rid)
 
     ##### REACTIONS ######
     ## Implemented optimized methods where all re resources are acceded at once
 
     def getReactionSetIds(self, compartment_id, reaction_set):
         location = self.newLocation(compartment_id, reaction_set)
-        return [r for r, p in self.reactions.items() if v['location'] == location]
+        return [r for r, p in self.reactions.items() if p['location'] == location]
 
     def parseReactions(self):
         '''
@@ -274,9 +263,11 @@ class SBMLParser:
     def specieCompartment(self, specie_id):
         return self.model.find('species', {'id': specie_id}).get('compartment')
 
-    def getReactionRoutingTable(self, reaction, compartment):
+    def getReactionRoutingTable(self, reaction, comp_id):
         species = [s.get('species') for s in reaction.findAll('speciesReference')]
-        return {s: 0 if compartment == self.specieCompartment(s) else 1 for s in species}
+        return {s: 0 if comp_id == self.specieCompartment(s)
+                else 1 if self.cytoplasm_id == self.specieCompartment(s)
+                else 2 for s in species}
 
     def parseStoichiometry(self, reaction):
         stoichiometry = {}

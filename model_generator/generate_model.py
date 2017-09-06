@@ -3,6 +3,8 @@
 
 import gflags
 import sys
+import pickle
+
 from modelGenerator import ModelGenerator
 
 if __name__ == '__main__':
@@ -21,12 +23,16 @@ if __name__ == '__main__':
         print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
 
+    with open("pickles/reactions.pickle", "r") as reaction_file:
+        reactions = pickle.load(reaction_file)
+
+    with open("pickles/enzymes.pickle", "r") as enzymes_file:
+        enzymes = pickle.load(enzymes_file)
+
     generator = ModelGenerator(FLAGS.sbml_file,
                                FLAGS.extra_cellular,
                                FLAGS.periplasm,
-                               FLAGS.cytoplasm)
+                               FLAGS.cytoplasm,
+                               reactions,
+                               enzymes)
 
-    print 'start geting stoichiometries'
-    generator.parser.parseStoichiometries()
-    print 'end geting stoichiometries'
-    generator.generateStructure()
