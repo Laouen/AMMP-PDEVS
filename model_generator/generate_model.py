@@ -5,7 +5,7 @@ import gflags
 import sys
 import pickle
 
-from modelGenerator import ModelGenerator
+from ModelGenerator import ModelGenerator
 
 if __name__ == '__main__':
 
