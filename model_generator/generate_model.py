@@ -22,17 +22,20 @@ if __name__ == '__main__':
     except gflags.FlagsError, e:
         print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
-
+    """
     with open("pickles/reactions.pickle", "r") as reaction_file:
         reactions = pickle.load(reaction_file)
 
     with open("pickles/enzymes.pickle", "r") as enzymes_file:
         enzymes = pickle.load(enzymes_file)
-
+    """
     generator = ModelGenerator(FLAGS.sbml_file,
                                FLAGS.extra_cellular,
                                FLAGS.periplasm,
-                               FLAGS.cytoplasm,
-                               reactions,
-                               enzymes)
+                               FLAGS.cytoplasm)
 
+    with open("pickles/reactions.pickle", "wb") as reaction_file:
+        pickle.dump(generator.parser.reactions, reaction_file)
+
+    with open("pickles/enzymes.pickle", "wb") as enzymes_file:
+        pickle.dump(generator.parser.enzymes, enzymes_file)

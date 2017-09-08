@@ -37,9 +37,7 @@ class ModelStructure:
         self.routing_table = {(comp_id, r): p for r, p in zip(routing_sets, rs_len)}
 
         # Building reaction sets
-        print comp_id
         for reaction_set in internal_reaction_sets:
-            print reaction_set
             reaction_ids = parser.get_reaction_set_ids(comp_id, reaction_set)
             self.reaction_sets = {rid: parser.reactions[rid] for rid in reaction_ids}
 

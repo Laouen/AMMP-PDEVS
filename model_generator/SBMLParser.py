@@ -70,7 +70,6 @@ class SBMLParser:
         self.compartments = None
         self.reactions = reactions
         self.enzymes = enzymes
-        self.reaction_locations = {}
 
         # Not in the SBML model parameters
         self.enzyme_amounts = defaultdict(lambda: 0)
@@ -148,7 +147,7 @@ class SBMLParser:
         :rtype: list[str]
         """
         return [eid for eid, enzyme in self.enzymes.items() 
-                if len(reactions.intersection(enzyme['handled_reacions'])) > 0]
+                if len(reactions.intersection(enzyme['handled_reactions'])) > 0]
 
     def get_enzyme_ids(self, reaction):
         """
@@ -273,6 +272,8 @@ class SBMLParser:
         It also generates the enzyme set obtained from reactions gene association
         """
         print '[Parser] Start parsing reactions.'
+        self.enzymes = {}
+        self.reactions = {}
         xml_reactions = self.model.findAll('reaction')
         
         bar = progressbar.ProgressBar(maxval=len(xml_reactions))
@@ -366,8 +367,7 @@ class SBMLParser:
         stoichiometry = self.parse_stoichiometry(reaction)
         species = stoichiometry['listOfReactants'].keys() + stoichiometry['listOfProducts'].keys()
         location = self.get_location(species)
-        routing_table = self.get_reaction_routing_table(reaction,
-                                                        location['compartment'])
+        routing_table = self.get_reaction_routing_table(reaction, location.cid)
         parameters = {
             # TODO(Routing): location is currently not used in the atomic model,
             # but should be used to determine which port to send the metabolites
