@@ -17,7 +17,7 @@
 // atomic model includes
 #include "atomic-models/filter.hpp"
 #include "atomic-models/reaction.hpp"
-#include "atomic-models/space.hpp"
+#include "atomic-models/cdboost-space.hpp"
 #include "atomic-models/biomass.hpp"
 
 using namespace std;
@@ -208,10 +208,10 @@ public:
         }
       }
 
-      // creating filter and space atomic models
+      // creating filter and cdboost-space atomic models
       auto cfilter = make_atomic_ptr< filter<TIME, MSG>, const string>(c + "_s");
       auto sm = make_atomic_ptr< 
-        space<TIME, MSG>, 
+        cdboost<TIME, MSG>,
         const string, 
         const TIME,
         const TIME,

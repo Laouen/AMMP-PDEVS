@@ -5,16 +5,16 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
         atomic-models/biomass.hpp
-        atomic-models/cdboost-reaction.hpp
+        atomic-models/reaction.hpp
         atomic-models/filter.hpp
         atomic-models/reaction.hpp
         atomic-models/space.hpp
-        data-structures/message_types.hpp
-        data-structures/randomNumbers.hpp
-        data-structures/types.cpp
-        data-structures/types.hpp
-        data-structures/unit_definition.cpp
-        data-structures/unit_definition.hpp
+        libs/message_types.hpp
+        libs/randomNumbers.hpp
+        libs/types.cpp
+        libs/types.hpp
+        libs/unit_definition.cpp
+        libs/unit_definition.hpp
         model_generator/model_generator.hpp
         model_generator/model_generator.py
         model_generator/parser.py
@@ -30,5 +30,3 @@ set(SOURCE_FILES
         model-engine.hpp
         msb201165-sup-0003.xml
         README.md)
-
-add_executable(PMGBP_PDEVS ${SOURCE_FILES})

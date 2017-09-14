@@ -37,6 +37,7 @@
 #include <NDTime.hpp>
 
 #include "atomic-models/reaction.hpp"
+#include "atomic-models/space.hpp"
 #include "data-structures/message_types.hpp"
 
 using namespace std;

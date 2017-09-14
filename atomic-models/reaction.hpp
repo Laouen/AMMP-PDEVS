@@ -77,19 +77,20 @@ public:
    * 
    */
   struct state_type{
-    string                                id;
-    shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
-    bool                                  reversible; // TODO: check where is this field used
-    TIME                                  rate;
-    map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
-    map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
-    map<string, Integer_t>                substrate_comps;
-    map<string, Integer_t>                product_comps;
-    double                                koff_STP;
-    double                                koff_PTS;
-    TIME                                  interval_time; // TODO: Check where is this field used
-    TIME                                  reject_time;
-    RTaskQueue_t<TIME, MSG>               tasks;
+      string                                id;
+      shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
+      bool                                  reversible; // TODO: check where is this field used
+      TIME                                  rate;
+      map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
+      map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
+      map<string, Integer_t>                substrate_comps;
+      map<string, Integer_t>                product_comps;
+      double                                koff_STP;
+      double                                koff_PTS;
+      TIME                                  interval_time; // TODO: Check where is this field used
+      TIME                                  reject_time;
+
+      RTaskQueue_t<TIME, MSG>               tasks;
   };
 
   constexpr reaction() noexcept {

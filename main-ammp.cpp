@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
   auto coupled_pf = mg.makeCoupledModel(pf);
 
 
-  if (comment_mode) cout << "Creating the model to show the space state from stream" << endl;
+  if (comment_mode) cout << "Creating the model to show the cdboost-space state from stream" << endl;
   piss = make_shared<istringstream>();
   input = "";
 

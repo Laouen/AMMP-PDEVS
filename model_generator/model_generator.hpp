@@ -19,7 +19,7 @@
 // atomic model includes
 #include "../atomic-models/filter.hpp"
 #include "../atomic-models/reaction.hpp"
-#include "../atomic-models/space.hpp"
+#include "../atomic-models/cdboost-space.hpp"
 #include "../atomic-models/biomass.hpp"
 
 template<class TIME,class MSG>
@@ -258,9 +258,9 @@ public:
   /*****************************************************/
 
   mm_t<TIME>& getSpaceModels() {
-    comment("Getting space models ...");
+    comment("Getting cdboost-space models ...");
     if (_space_models.empty()) {
-      comment("Creating space models ...");
+      comment("Creating cdboost-space models ...");
       string id;
       
       if(_reaction_set_models.empty()) this->getEnzymeSetModels();
@@ -272,7 +272,7 @@ public:
         Address_t biomass_address = parser.getBiomass().location;
 
         auto space_model = make_atomic_ptr< 
-        space<TIME, MSG>,
+        cdboost<TIME, MSG>,
         const string,
         const TIME,
         const TIME,
@@ -303,9 +303,9 @@ public:
         _space_models.insert({id, make_shared<flattened_coupled<TIME, MSG>>(models, eic, ic, eoc)});
       }
 
-      comment("End creating space models.");
+      comment("End creating cdboost-space models.");
     }
-    comment("End getting space models.");
+    comment("End getting cdboost-space models.");
     return _space_models;
   }
 

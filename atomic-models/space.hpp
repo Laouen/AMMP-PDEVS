@@ -1,492 +1,390 @@
-#ifndef BOOST_SIMULATION_PDEVS_SPACE_H
-#define BOOST_SIMULATION_PDEVS_SPACE_H
-#include <string>
-#include <utility>
-#include <map>
+/**
+ * Copyright (c) 2017, Laouen Mayal Louan Belloli
+ * Carleton University
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef PMGBP_PDEVS_SPACE_HPP
+#define PMGBP_PDEVS_SPACE_HPP
+
 #include <limits>
-#include <memory>
-#include <math.h>
-// specially to shuffle the current_enzyme vector.
-#include <random>
-#include <algorithm>
-#include <iterator>
-#include <iostream>
+#include <string>
 
-#include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+#include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
+#include "../libs/randomNumbers.hpp" // RealRandom
+#include "../libs/Logger.hpp"
 
-#include "../data-structures/types.hpp" // reaction_info_t, SState_t, Integer_t
-#include "../data-structures/randomNumbers.hpp" // IntegerRandom_t
+// TODO: Ports must be defined by the model generator
+template <typename MSG>
+struct space_defs{
+    // custom ports
+    struct out : public out_port<MSG> {
+    };
+    struct in : public in_port<MSG> {
+    };
+};
 
+template <class MSG, class TIME>
+class space {
 
-using namespace boost::simulation::pdevs;
-using namespace boost::simulation;
-using namespace std;
-
-#define TIME_TO_SEND_FOR_REACTION TIME(1,100000)
-
-template<class TIME, class MSG>
-class space : public pdevs::atomic<TIME, MSG>
-{
-private:
-  string                  _id;
-  TIME                    _it; // it = interval time
-  TIME                    _br; // br = biomass request
-  TIME                    _current_time;
-  Address_t               _biomass_address;
-  SetOfMolecules_t        _metabolites;
-  map<string, enzyme_t>   _enzymes;
-  double                  _volume;
-
-  // task queue
-  STaskQueue_t<TIME, MSG> _tasks;
-
-  // used for uniform random numbers
-  RealRandom_t<double>       _real_random;
-  IntegerRandom_t<Integer_t> _integer_random;
+    using defs=space_defs<MSG>;
 
 public:
+    /**
+     * @author Laouen Mayal Louan Belloli
+     *
+     * @struct space::state_type space.hpp
+     *
+     * @brief Represents a valid P-DEVS atomic space internal model state
+     */
+    // TODO: Implement generic state class with state validations
+    struct state_type {
+        std::string                 id;
+        TIME                        current_time;
+        TIME                        internal_time;
+        TIME                        biomass_request;
+        Address_t                   biomass_address;
+        SetOfMolecules_t            metabolites;
+        map<std::string, enzyme_t>  enzymes;
+        double                     volume;
 
-  // precondition: the SetOfMolecules_t given as parameter must contain all the getReactionIDs metabolites in the space
-  explicit space(
-    const string                  other_id,
-    const TIME                    other_it,
-    const TIME                    other_br,
-    const TIME                    other_ct,
-    const Address_t&              other_biomass_address,
-    const SetOfMolecules_t        other_metabolites,
-    const map<string, enzyme_t>&  other_enzymes,
-    const double                  other_volume
-    ) noexcept :
-  _id(other_id),
-  _it(other_it),
-  _br(other_br),
-  _current_time(other_ct),
-  _biomass_address(other_biomass_address),
-  _metabolites(other_metabolites),
-  _enzymes(other_enzymes),
-  _volume(other_volume) {
+        STaskQueue_t<TIME, MSG>     tasks;
+    };
 
-    // The random atributes must be initilized with a random generator
-    random_device real_rd; // Random generator variable
-    _real_random.seed(real_rd());
-    random_device integer_rd;
-    _integer_random.seed(integer_rd());
-    // just to confirm, the space and metabolites start empty.
-    _tasks.clear();
-  }
+    RealRandom_t<double>       _real_random;
+    IntegerRandom_t<Integer_t>  _integer_random;
 
-  void internal() noexcept {
-    comment("internal init.");
-    MSG cm;
-    STask_t<TIME, MSG> sr; //, sb; // sr = selected_reactants, sb = selected_biomass
-    bool srah = false; // this boolean says if a SELECTING_FOR_REACTION tasks has already happen or not.
+    state_type                  _state;
 
-    _current_time += _tasks.front().time_left;
-    this->updateTaskTimeLefts(_tasks.front().time_left);
+    Logger logger;
 
-    // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is ZERO.
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
-      
-      if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
+    // ports definition
+    using input_ports=std::tuple<typename defs::in>;
+    using output_ports=std::tuple<typename defs::out>;
 
-      if (!srah) {
-        srah = true;
+    /********* Space constructors *************/
 
-        // set a new task to send the selected metabolites.
-        sr.task_kind  = SState_t::SENDING_REACTIONS;
-        sr.time_left  = TIME_TO_SEND_FOR_REACTION;
-        this->selectMetalobitesToReact(sr.msgs);
-        unifyMessages(sr.msgs);
-        if (!sr.msgs.empty()) this->insertTask(sr);
-      } 
+    /**
+     * @brief Default constructor
+     */
+    constexpr space() noexcept { this->initialize_random_engines(); }
+
+    /**
+     * @brief Constructs a new space instance using the internal state passed as parameter as the
+     * initial model state.
+     *
+     * @param state_other - The model initial internal state.
+     * @tparam state_other - space::state_type
+     */
+    constexpr space(const state_type& state_other) noexcept {
+        this->_state = state_other;
+        this->initialize_random_engines();
+        this->logger.setModuleName(this->_state._id);
     }
 
-    // setting new selection
-    this->setNextSelection();
-    comment("internal end.");
-  }
+    /********* Space constructors *************/
 
-  TIME advance() const noexcept {
-    comment("advance init.");
-    TIME result;
-    if (!_tasks.empty()) result = _tasks.front().time_left;
-    else                 result = pdevs::atomic<TIME, MSG>::infinity;
+    /********** P-DEVS functions **************/
 
-    if (result <= TIME(0,1)) cout << _id << " " << result << endl;
-    comment("advance time result " + result.toStringAsDouble());
-    return result;
-  }
+    void internal_transition() {
+        this->logger.info("Begin internal_transition");
 
-  vector<MSG> out() const noexcept {
-    comment("out init.");
-    vector<MSG> result;
-    MSG b_msg;
-    TIME current_time  = _tasks.front().time_left;
+        MSG cm;
+        STask_t<TIME, MSG> sr; // sr = selected_reactants, sb = selected_biomass (TODO: check sb)
 
-    // for all the tasks that ocurr in the current time. These tasks are processed now.
-    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {    
-      if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
-      result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
-    }
+        bool reaction_selection_done = false;
 
-    comment("out end.");
-    return result;
-  }
+        this->_state.current_time += this->_state.tasks.front().time_left;
+        this->updateTaskTimeLefts(this->_state.tasks.front().time_left);
 
-  void external(const vector<MSG>& mb, const TIME& t) noexcept {
-    comment("external init.");
-    //STask_t<TIME, MSG> new_task;
-    bool select_biomass = false;
-    bool show_metabolites = false;
+        // For all the tasks that are happening now.
+        // Because The task time_lefts were updated, the current time is ZERO.
+        typename STaskQueue_t<TIME, MSG>::iterator it;
+        for (it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
 
-    _current_time += t;
-    this->updateTaskTimeLefts(t);
+            if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
 
-    for (typename vector<MSG>::const_iterator it = mb.cbegin(); it != mb.cend(); ++it) {
-      if (it->show_request) {
-        
-        show_metabolites = true;
-      } else if (it->biomass_request) {
+            if (!reaction_selection_done) {
+                reaction_selection_done = true;
 
-        select_biomass = true;
-      } else {
-
-        addMultipleMetabolites(_metabolites, it->metabolites);
-      }
-    }
-
-    if (show_metabolites) this->show_metabolites();
-    if (select_biomass) this->selectForBiomass();
-
-    // if some metabolites have just arrived (the third part of the if has happen), a selection task must be programed.
-    this->setNextSelection();
-    comment("external end.");
-  }
-
-  virtual void confluence(const std::vector<MSG>& mb, const TIME& t) noexcept {
-    comment("confluence init.");
-    internal(); 
-    external(mb, ZERO);
-    comment("confluence end.");
-  }
-
-  /***************************************
-  ********* helper functions *************
-  ***************************************/
-  void comment(string msg) const {
-    if (COMMENTS) cout << "[space " << _id << "] " << msg << endl;
-  }
-
-  void show_metabolites() const {
-    cout << _current_time << " " << _id << " ";
-    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-      if (it->second > 0) cout << it->first << " " << it->second << " ";
-    }
-    cout << endl;
-  }
-
-  void selectForBiomass() {
-    MSG cm;
-    STask_t<TIME, MSG> send_biomas;
-    // look for metabolites to send
-    cm.to = _biomass_address;
-    cm.from = _id;
-    addMultipleMetabolites(cm.metabolites, _metabolites);
-
-    // set a new task for out() to send the selected metabolites.
-    send_biomas.time_left  = _br;
-    send_biomas.task_kind  = SState_t::SENDING_BIOMAS;
-    send_biomas.msgs.push_back(cm);
-    
-    // once the metabolite are all send to biomass, there is no more metabolites in the space.
-    this->removeAllMetabolites(); 
-    
-    this->insertTask(send_biomas);
-  }
-
-  void removeAllMetabolites() {
-    for (SetOfMolecules_t::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
-      it->second = 0;
-    }
-  } 
-
-
-  /************** addMultipleMetabolites ****************************/
-
-  // TODO: generate test of all the helper functions
-  // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
-  
-    // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
-    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      if (m.find(it->first) != m.end()) {
-        m.at(it->first) += it->second;
-      } else {
-        m.insert({it->first, it->second});
-      }
-    }
-  }
-
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
-  
-    // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
-    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
-      if (m.find(it->first) != m.end()) {
-        m.at(it->first) += it->second;
-      } else {
-        m.insert({it->first, it->second});
-      }
-    }
-  }
-
-  /************** SetNextSelection *********************************/
-
-  // this function tells if there is or not metabolites in the space.
-  bool thereIsMetabolites() const {
-
-    bool result = false;
-    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
-      if (it->second > 0) {
-        result = true;
-        break;
-      }
-    }
-    return result;
-  }
-
-  // this function looks if there is a selection task already programed.
-  bool thereIsNextSelection() const {
-    bool result = false;
-
-    for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it != _tasks.cend(); ++it) {
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && (it->time_left <= _it)) {
-        result = true;
-        break;
-      }
-    }
-
-    return result;
-  }
-
-  // this function look if there is metabolites to send and in this case, if the space have not alreafy programed a selection task to send metabolites, it will program one.
-  void setNextSelection() {
-    STask_t<TIME, MSG> new_selection;
-    
-    if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
-
-      new_selection.time_left = _it;
-      new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
-      this->insertTask(new_selection);
-    }
-  }
-
-  /***************** selectMetabolitesToReact ********************/
-
-  bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
-    bool result = true;
-
-    for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
-      if((_metabolites.find(it->first) != _metabolites.end()) && (_metabolites.at(it->first) < it->second)) {
-        result = false;
-        break;
-      }
-    }
-
-    return result;
-  }
-
-  double sumAll(const map<string, double>& ons) const {
-    double result = 0;
-
-    for (map<string, double>::const_iterator i = ons.cbegin(); i != ons.cend(); ++i) {
-      result += i->second;
-    }
-
-    return result;
-  }
-
-  void unfoldEnzymes(vector<string>& ce) const {
-
-    for (map<string, enzyme_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
-      ce.insert(ce.end(), it->second.amount, it->second.id);
-    }
-  }
-
-  // TODO test this function specially
-  void shuffleEnzymes(vector<string>& ce) const {
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(ce.begin(), ce.end(), g);
-  }
-
-  // TODO test this function specially
-  double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
-
-    // calculation of the consentrations [A][B][C]
-    double consentration = 1.0;
-    for (SetOfMolecules_t::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
-      if (_metabolites.find(it->first) != _metabolites.end()) {
-        consentration *= _metabolites.at(it->first) / (L * _volume);  
-      }
-    }
-
-    if (consentration == 0.0) 
-      return 0.0;
-
-    return exp(-(1.0 / (consentration*kon)));
-  }
-
-  // TODO for testing
-  void collectOns(const map<string, reaction_info_t>& r, map<string, double>& s, map<string, double>& p) {
-
-    for (map<string, reaction_info_t>::const_iterator it = r.cbegin(); it != r.cend(); ++it) {
-      
-      // calculating the sons and pons
-      if (this->thereAreEnaughFor(it->second.substrate_sctry)) s.insert({it->first, this->bindingTreshold(it->second.substrate_sctry, it->second.konSTP)});
-      else s.insert({it->first, 0});
-      if (it->second.reversible && this->thereAreEnaughFor(it->second.products_sctry)) p.insert({it->first, this->bindingTreshold(it->second.products_sctry, it->second.konPTS)});
-      else p.insert({it->first, 0});
-    }
-  }
-
-  // TODO for testing
-  void normalize(map<string, double>& ons, double t) {
-    for (map<string, double>::iterator i = ons.begin(); i != ons.end(); ++i) {
-      i->second = i->second / t;
-    }
-  }
-
-
-  void selectMetalobitesToReact(vector<MSG>& m) {
-    MSG cm;
-    double rv, total, partial;
-    map<string, double> sons, pons;
-    enzyme_t en;
-    reaction_info_t re;
-    vector<string> enzyme_IDs;
-
-    this->unfoldEnzymes(enzyme_IDs); // all the enzyme are considered individualy not grouped by kind
-    shuffleEnzymes(enzyme_IDs); // the enzymes are iterated randomly
-
-    for (vector<string>::iterator it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
-      partial = 0.0; total = 0.0, rv = 0.0;
-      sons.clear(); pons.clear(); re.clear(); en.clear();
-      en = _enzymes.at(*it);
-
-      collectOns(en.handled_reactions, sons, pons);
-
-
-      // sons + pons can't be greater than 1. If that happen, they are normalized
-      // if sons + pons is smaller than 1, there is a chanse that the enzyme does'nt react
-      total = sumAll(sons) + sumAll(pons);
-      if (total > 1) {
-        normalize(sons, total);
-        normalize(pons, total);
-      }
-      
-      // the interval [0,1] is  divided in pieces: 
-      // [0,son1), [son1, son1+son2), ... , [son1 + ... + sonk, son1 + ... + sonk + pon1), ... ,[son1 + ... + sonk + pon1 + ... + ponk, 1)
-      // depending on which of those sub-interval rv belongs, the enzyme triggers the correct reaction or do nothing.
-
-      rv = _real_random.drawNumber(0.0, 1.0);
-      
-      for (map<string, double>::iterator i = sons.begin(); i != sons.end(); ++i) {
-        
-        partial += i->second;
-        if (rv < partial) {
-          // send message to trigger the reaction
-          re = en.handled_reactions.at(i->first);
-          cm.clear();
-          cm.to = re.location;
-          cm.from = _id;
-          cm.react_direction = Way_t::STP;
-          cm.react_amount = 1;
-          m.push_back(cm);
-          break;
-        }
-      }
-
-      // update the metabolite amount in the space
-      if (!re.empty()) {
-        for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
-          if (_metabolites.find(it->first) != _metabolites.end()) {
-            assert(_metabolites.at(it->first) >= it->second);
-            _metabolites.at(it->first) -= it->second;
-          }
-        }
-      } else { // if re is empty, then no one of the STP reactions have ben triggered and the search continue with the PTS reactions.
-        for (map<string, double>::iterator i = pons.begin(); i != pons.end(); ++i) {
-        
-          partial += i->second;
-          if (rv < partial) {
-            // send message to trigger the reaction
-            re = en.handled_reactions.at(i->first);
-            cm.clear();
-            cm.to = re.location;
-            cm.from = _id;
-            cm.react_direction = Way_t::PTS;
-            cm.react_amount = 1;
-            m.push_back(cm);
-            break;
-          } 
-        }
-      
-        // update the metabolite amount in the space
-        if (!re.empty()) {
-          for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
-            if (_metabolites.find(it->first) != _metabolites.end()) {
-              assert(_metabolites.at(it->first) >= it->second);
-              _metabolites.at(it->first) -= it->second;
+                // set a new task to send the selected metabolites.
+                sr.task_kind  = SState_t::SENDING_REACTIONS;
+                sr.time_left  = TIME_TO_SEND_FOR_REACTION;
+                this->selectMetalobitesToReact(sr.msgs);
+                this->unifyMessages(sr.msgs);
+                if (!sr.msgs.empty()) this->insertTask(sr);
             }
-          }
         }
-      }
-    }
-  }
 
-  /************ remove all metabolites *****************************/
-
-  /*****************************************************************/
-
-  void insertTask(const STask_t<TIME, MSG>& t) {
-
-    typename STaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
-    _tasks.insert(it, t);
-  }
-
-  void updateTaskTimeLefts(TIME t){
-
-    for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); it != _tasks.end(); ++it) {
-      it->time_left -= t;
-    }
-  }
-
-  void unifyMessages(vector<MSG>& m) const {
-
-    map<Address_t, MSG> unMsgs;
-
-    for (typename vector<MSG>::iterator it = m.begin(); it != m.end(); ++it) {
-      insertMessageUnifying(unMsgs, *it);
+        // setting new selection
+        this->setNextSelection();
+        this->logger.info("End internal_transition");
     }
 
-    m.clear();
+    void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+        this->logger.info("Begin external_transition");
 
-    for (typename map<Address_t, MSG>::iterator it = unMsgs.begin(); it != unMsgs.end(); ++it) {
-      m.push_back(it->second);
+        bool select_biomass = false;
+        bool show_metabolites = false;
+
+        this->_state.current_time += t;
+        this->updateTaskTimeLefts(t);
+
+        for (const auto &x : get_messages<typename defs::in>(mbs)) {
+            if (x.biomass_request) {
+                select_biomass = true;
+                continue;
+            }
+
+            this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
+        }
+
+        if (select_biomass) this->selectForBiomass();
+        this->setNextSelection();
+
+        this->logger.info("End external_transition");
     }
-  }
 
-  void insertMessageUnifying(map<Address_t, MSG>& ms, MSG& m) const {
-
-    if (m.react_amount > 0) {
-      if (ms.find(m.to) != ms.end()) {
-        ms.at(m.to).react_amount += m.react_amount;
-      } else {
-        ms.insert({m.to, m}); // TODO: change all the initializer_list because they don't work on windows
-      }
+    void confluence_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+        this->logger.info("Begin confluence_transition");
+        this->logger.info("End confluence_transition");
     }
-  }
+
+    typename make_message_bags<output_ports>::type output() const {
+        this->logger.info("Begin output");
+
+        typename STaskQueue_t<TIME, MSG>::const_iterator it;
+        vector<MSG> result;
+        MSG b_msg;
+        TIME current_time  = _tasks.front().time_left;
+
+        // for all the tasks currently occurring. These tasks are processed now.
+        for (it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {
+            if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
+            result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
+        }
+
+        typename make_message_bags<output_ports>::type bags;
+        for (typename vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
+            cadmium::get_messages<typename defs::out>(bags).emplace_back(*it);
+        }
+
+        this->logger.info("End output");
+        return bags;
+    }
+
+    TIME time_advance() const {
+        this->logger.info("Begin time_advance");
+
+        TIME result;
+        if (!this->_state.tasks.empty()) result = this->_state.tasks.front().time_left;
+        else result = TIME("inf");
+
+        if (result <= TIME(0)) {
+            this->logger.error("Bad time: negative advance_time: " + result);
+        }
+
+        this->logger.info("End time_advance");
+        return result;
+    }
+
+    /********** P-DEVS functions **************/
+
+private:
+
+    void initialize_random_engines() {
+
+        // The random attributes must be initialized with a random generator variables
+        random_device real_rd;
+        this->_real_random.seed(real_rd());
+
+        random_device integer_rd;
+        this->_integer_random.seed(integer_rd());
+    }
+
+    void selectMetalobitesToReact(vector<MSG>& m) {
+        MSG cm;
+        double rv, total, partial;
+        map<string, double> sons, pons;
+        enzyme_t en;
+        reaction_info_t re;
+        vector<string> enzyme_IDs;
+
+        // Iterators
+        vector<string>::iterator it;
+        SetOfMolecules_t::iterator st;
+        map<string, double>::iterator i;
+
+        // Enzyme are individually considered
+        this->unfoldEnzymes(enzyme_IDs);
+        // Enzymes are randomly iterated
+        this->shuffleEnzymes(enzyme_IDs);
+
+        for (it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
+            partial = 0.0; total = 0.0, rv = 0.0;
+            sons.clear(); pons.clear(); re.clear(); en.clear();
+            en = this->_state.enzymes.at(*it);
+
+            this->collectOns(en.handled_reactions, sons, pons);
+
+
+            // sons + pons can't be greater than 1. If that happen, they are normalized
+            // if sons + pons is smaller than 1, there is a chance that the enzyme does'nt react
+            total = this->sumAll(sons) + this->sumAll(pons);
+            if (total > 1) {
+                this->normalize(sons, total);
+                this->normalize(pons, total);
+            }
+
+            // The interval [0,1] is  divided in pieces:
+            // {[0,son1), [son1, son1+son2),
+            // ... ,
+            // [son1 + ... + sonk, son1 + ... + sonk + pon1),
+            // ... ,
+            // [son1 + ... + sonk + pon1 + ... + ponk, 1)}
+            // Depending to which intervals rv belongs, the enzyme triggers
+            // the corresponding reaction or do nothing (last interval).
+
+            rv = _real_random.drawNumber(0.0, 1.0);
+
+            for (i = sons.begin(); i != sons.end(); ++i) {
+
+                partial += i->second;
+                if (rv < partial) {
+                    // send message to trigger the reaction
+                    re = en.handled_reactions.at(i->first);
+                    cm.clear();
+                    cm.to = re.location; // TODO: use new routing mechanism
+                    cm.from = _id;
+                    cm.react_direction = Way_t::STP;
+                    cm.react_amount = 1;
+                    m.push_back(cm);
+                    break;
+                }
+            }
+
+            // update the metabolite amount in the space
+            if (!re.empty()) {
+                for (st = re.substrate_sctry.begin(); st != re.substrate_sctry.end(); ++st) {
+                    if (_metabolites.find(st->first) != _metabolites.end()) {
+                        assert(_metabolites.at(st->first) >= st->second);
+                        _metabolites.at(st->first) -= st->second;
+                    }
+                }
+                // once the reaction is set the enzyme was processed and it moves on to the
+                // next enzyme
+                continue;
+            }
+
+            // if re is empty, then no one of the STP reactions have ben triggered
+            // and the search continues with the PTS reactions.
+            for (i = pons.begin(); i != pons.end(); ++i) {
+
+                partial += i->second;
+                if (rv < partial) {
+                    // send message to trigger the reaction
+                    re = en.handled_reactions.at(i->first);
+                    cm.clear();
+                    cm.to = re.location;
+                    cm.from = _id;
+                    cm.react_direction = Way_t::PTS;
+                    cm.react_amount = 1;
+                    m.push_back(cm);
+                    break;
+                }
+            }
+
+            // update the metabolite amount in the space
+            if (!re.empty()) {
+                for (st = re.products_sctry.begin(); st != re.products_sctry.end(); ++st) {
+                    if (_metabolites.find(st->first) != _metabolites.end()) {
+                        assert(_metabolites.at(st->first) >= st->second);
+                        _metabolites.at(st->first) -= st->second;
+                    }
+                }
+            }
+        }
+    }
+
+    void unfoldEnzymes(vector<string>& ce) const {
+        map<string, enzyme_t>::const_iterator it;
+
+        for (it = this->_state.enzymes.cbegin(); it != this->_state.enzymes.cend(); ++it) {
+            ce.insert(ce.end(), it->second.amount, it->second.id);
+        }
+    }
+
+    // TODO test this function specially
+    void shuffleEnzymes(vector<string>& ce) const {
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(ce.begin(), ce.end(), g);
+    }
+
+    void collectOns(const map<string, reaction_info_t>& r,
+                    map<string, double>& s,
+                    map<string, double>& p) {
+
+        map<string, reaction_info_t>::const_iterator it;
+        double threshold;
+
+        for (it = r.cbegin(); it != r.cend(); ++it) {
+
+            // calculating the sons and pons
+            if (this->thereAreEnaughFor(it->second.substrate_sctry)) {
+                threshold = this->bindingTreshold(it->second.substrate_sctry, it->second.konSTP);
+                s.insert({it->first, threshold});
+            } else {
+                s.insert({it->first, 0});
+            }
+
+            if (it->second.reversible && this->thereAreEnaughFor(it->second.products_sctry)) {
+                threshold = this->bindingTreshold(it->second.products_sctry, it->second.konPTS);
+                p.insert({it->first, threshold});
+            } else {
+                p.insert({it->first, 0});
+            }
+        }
+    }
+
+    // TODO test this function specially
+    double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
+        // calculation of the concentrations [A][B][C]
+
+        double concentration = 1.0;
+        SetOfMolecules_t::const_iterator it;
+        for (it = sctry.cbegin(); it != sctry.cend(); ++it) {
+            if (this->_state.metabolites.find(it->first) != this->_state.metabolites.end()) {
+                concentration *= this->._state.metabolites.at(it->first) / (L * _volume);
+            }
+        }
+
+        if (concentration == 0.0)
+            return 0.0;
+
+        return exp(-(1.0 / (concentration * kon)));
+    }
 };
-  
 
-#endif // BOOST_SIMULATION_PDEVS_SPACE_H
+
+#endif //PMGBP_PDEVS_SPACE_HPP
