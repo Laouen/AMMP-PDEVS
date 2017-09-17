@@ -43,8 +43,8 @@
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
 
-#include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
-#include "../data-structures/randomNumbers.hpp" // RealRandom
+#include "../libs/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
+#include "../libs/randomNumbers.hpp" // RealRandom
 
 using namespace std;
 using namespace cadmium;
@@ -93,8 +93,8 @@ public:
       RTaskQueue_t<TIME, MSG>               tasks;
   };
 
-  constexpr reaction() noexcept {
-    // real_random is initilized with a random generator engine
+  reaction() noexcept {
+    // real_random is initialized with a random generator engine
     random_device real_rd; // Random generator engine
     real_random.seed(real_rd());
   }
@@ -106,11 +106,11 @@ public:
    * 
    * @param initialized_state A reaction::state_type already initialized.
    */
-  constexpr reaction(const state_type& initialized_state) noexcept {
-    
+  explicit reaction(const state_type& initialized_state) noexcept {
+
     this->state = initialized_state;
 
-    // real_random is initilized with a random generator engine
+    // real_random is initialized with a random generator engine
     random_device real_rd; // Random generator engine
     real_random.seed(real_rd());
   }

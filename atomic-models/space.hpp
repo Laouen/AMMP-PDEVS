@@ -30,9 +30,15 @@
 #include <limits>
 #include <string>
 
+#include <cadmium/modeling/ports.hpp>
+#include <cadmium/modeling/message_bag.hpp>
+
 #include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
 #include "../libs/randomNumbers.hpp" // RealRandom
 #include "../libs/Logger.hpp"
+
+using namespace std;
+using namespace cadmium;
 
 // TODO: Ports must be defined by the model generator
 template <typename MSG>
@@ -87,7 +93,7 @@ public:
     /**
      * @brief Default constructor
      */
-    constexpr space() noexcept { this->initialize_random_engines(); }
+    space() noexcept { this->initialize_random_engines(); }
 
     /**
      * @brief Constructs a new space instance using the internal state passed as parameter as the
@@ -96,10 +102,10 @@ public:
      * @param state_other - The model initial internal state.
      * @tparam state_other - space::state_type
      */
-    constexpr space(const state_type& state_other) noexcept {
+    explicit space(const state_type& state_other) noexcept {
         this->_state = state_other;
         this->initialize_random_engines();
-        this->logger.setModuleName(this->_state._id);
+        this->logger.setModuleName(this->_state.id);
     }
 
     /********* Space constructors *************/
@@ -130,7 +136,7 @@ public:
                 // set a new task to send the selected metabolites.
                 sr.task_kind  = SState_t::SENDING_REACTIONS;
                 sr.time_left  = TIME_TO_SEND_FOR_REACTION;
-                this->selectMetalobitesToReact(sr.msgs);
+                this->selectMetabolitesToReact(sr.msgs);
                 this->unifyMessages(sr.msgs);
                 if (!sr.msgs.empty()) this->insertTask(sr);
             }
@@ -174,6 +180,7 @@ public:
         this->logger.info("Begin output");
 
         typename STaskQueue_t<TIME, MSG>::const_iterator it;
+        typename vector<MSG>::iterator rt;
         vector<MSG> result;
         MSG b_msg;
         TIME current_time  = _tasks.front().time_left;
@@ -185,8 +192,8 @@ public:
         }
 
         typename make_message_bags<output_ports>::type bags;
-        for (typename vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
-            cadmium::get_messages<typename defs::out>(bags).emplace_back(*it);
+        for (rt = result.begin(); rt != result.end(); ++rt) {
+            cadmium::get_messages<typename defs::out>(bags).emplace_back(*rt);
         }
 
         this->logger.info("End output");
@@ -222,7 +229,7 @@ private:
         this->_integer_random.seed(integer_rd());
     }
 
-    void selectMetalobitesToReact(vector<MSG>& m) {
+    void selectMetabolitesToReact(vector<MSG> &m) {
         MSG cm;
         double rv, total, partial;
         map<string, double> sons, pons;
@@ -352,14 +359,14 @@ private:
 
             // calculating the sons and pons
             if (this->thereAreEnaughFor(it->second.substrate_sctry)) {
-                threshold = this->bindingTreshold(it->second.substrate_sctry, it->second.konSTP);
+                threshold = this->bindingThreshold(it->second.substrate_sctry, it->second.konSTP);
                 s.insert({it->first, threshold});
             } else {
                 s.insert({it->first, 0});
             }
 
             if (it->second.reversible && this->thereAreEnaughFor(it->second.products_sctry)) {
-                threshold = this->bindingTreshold(it->second.products_sctry, it->second.konPTS);
+                threshold = this->bindingThreshold(it->second.products_sctry, it->second.konPTS);
                 p.insert({it->first, threshold});
             } else {
                 p.insert({it->first, 0});
@@ -368,7 +375,7 @@ private:
     }
 
     // TODO test this function specially
-    double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
+    double bindingThreshold(const SetOfMolecules_t &sctry, double kon) const {
         // calculation of the concentrations [A][B][C]
 
         double concentration = 1.0;

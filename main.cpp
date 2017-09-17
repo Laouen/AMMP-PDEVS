@@ -27,18 +27,14 @@
 #include <iostream>
 #include <chrono>
 #include <algorithm>
-#include <string>
 
 #include <cadmium/modeling/coupled_model.hpp>
-#include <cadmium/modeling/ports.hpp>
-#include <cadmium/concept/coupled_model_assert.hpp>
 #include <cadmium/engine/pdevs_runner.hpp>
 
 #include <NDTime.hpp>
 
 #include "atomic-models/reaction.hpp"
-#include "atomic-models/space.hpp"
-#include "data-structures/message_types.hpp"
+#include "libs/message_types.hpp"
 
 using namespace std;
 
@@ -80,7 +76,7 @@ int main() {
   cadmium::engine::runner<NDTime, top_model> r{0};
   r.runUntil(3000);
 
-  auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(hclock::now() - start).count();
+  auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
   cout << "Simulation took:" << elapsed << "sec" << endl;
   return 0;
 }
