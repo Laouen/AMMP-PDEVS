@@ -29,9 +29,11 @@
 
 #include <limits>
 #include <string>
+#include <assert.h>
 
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
+#include <algorithm>
 
 #include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
 #include "../libs/randomNumbers.hpp" // RealRandom
@@ -39,6 +41,8 @@
 
 using namespace std;
 using namespace cadmium;
+
+#define TIME_TO_SEND_FOR_REACTION TIME(0,0,0,1) // 1 millisecond
 
 // TODO: Ports must be defined by the model generator
 template <typename MSG>
@@ -126,7 +130,9 @@ public:
         // For all the tasks that are happening now.
         // Because The task time_lefts were updated, the current time is ZERO.
         typename STaskQueue_t<TIME, MSG>::iterator it;
-        for (it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
+        for (it = this->_state.tasks.begin();
+             !this->_state.tasks.empty() && (it->time_left == TIME(0));
+             it = this->_state.tasks.erase(it)) {
 
             if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
 
@@ -183,10 +189,12 @@ public:
         typename vector<MSG>::iterator rt;
         vector<MSG> result;
         MSG b_msg;
-        TIME current_time  = _tasks.front().time_left;
+        TIME current_time  = this->_state.tasks.front().time_left;
 
         // for all the tasks currently occurring. These tasks are processed now.
-        for (it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {
+        for (it = this->_state.tasks.cbegin();
+             (it != this->_state.tasks.end()) && (it->time_left == current_time);
+             ++it) {
             if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
             result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
         }
@@ -282,7 +290,7 @@ private:
                     re = en.handled_reactions.at(i->first);
                     cm.clear();
                     cm.to = re.location; // TODO: use new routing mechanism
-                    cm.from = _id;
+                    cm.from = this->_state.id;
                     cm.react_direction = Way_t::STP;
                     cm.react_amount = 1;
                     m.push_back(cm);
@@ -293,9 +301,9 @@ private:
             // update the metabolite amount in the space
             if (!re.empty()) {
                 for (st = re.substrate_sctry.begin(); st != re.substrate_sctry.end(); ++st) {
-                    if (_metabolites.find(st->first) != _metabolites.end()) {
-                        assert(_metabolites.at(st->first) >= st->second);
-                        _metabolites.at(st->first) -= st->second;
+                    if (this->_state.metabolites.find(st->first) != this->_state.metabolites.end()) {
+                        assert(this->_state.metabolites.at(st->first) >= st->second);
+                        this->_state.metabolites.at(st->first) -= st->second;
                     }
                 }
                 // once the reaction is set the enzyme was processed and it moves on to the
@@ -313,7 +321,7 @@ private:
                     re = en.handled_reactions.at(i->first);
                     cm.clear();
                     cm.to = re.location;
-                    cm.from = _id;
+                    cm.from = this->_state.id;
                     cm.react_direction = Way_t::PTS;
                     cm.react_amount = 1;
                     m.push_back(cm);
@@ -324,9 +332,9 @@ private:
             // update the metabolite amount in the space
             if (!re.empty()) {
                 for (st = re.products_sctry.begin(); st != re.products_sctry.end(); ++st) {
-                    if (_metabolites.find(st->first) != _metabolites.end()) {
-                        assert(_metabolites.at(st->first) >= st->second);
-                        _metabolites.at(st->first) -= st->second;
+                    if (this->_state.metabolites.find(st->first) != this->_state.metabolites.end()) {
+                        assert(this->_state.metabolites.at(st->first) >= st->second);
+                        this->_state.metabolites.at(st->first) -= st->second;
                     }
                 }
             }
@@ -341,7 +349,7 @@ private:
         }
     }
 
-    // TODO test this function specially
+    // TODO test this function specially and put this in the random number class
     void shuffleEnzymes(vector<string>& ce) const {
         std::random_device rd;
         std::mt19937 g(rd());
@@ -382,7 +390,7 @@ private:
         SetOfMolecules_t::const_iterator it;
         for (it = sctry.cbegin(); it != sctry.cend(); ++it) {
             if (this->_state.metabolites.find(it->first) != this->_state.metabolites.end()) {
-                concentration *= this->._state.metabolites.at(it->first) / (L * _volume);
+                concentration *= this->._state.metabolites.at(it->first) / (L * this->_state.volume);
             }
         }
 

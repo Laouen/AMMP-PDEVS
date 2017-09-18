@@ -12,10 +12,10 @@
 #include <iterator>
 #include <iostream>
 
-#include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
+#include <boost/simulation/pdevs/atomic.hpp> // boost simulator include
 
-#include "../data-structures/types.hpp" // reaction_info_t, SState_t, Integer_t
-#include "../data-structures/randomNumbers.hpp" // IntegerRandom_t
+#include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
+#include "../libs/randomNumbers.hpp" // IntegerRandom_t
 
 
 using namespace boost::simulation::pdevs;

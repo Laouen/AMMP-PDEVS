@@ -156,13 +156,6 @@ struct STask_t {
 
 };
 
-// TODO: Implement the class STaskScheduler and replace STaskQueue
-// STaskScheduler must define the next interface:
-// add()
-// pop()
-// remove(task)
-// next_tasks() return a set of all the tasks with the minimal time left
-// time_advance() return the minimum time left
 template<class TIME, class MSG>
 using STaskQueue_t = list< STask_t<TIME, MSG> >;
 

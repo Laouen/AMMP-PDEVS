@@ -162,41 +162,43 @@ public:
   }
 
   typename make_message_bags<output_ports>::type output() const {
-    comment("reaction::output function.");
-    
-    typename make_message_bags<output_ports>::type bags;
-    MSG new_message;
-    const map<string, SetOfMolecules_t>* curr_sctry;
+      comment("reaction::output function.");
 
-    vector<MSG> result = {};
-    TIME current_time = state.tasks.front().time_left;
+      map<string, SetOfMolecules_t>::const_iterator jt;
+      typename RTaskQueue_t<TIME, MSG>::const_iterator it;
+      typename vector<MSG>::iterator mt
 
-    typename RTaskQueue_t<TIME, MSG>::const_iterator it;
-    for (it = state.tasks.cbegin(); (it != state.tasks.cend()) && (it->time_left == current_time); ++it) {
+      typename make_message_bags<output_ports>::type bags;
+      MSG new_message;
+      const map<string, SetOfMolecules_t>* curr_sctry;
 
-      if (it->task_kind == RState_t::REACTING) {
-    
-        if (it->direction == Way_t::STP) curr_sctry = &state.products_sctry;
-        else curr_sctry = &state.substrate_sctry;
+      vector<MSG> result = {};
+      TIME current_time = state.tasks.front().time_left;
 
-        for (map<string, SetOfMolecules_t>::const_iterator jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
-          
-          for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
-            new_message.clear();
-            new_message.to = state.addresses->at(mt->first); // TODO: change this by ports routing
-            new_message.metabolites.insert({mt->first, it->amount*mt->second});
-            result.push_back(new_message);
+      for (it = state.tasks.cbegin(); (it != state.tasks.cend()) && (it->time_left == current_time); ++it) {
+          if (it->task_kind == RState_t::REACTING) {
+
+              if (it->direction == Way_t::STP) curr_sctry = &state.products_sctry;
+              else curr_sctry = &state.substrate_sctry;
+
+              for (jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
+
+                  for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
+                        new_message.clear();
+                        new_message.to = state.addresses->at(mt->first); // TODO: change this by ports routing
+                        new_message.metabolites.insert({mt->first, it->amount*mt->second});
+                        result.push_back(new_message);
+                  }
+              }
+          } else {
+              result.insert(result.end(), it->toSend.begin(), it->toSend.end());
           }
-        }
-      } else {
-        result.insert(result.end(), it->toSend.begin(), it->toSend.end());
       }
-    }
 
-    this->unifyMessages(result);
-    for (typename vector<MSG>::iterator it = result.begin(); it != result.end(); ++it) {
-      cadmium::get_messages<typename defs::out>(bags).emplace_back(*it);
-    }
+      this->unifyMessages(result);
+      for (mt = result.begin(); mt != result.end(); ++mt) {
+            cadmium::get_messages<typename defs::out>(bags).emplace_back(*mt);
+      }
     
     return bags;
   }
