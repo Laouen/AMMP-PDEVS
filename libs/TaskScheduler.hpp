@@ -26,7 +26,7 @@ public:
     using T = Tasks<TIME, ELEMENT>;
 
     void add(TIME time_left, ELEMENT element) {
-        assert(time_left >= 0);
+        assert(time_left >= TIME({0}));
 
         typename std::list<T>::iterator insert_it = this->tasks_queue.begin();
         while(insert_it != this->tasks_queue.end() && insert_it->time_left < time_left) {
@@ -62,10 +62,7 @@ public:
     }
 
     void update(TIME elapsed_time) {
-        if(elapsed_time > this->time_advance()) {
-            std::cout << "entra" << std::endl;
-            throw std::exception();
-        }
+        assert(elapsed_time <= this->time_advance());
 
         typename std::list<T>::iterator it;
         for(it = this->tasks_queue.begin(); it != this->tasks_queue.end(); ++it) {
