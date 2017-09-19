@@ -14,7 +14,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simulator include
 
-#include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
+#include "../libs/types.hpp" // reaction_info_t, SpaceState, Integer_t
 #include "../libs/randomNumbers.hpp" // IntegerRandom_t
 
 
@@ -33,7 +33,7 @@ private:
   TIME                    _br; // br = biomass request
   TIME                    _current_time;
   Address_t               _biomass_address;
-  SetOfMolecules_t        _metabolites;
+  MetaboliteAmounts        _metabolites;
   map<string, enzyme_t>   _enzymes;
   double                  _volume;
 
@@ -46,14 +46,14 @@ private:
 
 public:
 
-  // precondition: the SetOfMolecules_t given as parameter must contain all the getReactionIDs metabolites in the cdboost-space
+  // precondition: the MetaboliteAmounts given as parameter must contain all the getReactionIDs metabolites in the cdboost-space
   explicit cdboost(
     const string                  other_id,
     const TIME                    other_it,
     const TIME                    other_br,
     const TIME                    other_ct,
     const Address_t&              other_biomass_address,
-    const SetOfMolecules_t        other_metabolites,
+    const MetaboliteAmounts        other_metabolites,
     const map<string, enzyme_t>&  other_enzymes,
     const double                  other_volume
     ) noexcept :
@@ -78,7 +78,7 @@ public:
   void internal() noexcept {
     comment("internal init.");
     MSG cm;
-    STask_t<TIME, MSG> sr; //, sb; // sr = selected_reactants, sb = selected_biomass
+    SpaceTask<TIME, MSG> sr; //, sb; // sr = selected_reactants, sb = selected_biomass
     bool srah = false; // this boolean says if a SELECTING_FOR_REACTION tasks has already happen or not.
 
     _current_time += _tasks.front().time_left;
@@ -87,13 +87,13 @@ public:
     // For all the tasks that are happening now. because The tasks time_lefts were updated, the current time is ZERO.
     for (typename STaskQueue_t<TIME, MSG>::iterator it = _tasks.begin(); !_tasks.empty() && (it->time_left == ZERO); it = _tasks.erase(it)) {
       
-      if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
+      if (it->task_kind != SpaceState::SELECTING_FOR_REACTION) continue;
 
       if (!srah) {
         srah = true;
 
         // set a new task to send the selected metabolites.
-        sr.task_kind  = SState_t::SENDING_REACTIONS;
+        sr.kind  = SpaceState::SENDING_REACTIONS;
         sr.time_left  = TIME_TO_SEND_FOR_REACTION;
         this->selectMetalobitesToReact(sr.msgs);
         unifyMessages(sr.msgs);
@@ -125,7 +125,7 @@ public:
 
     // for all the tasks that ocurr in the current time. These tasks are processed now.
     for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); (it != _tasks.end()) && (it->time_left == current_time); ++it) {    
-      if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
+      if (it->task_kind == SpaceState::SELECTING_FOR_REACTION) continue;
       result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
     }
 
@@ -135,7 +135,7 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     comment("external init.");
-    //STask_t<TIME, MSG> new_task;
+    //SpaceTask<TIME, MSG> new_task;
     bool select_biomass = false;
     bool show_metabolites = false;
 
@@ -179,7 +179,7 @@ public:
 
   void show_metabolites() const {
     cout << _current_time << " " << _id << " ";
-    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
       if (it->second > 0) cout << it->first << " " << it->second << " ";
     }
     cout << endl;
@@ -187,7 +187,7 @@ public:
 
   void selectForBiomass() {
     MSG cm;
-    STask_t<TIME, MSG> send_biomas;
+    SpaceTask<MSG> send_biomas;
     // look for metabolites to send
     cm.to = _biomass_address;
     cm.from = _id;
@@ -195,7 +195,7 @@ public:
 
     // set a new task for out() to send the selected metabolites.
     send_biomas.time_left  = _br;
-    send_biomas.task_kind  = SState_t::SENDING_BIOMAS;
+    send_biomas.kind  = SpaceState::SENDING_BIOMASS;
     send_biomas.msgs.push_back(cm);
     
     // once the metabolite are all send to biomass, there is no more metabolites in the cdboost-space.
@@ -205,7 +205,7 @@ public:
   }
 
   void removeAllMetabolites() {
-    for (SetOfMolecules_t::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
+    for (MetaboliteAmounts::iterator it = _metabolites.begin(); it != _metabolites.end(); ++it) {
       it->second = 0;
     }
   } 
@@ -215,10 +215,10 @@ public:
 
   // TODO: generate test of all the helper functions
   // This funtion takes all the metabolites from om with an amount grater than 0 and add them to m.
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) {
+  void addMultipleMetabolites(MetaboliteAmounts& m, const MetaboliteAmounts& om) {
   
     // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
-    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
       if (m.find(it->first) != m.end()) {
         m.at(it->first) += it->second;
       } else {
@@ -227,10 +227,10 @@ public:
     }
   }
 
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
+  void addMultipleMetabolites(MetaboliteAmounts& m, const MetaboliteAmounts& om) const {
   
     // if the metabolite isn't defined in the compartment is not from here and an error ocurre.
-    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
       if (m.find(it->first) != m.end()) {
         m.at(it->first) += it->second;
       } else {
@@ -245,7 +245,7 @@ public:
   bool thereIsMetabolites() const {
 
     bool result = false;
-    for (SetOfMolecules_t::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = _metabolites.cbegin(); it != _metabolites.cend(); ++it) {
       if (it->second > 0) {
         result = true;
         break;
@@ -259,7 +259,7 @@ public:
     bool result = false;
 
     for (typename STaskQueue_t<TIME, MSG>::const_iterator it = _tasks.cbegin(); it != _tasks.cend(); ++it) {
-      if ((it->task_kind == SState_t::SELECTING_FOR_REACTION) && (it->time_left <= _it)) {
+      if ((it->task_kind == SpaceState::SELECTING_FOR_REACTION) && (it->time_left <= _it)) {
         result = true;
         break;
       }
@@ -270,22 +270,22 @@ public:
 
   // this function look if there is metabolites to send and in this case, if the cdboost-space have not alreafy programed a selection task to send metabolites, it will program one.
   void setNextSelection() {
-    STask_t<TIME, MSG> new_selection;
+    SpaceTask<TIME, MSG> new_selection;
     
     if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
 
       new_selection.time_left = _it;
-      new_selection.task_kind = SState_t::SELECTING_FOR_REACTION;
+      new_selection.kind = SpaceState::SELECTING_FOR_REACTION;
       this->insertTask(new_selection);
     }
   }
 
   /***************** selectMetabolitesToReact ********************/
 
-  bool thereAreEnaughFor(const SetOfMolecules_t& stcry) const {
+  bool thereAreEnaughFor(const MetaboliteAmounts& stcry) const {
     bool result = true;
 
-    for (SetOfMolecules_t::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = stcry.begin(); it != stcry.end(); ++it) {
       if((_metabolites.find(it->first) != _metabolites.end()) && (_metabolites.at(it->first) < it->second)) {
         result = false;
         break;
@@ -320,11 +320,11 @@ public:
   }
 
   // TODO test this function specially
-  double bindingTreshold(const SetOfMolecules_t& sctry, double kon) const {
+  double bindingTreshold(const MetaboliteAmounts& sctry, double kon) const {
 
     // calculation of the consentrations [A][B][C]
     double consentration = 1.0;
-    for (SetOfMolecules_t::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = sctry.cbegin(); it != sctry.cend(); ++it) {
       if (_metabolites.find(it->first) != _metabolites.end()) {
         consentration *= _metabolites.at(it->first) / (L * _volume);  
       }
@@ -408,7 +408,7 @@ public:
 
       // update the metabolite amount in the cdboost-space
       if (!re.empty()) {
-        for (SetOfMolecules_t::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
+        for (MetaboliteAmounts::iterator it = re.substrate_sctry.begin(); it != re.substrate_sctry.end(); ++it) {
           if (_metabolites.find(it->first) != _metabolites.end()) {
             assert(_metabolites.at(it->first) >= it->second);
             _metabolites.at(it->first) -= it->second;
@@ -433,7 +433,7 @@ public:
       
         // update the metabolite amount in the cdboost-space
         if (!re.empty()) {
-          for (SetOfMolecules_t::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
+          for (MetaboliteAmounts::iterator it = re.products_sctry.begin(); it != re.products_sctry.end(); ++it) {
             if (_metabolites.find(it->first) != _metabolites.end()) {
               assert(_metabolites.at(it->first) >= it->second);
               _metabolites.at(it->first) -= it->second;
@@ -448,7 +448,7 @@ public:
 
   /*****************************************************************/
 
-  void insertTask(const STask_t<TIME, MSG>& t) {
+  void insertTask(const SpaceTask<TIME, MSG>& t) {
 
     typename STaskQueue_t<TIME, MSG>::iterator it = lower_bound(_tasks.begin(), _tasks.end(), t);
     _tasks.insert(it, t);

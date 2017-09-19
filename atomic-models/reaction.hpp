@@ -43,7 +43,7 @@
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
 
-#include "../libs/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
+#include "../libs/types.hpp" // MetaboliteAmounts, RTask_t, Way_t, RTaskQueue_t
 #include "../libs/randomNumbers.hpp" // RealRandom
 
 using namespace std;
@@ -81,8 +81,8 @@ public:
       shared_ptr<map<string, Address_t>>    addresses; // TODO: This must be replaced with the use of ports
       bool                                  reversible; // TODO: check where is this field used
       TIME                                  rate;
-      map<string, SetOfMolecules_t>         substrate_sctry; // the stoichiometry is separated by compartments
-      map<string, SetOfMolecules_t>         products_sctry; // the stoichiometry is separated by compartments
+      map<string, MetaboliteAmounts>         substrate_sctry; // the stoichiometry is separated by compartments
+      map<string, MetaboliteAmounts>         products_sctry; // the stoichiometry is separated by compartments
       map<string, Integer_t>                substrate_comps;
       map<string, Integer_t>                product_comps;
       double                                koff_STP;
@@ -164,13 +164,13 @@ public:
   typename make_message_bags<output_ports>::type output() const {
       comment("reaction::output function.");
 
-      map<string, SetOfMolecules_t>::const_iterator jt;
+      map<string, MetaboliteAmounts>::const_iterator jt;
       typename RTaskQueue_t<TIME, MSG>::const_iterator it;
       typename vector<MSG>::iterator mt
 
       typename make_message_bags<output_ports>::type bags;
       MSG new_message;
-      const map<string, SetOfMolecules_t>* curr_sctry;
+      const map<string, MetaboliteAmounts>* curr_sctry;
 
       vector<MSG> result = {};
       TIME current_time = state.tasks.front().time_left;
@@ -183,7 +183,7 @@ public:
 
               for (jt = curr_sctry->cbegin(); jt != curr_sctry->cend(); ++jt) {
 
-                  for (SetOfMolecules_t::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
+                  for (MetaboliteAmounts::const_iterator mt = jt->second.cbegin(); mt != jt->second.cend(); ++mt) {
                         new_message.clear();
                         new_message.to = state.addresses->at(mt->first); // TODO: change this by ports routing
                         new_message.metabolites.insert({mt->first, it->amount*mt->second});
@@ -292,7 +292,7 @@ public:
       if (it->second.first > 0) {
         assert(state.substrate_sctry.find(it->first) != state.substrate_sctry.end());
         
-        for (SetOfMolecules_t::const_iterator jt = state.substrate_sctry.at(it->first).cbegin(); jt != state.substrate_sctry.at(it->first).cend(); ++jt) {
+        for (MetaboliteAmounts::const_iterator jt = state.substrate_sctry.at(it->first).cbegin(); jt != state.substrate_sctry.at(it->first).cend(); ++jt) {
           
           m.clear();
           m.to = state.addresses->at(jt->first);
@@ -304,7 +304,7 @@ public:
       if (it->second.second > 0) {
         assert(state.products_sctry.find(it->first) != state.products_sctry.end());
         
-        for (SetOfMolecules_t::const_iterator jt = state.products_sctry.at(it->first).cbegin(); jt != state.products_sctry.at(it->first).cend(); ++jt) {
+        for (MetaboliteAmounts::const_iterator jt = state.products_sctry.at(it->first).cbegin(); jt != state.products_sctry.at(it->first).cend(); ++jt) {
           
           m.clear();
           m.to = state.addresses->at(jt->first);
@@ -381,14 +381,14 @@ public:
     }
   }
 
-  void addMultipleMetabolites(SetOfMolecules_t& m, const SetOfMolecules_t& om) const {
+  void addMultipleMetabolites(MetaboliteAmounts& m, const MetaboliteAmounts& om) const {
   
-    for (SetOfMolecules_t::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
+    for (MetaboliteAmounts::const_iterator it = om.cbegin(); it != om.cend(); ++it) {
       addMetabolite(m, it->first, it->second);
     }
   }
 
-  void addMetabolite(SetOfMolecules_t& m, string n, Integer_t a) const {
+  void addMetabolite(MetaboliteAmounts& m, string n, Integer_t a) const {
 
     if (a > 0) {
       if (m.find(n) != m.end()) {

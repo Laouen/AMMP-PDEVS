@@ -35,10 +35,10 @@ ostream& operator<<(ostream& os, const vector<string>& m) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const SetOfMolecules_t& m) {
+ostream& operator<<(ostream& os, const MetaboliteAmounts& m) {
   
   os << "[";
-  SetOfMolecules_t::const_iterator i = m.cbegin();
+  MetaboliteAmounts::const_iterator i = m.cbegin();
   while(i != m.cend()){
     os << i->second << "-" << i->first;
     ++i;
@@ -48,16 +48,16 @@ ostream& operator<<(ostream& os, const SetOfMolecules_t& m) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const SState_t& s) {
+ostream& operator<<(ostream& os, const SpaceState& s) {
 
   switch(s) {
-    case SState_t::SENDING_BIOMAS:
-      os << "SENDING_BIOMAS";
+    case SpaceState::SENDING_BIOMASS:
+      os << "SENDING_BIOMASS";
       break;
-    case SState_t::SENDING_REACTIONS:
+    case SpaceState::SENDING_REACTIONS:
       os << "SENDING_REACTIONS";
       break;
-    case SState_t::SELECTING_FOR_REACTION:
+    case SpaceState::SELECTING_FOR_REACTION:
       os << "SELECTING_FOR_REACTION";
       break;
   }

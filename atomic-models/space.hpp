@@ -35,9 +35,10 @@
 #include <cadmium/modeling/message_bag.hpp>
 #include <algorithm>
 
-#include "../libs/types.hpp" // reaction_info_t, SState_t, Integer_t
+#include "../libs/types.hpp" // reaction_info_t, SpaceState, Integer_t
 #include "../libs/randomNumbers.hpp" // RealRandom
 #include "../libs/Logger.hpp"
+#include "../libs/TaskScheduler.hpp"
 
 using namespace std;
 using namespace cadmium;
@@ -72,13 +73,13 @@ public:
         std::string                 id;
         TIME                        current_time;
         TIME                        internal_time;
-        TIME                        biomass_request;
+        TIME                        biomass_request_time;
         Address_t                   biomass_address;
-        SetOfMolecules_t            metabolites;
+        MetaboliteAmounts           metabolites;
         map<std::string, enzyme_t>  enzymes;
         double                     volume;
 
-        STaskQueue_t<TIME, MSG>     tasks;
+        TaskScheduler<TIME, SpaceTask<MSG>> tasks;
     };
 
     RealRandom_t<double>       _real_random;
@@ -119,34 +120,27 @@ public:
     void internal_transition() {
         this->logger.info("Begin internal_transition");
 
-        MSG cm;
-        STask_t<TIME, MSG> sr; // sr = selected_reactants, sb = selected_biomass (TODO: check sb)
+        this->_state.current_time += this->_state.tasks.time_advance();
 
-        bool reaction_selection_done = false;
+        if (this->_state.tasks.is_in_next(SpaceTask(SpaceState::SELECTING_FOR_REACTION))) {
 
-        this->_state.current_time += this->_state.tasks.front().time_left;
-        this->updateTaskTimeLefts(this->_state.tasks.front().time_left);
+            // advance() must be called after the is_in_next() and before to add the
+            // SENDING_REACTION task
+            this->_state.tasks.advance();
 
-        // For all the tasks that are happening now.
-        // Because The task time_lefts were updated, the current time is ZERO.
-        typename STaskQueue_t<TIME, MSG>::iterator it;
-        for (it = this->_state.tasks.begin();
-             !this->_state.tasks.empty() && (it->time_left == TIME(0));
-             it = this->_state.tasks.erase(it)) {
-
-            if (it->task_kind != SState_t::SELECTING_FOR_REACTION) continue;
-
-            if (!reaction_selection_done) {
-                reaction_selection_done = true;
-
-                // set a new task to send the selected metabolites.
-                sr.task_kind  = SState_t::SENDING_REACTIONS;
-                sr.time_left  = TIME_TO_SEND_FOR_REACTION;
-                this->selectMetabolitesToReact(sr.msgs);
-                this->unifyMessages(sr.msgs);
-                if (!sr.msgs.empty()) this->insertTask(sr);
+            // set a new task to send the selected metabolites.
+            // selected_reactants = selected_reactants
+            SpaceTask<MSG> selected_reactants(SpaceState::SENDING_REACTIONS);
+            this->selectMetabolitesToReact(selected_reactants.msgs);
+            this->mergeMessages(selected_reactants.msgs);
+            if (!selected_reactants.msgs.empty()) {
+                this->_state.tasks.add(TIME_TO_SEND_FOR_REACTION, selected_reactants);
             }
+        } else {
+
+            this->_state.tasks.advance();
         }
+
 
         // setting new selection
         this->setNextSelection();
@@ -159,16 +153,15 @@ public:
         bool select_biomass = false;
         bool show_metabolites = false;
 
-        this->_state.current_time += t;
-        this->updateTaskTimeLefts(t);
+        this->_state.current_time += e;
+        this->_state.tasks.update(e);
 
         for (const auto &x : get_messages<typename defs::in>(mbs)) {
             if (x.biomass_request) {
                 select_biomass = true;
-                continue;
+            } else {
+                this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
             }
-
-            this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
         }
 
         if (select_biomass) this->selectForBiomass();
@@ -179,29 +172,25 @@ public:
 
     void confluence_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
         this->logger.info("Begin confluence_transition");
+        internal_transition();
+        external_transition(mbs, TIME::zero());
         this->logger.info("End confluence_transition");
     }
 
     typename make_message_bags<output_ports>::type output() const {
         this->logger.info("Begin output");
 
-        typename STaskQueue_t<TIME, MSG>::const_iterator it;
+        typename std::list<MSG>::const_iterator it;
         typename vector<MSG>::iterator rt;
-        vector<MSG> result;
-        MSG b_msg;
-        TIME current_time  = this->_state.tasks.front().time_left;
-
-        // for all the tasks currently occurring. These tasks are processed now.
-        for (it = this->_state.tasks.cbegin();
-             (it != this->_state.tasks.end()) && (it->time_left == current_time);
-             ++it) {
-            if (it->task_kind == SState_t::SELECTING_FOR_REACTION) continue;
-            result.insert(result.end(), it->msgs.cbegin(), it->msgs.cend());
-        }
-
         typename make_message_bags<output_ports>::type bags;
-        for (rt = result.begin(); rt != result.end(); ++rt) {
-            cadmium::get_messages<typename defs::out>(bags).emplace_back(*rt);
+
+        std::list<MSG> current_tasks = this->_state.tasks.next();
+        for (it = current_tasks.cbegin(); it != current_tasks.cend(); ++it) {
+            if (it->task_kind == SpaceState::SELECTING_FOR_REACTION) continue;
+
+            for (rt = it->msgs.cbegin(); rt != it->msgs.cend(); ++rt) {
+                cadmium::get_messages<typename defs::out>(bags).emplace_back(*rt);
+            }
         }
 
         this->logger.info("End output");
@@ -211,12 +200,10 @@ public:
     TIME time_advance() const {
         this->logger.info("Begin time_advance");
 
-        TIME result;
-        if (!this->_state.tasks.empty()) result = this->_state.tasks.front().time_left;
-        else result = TIME("inf");
+        TIME result = this->_state.tasks.time_advance();
 
-        if (result <= TIME(0)) {
-            this->logger.error("Bad time: negative advance_time: " + result);
+        if (result <= TIME::zero()) {
+            this->logger.error("Bad time: negative time: " + result);
         }
 
         this->logger.info("End time_advance");
@@ -247,7 +234,7 @@ private:
 
         // Iterators
         vector<string>::iterator it;
-        SetOfMolecules_t::iterator st;
+        MetaboliteAmounts::iterator st;
         map<string, double>::iterator i;
 
         // Enzyme are individually considered
@@ -366,14 +353,14 @@ private:
         for (it = r.cbegin(); it != r.cend(); ++it) {
 
             // calculating the sons and pons
-            if (this->thereAreEnaughFor(it->second.substrate_sctry)) {
+            if (this->thereAreEnoughFor(it->second.substrate_sctry)) {
                 threshold = this->bindingThreshold(it->second.substrate_sctry, it->second.konSTP);
                 s.insert({it->first, threshold});
             } else {
                 s.insert({it->first, 0});
             }
 
-            if (it->second.reversible && this->thereAreEnaughFor(it->second.products_sctry)) {
+            if (it->second.reversible && this->thereAreEnoughFor(it->second.products_sctry)) {
                 threshold = this->bindingThreshold(it->second.products_sctry, it->second.konPTS);
                 p.insert({it->first, threshold});
             } else {
@@ -383,11 +370,11 @@ private:
     }
 
     // TODO test this function specially
-    double bindingThreshold(const SetOfMolecules_t &sctry, double kon) const {
+    double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
         // calculation of the concentrations [A][B][C]
 
         double concentration = 1.0;
-        SetOfMolecules_t::const_iterator it;
+        MetaboliteAmounts::const_iterator it;
         for (it = sctry.cbegin(); it != sctry.cend(); ++it) {
             if (this->_state.metabolites.find(it->first) != this->_state.metabolites.end()) {
                 concentration *= this->._state.metabolites.at(it->first) / (L * this->_state.volume);
@@ -398,6 +385,147 @@ private:
             return 0.0;
 
         return exp(-(1.0 / (concentration * kon)));
+    }
+
+    bool thereAreEnoughFor(const MetaboliteAmounts &stcry) const {
+        MetaboliteAmounts::const_iterator it;
+        bool local_metabolite, not_enough;
+
+        for (it = stcry.begin(); it != stcry.end(); ++it) {
+            local_metabolite = this->_state.metabolites.find(it->first) != this->_state.metabolites.end();
+            not_enough = this->_state.metabolites.at(it->first) < it->second;
+            if(local_metabolite && not_enough) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Takes all the metabolites from om with an amount grater than 0 and add them to m.
+     */
+    void addMultipleMetabolites(MetaboliteAmounts& m, const MetaboliteAmounts& om) {
+        MetaboliteAmounts::const_iterator it;
+
+        for (it = om.cbegin(); it != om.cend(); ++it) {
+            if (m.find(it->first) != m.end()) {
+                m.at(it->first) += it->second;
+            } else {
+                m.insert({it->first, it->second});
+            }
+        }
+    }
+
+    /**
+     * @brief Merges all message unifying those with the same receiver address
+     * @param m The non grouped messages to Unify
+     */
+    void mergeMessages(vector<MSG> &m) const {
+
+        typename vector<MSG>::iterator it;
+        typename map<Address_t, MSG>::iterator mt;
+        map<Address_t, MSG> unMsgs;
+
+        for (it = m.begin(); it != m.end(); ++it) {
+            this->insertMessageMerging(unMsgs, *it);
+        }
+
+        m.clear();
+
+        for (mt = unMsgs.begin(); mt != unMsgs.end(); ++mt) {
+            m.push_back(mt->second);
+        }
+    }
+
+    void insertMessageMerging(map<Address_t, MSG> &ms, MSG &m) const {
+
+        if (m.react_amount > 0) {
+            if (ms.find(m.to) != ms.end()) {
+                ms.at(m.to).react_amount += m.react_amount;
+            } else {
+                ms.insert({m.to, m});
+            }
+        }
+    }
+
+    /**
+     * @brief Looks if there is metabolites to send and in this case, if the space have
+     * not already programed a selection task to send metabolites, it will program one.
+     */
+    void setNextSelection() {
+
+        if ( this->thereIsMetabolites() && !this->thereIsNextSelection() ) {
+            SpaceTask<MSG> selection_task(SpaceState::SELECTING_FOR_REACTION);
+            this->_state.tasks.add(this->_state.internal_time, selection_task);
+        }
+    }
+
+    /**
+     * @brief Tells if there is or not metabolites in the space.
+     * @return True if there is metabolites in the space.
+     */
+    bool thereIsMetabolites() const {
+
+        MetaboliteAmounts::const_iterator it;
+        for (it = this->_state.metabolites.cbegin(); it != this->_state.metabolites.cend(); ++it) {
+            if (it->second > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @brief Looks if there is a selection task already programed.
+     * @return True if there is a selection task, otherwise false.
+     */
+    bool thereIsNextSelection() const {
+        return this->_state.tasks.exists(SpaceState::SELECTING_FOR_REACTION);
+    }
+
+    void selectForBiomass() {
+
+        // Look for metabolites to send
+        MSG cm;
+        cm.to = this->_state.biomass_address;
+        cm.from = this->_state.id;
+        addMultipleMetabolites(cm.metabolites, this->_state.metabolites);
+
+        // Set a new task for output() to send the selected metabolites.
+        SpaceTask<MSG> send_biomass(SpaceState::SENDING_BIOMASS);
+        send_biomass.msgs.push_back(cm);
+        this->_state.tasks.add(this->_state.biomass_request_time, send_biomass);
+
+        // Once the metabolite are all send to biomass, there is no more metabolites in the space.
+        this->removeAllMetabolites();
+
+    }
+
+    void removeAllMetabolites() {
+
+        MetaboliteAmounts::iterator it;
+        for (it = this->_state.metabolites.begin(); it != this->_state.metabolites.end(); ++it) {
+            it->second = 0;
+        }
+    }
+
+    double sumAll(const std::map<string, double>& ons) const {
+        double result = 0;
+
+        std::map<string, double>::const_iterator it;
+        for (it = ons.cbegin(); it != ons.cend(); ++it) {
+            result += it->second;
+        }
+
+        return result;
+    }
+
+    void normalize(std::map<string, double>& ons, double t) {
+        std::map<string, double>::const_iterator it;
+        for (it = ons.begin(); it != ons.end(); ++it) {
+            it->second = it->second / t;
+        }
     }
 };
 

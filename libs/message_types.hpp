@@ -5,7 +5,7 @@
 #include <list>
 #include <map>
 
-#include "types.hpp" // SetOfMolecules_t, Address_t, Integer_t, Way_t
+#include "types.hpp" // MetaboliteAmounts, Address_t, Integer_t, Way_t
 
 using namespace std;
 
@@ -16,7 +16,7 @@ namespace msg_event {
     string from;
     Way_t react_direction;
     Integer_t react_amount;
-    SetOfMolecules_t metabolites;
+    MetaboliteAmounts metabolites;
 
     Metabolites() {
       this->clear();

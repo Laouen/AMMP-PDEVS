@@ -76,6 +76,30 @@ public:
         this->update(time_to_advance);
     }
 
+    bool empty() const {
+        return this->tasks_queue.empty();
+    }
+
+    bool is_in_next(const ELEMENT& elem) const {
+
+        std::list<ELEMENT> next_tasks = this->next();
+        return std::find(next_tasks.begin(), next_tasks.end(), elem) != current_tasks.end();
+    }
+
+    bool exists(const ELEMENT& elem) const {
+
+        std::list<T>::const_iterator it;
+
+        for (it = this->tasks_queue.cbegin(); it != this->tasks_queue.cend(); ++it) {
+            if (std::find(it->task_elements.begin(),
+                          it->task_elements.end(),
+                          elem) != it->task_elements.end()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 private:
     typename std::list<T> tasks_queue;
 };

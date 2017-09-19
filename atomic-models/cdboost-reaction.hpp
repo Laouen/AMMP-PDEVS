@@ -11,7 +11,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simalator include
 
-#include "../data-structures/types.hpp" // SetOfMolecules_t, RTask_t, Way_t, RTaskQueue_t
+#include "../data-structures/types.hpp" // MetaboliteAmounts, RTask_t, Way_t, RTaskQueue_t
 #include "../data-structures/randomNumbers.hpp" // RealRandom
 
 using namespace boost::simulation::pdevs;
