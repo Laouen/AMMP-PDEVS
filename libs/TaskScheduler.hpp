@@ -7,6 +7,7 @@
 
 #include <list>
 #include <algorithm>
+#include <iostream>
 
 template <class TIME, class ELEMENT>
 struct Tasks {
@@ -25,6 +26,7 @@ public:
     using T = Tasks<TIME, ELEMENT>;
 
     void add(TIME time_left, ELEMENT element) {
+        assert(time_left >= 0);
 
         typename std::list<T>::iterator insert_it = this->tasks_queue.begin();
         while(insert_it != this->tasks_queue.end() && insert_it->time_left < time_left) {
@@ -60,6 +62,11 @@ public:
     }
 
     void update(TIME elapsed_time) {
+        if(elapsed_time > this->time_advance()) {
+            std::cout << "entra" << std::endl;
+            throw std::exception();
+        }
+
         typename std::list<T>::iterator it;
         for(it = this->tasks_queue.begin(); it != this->tasks_queue.end(); ++it) {
             it->time_left -= elapsed_time;
@@ -75,11 +82,5 @@ public:
 private:
     typename std::list<T> tasks_queue;
 };
-
-template<typename TIME, typename ELEMENT>
-std::ostream& operator<<(std::ostream& os, const TaskScheduler<TIME, ELEMENT>& tasks) {
-    os << "time left: " << tasks.time_advance();
-    return os;
-}
 
 #endif //PMGBP_PDEVS_TASKSCHEDULER_HPP

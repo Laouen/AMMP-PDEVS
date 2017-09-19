@@ -9,7 +9,7 @@ set(SOURCES
         libs/types.cpp
         libs/unit_definition.cpp
         main.cpp
-        atomic-models test/cpp/libs/main-test.cpp.cpp)
+        atomic-models)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
