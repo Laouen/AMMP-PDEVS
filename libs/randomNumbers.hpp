@@ -5,12 +5,12 @@
 using namespace std;
 
 template<class NumbType>
-class IntegerRandom_t {
+class IntegerRandom {
 
 public:
 
-	IntegerRandom_t() = default;
-	IntegerRandom_t(std::mt19937::result_type s) : generator(s) {};
+	IntegerRandom() = default;
+	IntegerRandom(std::mt19937::result_type s) : generator(s) {};
 	
 	NumbType drawNumber(NumbType a, NumbType b) {
 		return uniform_int_distribution<NumbType>(a, b)(generator);
@@ -25,12 +25,12 @@ private:
 };
 
 template<class NumbType>
-class RealRandom_t {
+class RealRandom {
 
 public:
 
-	RealRandom_t() = default;
-	RealRandom_t(std::mt19937::result_type s) : generator(s) {};
+	RealRandom() = default;
+	RealRandom(std::mt19937::result_type s) : generator(s) {};
 	
 	NumbType drawNumber(NumbType a, NumbType b) {
 		return uniform_real_distribution<NumbType>(a, b)(generator);

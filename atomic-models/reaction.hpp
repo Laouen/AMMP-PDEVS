@@ -43,7 +43,7 @@
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
 
-#include "../libs/types.hpp" // MetaboliteAmounts, RTask_t, Way_t, RTaskQueue_t
+#include "../structures/types.hpp" // MetaboliteAmounts, RTask_t, Way_t, RTaskQueue_t
 #include "../libs/randomNumbers.hpp" // RealRandom
 
 using namespace std;
@@ -115,7 +115,7 @@ public:
     real_random.seed(real_rd());
   }
 
-  RealRandom_t<double> real_random; // used for uniform random number
+  RealRandom<double> real_random; // used for uniform random number
   state_type state;
 
   // ports definition

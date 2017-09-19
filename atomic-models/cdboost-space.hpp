@@ -14,8 +14,8 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simulator include
 
-#include "../libs/types.hpp" // reaction_info_t, SpaceState, Integer_t
-#include "../libs/randomNumbers.hpp" // IntegerRandom_t
+#include "../structures/types.hpp" // reaction_info_t, SpaceState, Integer_t
+#include "../libs/randomNumbers.hpp" // IntegerRandom
 
 
 using namespace boost::simulation::pdevs;
@@ -41,8 +41,8 @@ private:
   STaskQueue_t<TIME, MSG> _tasks;
 
   // used for uniform random numbers
-  RealRandom_t<double>       _real_random;
-  IntegerRandom_t<Integer_t> _integer_random;
+  RealRandom<double>       _real_random;
+  IntegerRandom<Integer_t> _integer_random;
 
 public:
 

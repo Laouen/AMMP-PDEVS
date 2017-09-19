@@ -5,7 +5,7 @@
 #include <list>
 #include <map>
 
-#include "types.hpp" // MetaboliteAmounts, Address_t, Integer_t, Way_t
+#include "../structures/types.hpp" // MetaboliteAmounts, Address_t, Integer_t, Way_t
 
 using namespace std;
 

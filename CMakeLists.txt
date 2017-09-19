@@ -3,10 +3,10 @@ project(PMGBP_PDEVS)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(../cadmium/include ../DESTimes atomic-models libs)
+include_directories(../cadmium/include ../DESTimes atomic-models libs structures)
 
 set(SOURCES
-        libs/types.cpp
+        structures/types.cpp
         libs/unit_definition.cpp
         main.cpp
         atomic-models)
@@ -14,7 +14,7 @@ set(SOURCES
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
 
-set(TEST_SOURCES libs)
+set(TEST_SOURCES libs structures)
 
 enable_testing()
 FILE(GLOB TestSources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/cpp/libs/*_test.cpp)

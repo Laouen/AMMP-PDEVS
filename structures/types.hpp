@@ -17,7 +17,6 @@ using namespace std;
 /******************************************/
 
 enum class RState_t { REJECTING = 1, REACTING = 0 };
-enum class SpaceState { SELECTING_FOR_REACTION = 2, SENDING_BIOMASS = 3, SENDING_REACTIONS = 4 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, IDLE = 2, WAITING = 3 };
 enum class Way_t { STP, PTS };
 
@@ -88,49 +87,6 @@ using RTaskQueue_t = list< RTask_t<TIME, MSG> >;
 /*******************************************/
 /************** End RTask_t ****************/
 /*******************************************/
-
-
-/*******************************************/
-/**************** STask_t ******************/
-/*******************************************/
-
-
-
-template<class MSG>
-struct SpaceTask {
-    SpaceState    kind;
-    vector<MSG>   msgs;
-
-    SpaceTask() {}
-
-    SpaceTask(const SpaceTask<MSG>& other) {
-        kind = other.kind;
-        msgs = other.msgs;
-    }
-
-    SpaceTask(SpaceState other_kind) {
-        kind = other_kind;
-    }
-
-    inline bool operator==(const SpaceTask<TIME, MSG>& o)  const {
-
-        bool result = (kind == o.task_kind);
-
-        if ((kind == SpaceState::SENDING_REACTIONS) || (kind == SpaceState::SENDING_BIOMASS)) {
-            result = result && (msgs == o.msgs);
-        }
-
-        return result;
-    }
-};
-
-
-/*******************************************/
-/************** End STask_t ****************/
-/*******************************************/
-
-
-
 
 
 /*******************************************/
