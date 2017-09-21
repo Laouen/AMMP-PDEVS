@@ -27,7 +27,7 @@ class Location:
 
         :param cid: The compartment id
         :type cid: str
-        :param rsn: Te raction set name
+        :param rsn: Te reaction set name
         :type rsn: str
         """
         self.cid = cid
@@ -346,7 +346,7 @@ class SBMLParser:
                 location = Location(self.periplasm_id, 'trans')
 
         if location is None:
-            raise IllegalCompartmentCombination('Ilegal compartment combination ' +
+            raise IllegalCompartmentCombination('Illegal compartment combination ' +
                                                 str(compartments))
         
         return location
