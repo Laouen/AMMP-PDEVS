@@ -7,10 +7,26 @@
 #include <vector>
 #include <map>
 
+#include "space.hpp"
+
 using namespace std;
 
 // TODO: correctly separate by namespaces like space::, reaction::, etc.
 // TODO(new line): Models and model internal states also should be under the same namespaces
+
+template <class ENTRY>
+struct RoutingTable {
+    std::map<ENTRY, int> entries;
+
+    int at(const ENTRY& entry) const {
+
+        if (entries.find(entry) != entries.cend()) {
+            return entries.at(entry);
+        } else {
+            return -1;
+        }
+    }
+};
 
 /******************************************/
 /********** Enums and renames *************/
@@ -20,8 +36,8 @@ enum class RState_t { REJECTING = 1, REACTING = 0 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, IDLE = 2, WAITING = 3 };
 enum class Way_t { STP, PTS };
 
-using Integer_t = unsigned long long;
-using MetaboliteAmounts  = map<string, Integer_t>;
+using Integer = unsigned long long;
+using MetaboliteAmounts  = map<string, Integer>;
 
 /******************************************/
 /******** End enums and renames ***********/
@@ -47,12 +63,12 @@ struct RTask_t {
   RState_t    task_kind;
   TIME        time_left;
   Way_t       direction;
-  Integer_t   amount;
+  Integer   amount;
   vector<MSG> toSend;
 
   RTask_t() {}
 
-  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer_t& other_a) 
+  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer& other_a)
   : task_kind(RState_t::REACTING), time_left(other_t), direction(other_d), amount(other_a) {}
 
   RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
@@ -102,7 +118,7 @@ struct Message_t {
   // fields for reactions
   string from;
   Way_t react_direction;
-  Integer_t react_amount;
+  Integer react_amount;
   
   // fields for spaces
   MetaboliteAmounts metabolites;
@@ -113,7 +129,7 @@ struct Message_t {
   // field for biomass reaction request
   bool biomass_request;
 
-  Message_t(const Address_t& other_to, string other_from, const MetaboliteAmounts& other_m, Way_t other_rd, Integer_t other_ra, bool other_sr, bool other_br)
+  Message_t(const Address_t& other_to, string other_from, const MetaboliteAmounts& other_m, Way_t other_rd, Integer other_ra, bool other_sr, bool other_br)
   : to(other_to), from(other_from), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
 
   Message_t()
@@ -152,11 +168,6 @@ ostream& operator<<(ostream& os, const Way_t& s);
 /*******************************************/
 
 
-
-
-
-
-
 /*******************************************/
 /************* Data info type **************/
 /*******************************************/
@@ -164,15 +175,15 @@ ostream& operator<<(ostream& os, const Way_t& s);
 // TODO this type must be removed after the new implementation.
 struct reaction_info_t {
 
-  string            id;
-  Address_t         location;
+  string id;
+  ReactionAddress location;
   MetaboliteAmounts  substrate_sctry;
   MetaboliteAmounts  products_sctry;
-  double            konSTP;
-  double            konPTS;
-  double            koffPTS;
-  double            koffSTP;
-  bool              reversible;
+  double konSTP;
+  double konPTS;
+  double koffPTS;
+  double koffSTP;
+  bool reversible;
 
   reaction_info_t()
   : id(), location(), konSTP(1), konPTS(1), reversible(false) {}
@@ -218,18 +229,18 @@ ostream& operator<<(ostream& os, const reaction_info_t& r);
 /*********** Data enzyme type **************/
 /*******************************************/
 
-struct enzyme_t {
+struct Enzyme {
   string      id;
-  Integer_t   amount;
+  Integer   amount;
   map<string, reaction_info_t> handled_reactions;
 
-  enzyme_t()
+  Enzyme()
   : id(""), amount(0), handled_reactions() {};
 
-  enzyme_t(string other_id, const Integer_t& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
+  Enzyme(string other_id, const Integer& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
   : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
 
-  enzyme_t(const enzyme_t& other)
+  Enzyme(const Enzyme& other)
   : id(other.id), amount(other.amount), handled_reactions(other.handled_reactions) {}
 
   void clear() {

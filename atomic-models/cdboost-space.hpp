@@ -14,7 +14,7 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simulator include
 
-#include "../structures/types.hpp" // reaction_info_t, SpaceState, Integer_t
+#include "../structures/types.hpp" // reaction_info_t, SpaceState, Integer
 #include "../libs/randomNumbers.hpp" // IntegerRandom
 
 
@@ -34,7 +34,7 @@ private:
   TIME                    _current_time;
   Address_t               _biomass_address;
   MetaboliteAmounts        _metabolites;
-  map<string, enzyme_t>   _enzymes;
+  map<string, Enzyme>   _enzymes;
   double                  _volume;
 
   // task queue
@@ -42,7 +42,7 @@ private:
 
   // used for uniform random numbers
   RealRandom<double>       _real_random;
-  IntegerRandom<Integer_t> _integer_random;
+  IntegerRandom<Integer> _integer_random;
 
 public:
 
@@ -54,7 +54,7 @@ public:
     const TIME                    other_ct,
     const Address_t&              other_biomass_address,
     const MetaboliteAmounts        other_metabolites,
-    const map<string, enzyme_t>&  other_enzymes,
+    const map<string, Enzyme>&  other_enzymes,
     const double                  other_volume
     ) noexcept :
   _id(other_id),
@@ -95,9 +95,9 @@ public:
         // set a new task to send the selected metabolites.
         sr.kind  = SpaceState::SENDING_REACTIONS;
         sr.time_left  = TIME_TO_SEND_FOR_REACTION;
-        this->selectMetalobitesToReact(sr.msgs);
-        unifyMessages(sr.msgs);
-        if (!sr.msgs.empty()) this->insertTask(sr);
+        this->selectMetalobitesToReact(sr.message_bags);
+        unifyMessages(sr.message_bags);
+        if (!sr.message_bags.empty()) this->insertTask(sr);
       } 
     }
 
@@ -196,7 +196,7 @@ public:
     // set a new task for out() to send the selected metabolites.
     send_biomas.time_left  = _br;
     send_biomas.kind  = SpaceState::SENDING_BIOMASS;
-    send_biomas.msgs.push_back(cm);
+    send_biomas.message_bags.push_back(cm);
     
     // once the metabolite are all send to biomass, there is no more metabolites in the cdboost-space.
     this->removeAllMetabolites(); 
@@ -307,7 +307,7 @@ public:
 
   void unfoldEnzymes(vector<string>& ce) const {
 
-    for (map<string, enzyme_t>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
+    for (map<string, Enzyme>::const_iterator it = _enzymes.cbegin(); it != _enzymes.cend(); ++it) {
       ce.insert(ce.end(), it->second.amount, it->second.id);
     }
   }
@@ -361,7 +361,7 @@ public:
     MSG cm;
     double rv, total, partial;
     map<string, double> sons, pons;
-    enzyme_t en;
+    Enzyme en;
     reaction_info_t re;
     vector<string> enzyme_IDs;
 

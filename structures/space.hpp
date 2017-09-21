@@ -6,6 +6,8 @@
 #define PMGBP_PDEVS_SPACE_STRUCTURES_HPP
 
 #include <vector>
+#include <string>
+#include <cadmium/modeling/message_bag.hpp>
 
 enum class SpaceState {
     SELECTING_FOR_REACTION = 2,
@@ -13,32 +15,49 @@ enum class SpaceState {
     SENDING_REACTIONS = 4
 };
 
+struct ReactionAddress {
+    std::string compartment;
+    std::string reaction_set;
+
+    ReactionAddress() = default;
+
+    ReactionAddress(const std::string& other_compartment, const std::string& other_reaction_set) {
+        this->compartment = other_compartment;
+        this->reaction_set = other_reaction_set;
+    }
+
+    inline bool operator==(const ReactionAddress& o) const {
+        return this->compartment == o.compartment && this->reaction_set == o.reaction_set;
+    }
+};
+
+
 /*******************************************/
 /**************** STask_t ******************/
 /*******************************************/
 
-template<class MSG>
+template<class OUT_PORTS>
 struct SpaceTask {
-    SpaceState    kind;
-    std::vector<MSG>   msgs;
+    SpaceState kind;
+    typename typename cadmium::make_message_bags<OUT_PORTS>::type message_bags;
 
-    SpaceTask() {}
+    SpaceTask() = default;
 
-    SpaceTask(const SpaceTask<MSG>& other) {
-        kind = other.kind;
-        msgs = other.msgs;
+    SpaceTask(const SpaceTask<OUT_PORTS>& other) {
+        this->kind = other.kind;
+        this->message_bags = other.message_bags;
     }
 
     SpaceTask(SpaceState other_kind) {
         kind = other_kind;
     }
 
-    inline bool operator==(const SpaceTask<MSG>& o)  const {
+    inline bool operator==(const SpaceTask<OUT_PORTS>& o) const {
 
         bool result = (kind == o.kind);
 
         if ((kind == SpaceState::SENDING_REACTIONS) || (kind == SpaceState::SENDING_BIOMASS)) {
-            result = result && (msgs == o.msgs);
+            result = result && (message_bags == o.message_bags);
         }
 
         return result;

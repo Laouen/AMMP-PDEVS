@@ -5,7 +5,7 @@
 #include <list>
 #include <map>
 
-#include "../structures/types.hpp" // MetaboliteAmounts, Address_t, Integer_t, Way_t
+#include "../structures/types.hpp" // MetaboliteAmounts, Address_t, Integer, Way_t
 
 using namespace std;
 
@@ -15,7 +15,7 @@ namespace msg_event {
     Address_t to;
     string from;
     Way_t react_direction;
-    Integer_t react_amount;
+    Integer react_amount;
     MetaboliteAmounts metabolites;
 
     Metabolites() {

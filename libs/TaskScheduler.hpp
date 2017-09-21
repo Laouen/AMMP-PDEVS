@@ -83,7 +83,7 @@ public:
     bool is_in_next(const ELEMENT& elem) const {
 
         std::list<ELEMENT> next_tasks = this->next();
-        return std::find(next_tasks.begin(), next_tasks.end(), elem) != current_tasks.end();
+        return std::find(next_tasks.begin(), next_tasks.end(), elem) != next_tasks.end();
     }
 
     bool exists(const ELEMENT& elem) const {

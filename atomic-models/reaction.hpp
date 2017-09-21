@@ -83,8 +83,8 @@ public:
       TIME                                  rate;
       map<string, MetaboliteAmounts>         substrate_sctry; // the stoichiometry is separated by compartments
       map<string, MetaboliteAmounts>         products_sctry; // the stoichiometry is separated by compartments
-      map<string, Integer_t>                substrate_comps;
-      map<string, Integer_t>                product_comps;
+      map<string, Integer>                substrate_comps;
+      map<string, Integer>                product_comps;
       double                                koff_STP;
       double                                koff_PTS;
       TIME                                  interval_time; // TODO: Check where is this field used
@@ -317,8 +317,8 @@ public:
 
   void lookForNewReactions() {
     
-    Integer_t stp_ready = totalReadyFor(state.substrate_comps); 
-    Integer_t pts_ready = totalReadyFor(state.product_comps);
+    Integer stp_ready = totalReadyFor(state.substrate_comps);
+    Integer pts_ready = totalReadyFor(state.product_comps);
 
     if (stp_ready > 0) {
       RTask_t<TIME, MSG> stp_task(state.rate, Way_t::STP, stp_ready);
@@ -333,18 +333,18 @@ public:
     }
   }
 
-  void removeMetabolites(map<string, Integer_t>& comp, Integer_t a) {
+  void removeMetabolites(map<string, Integer>& comp, Integer a) {
 
-    for (map<string, Integer_t>::iterator it = comp.begin(); it != comp.end(); ++it) {
+    for (map<string, Integer>::iterator it = comp.begin(); it != comp.end(); ++it) {
       it->second -= a;  
     }
   }
 
   // TODO: test this function specially
-  Integer_t totalReadyFor(const map<string, Integer_t>& comp) {
+  Integer totalReadyFor(const map<string, Integer>& comp) {
 
-    Integer_t result = comp.cbegin()->second;
-    for (map<string, Integer_t>::const_iterator it = comp.cbegin(); it != comp.cend(); ++it) {
+    Integer result = comp.cbegin()->second;
+    for (map<string, Integer>::const_iterator it = comp.cbegin(); it != comp.cend(); ++it) {
       if (result > it->second) result = it->second;
     }
 
@@ -388,7 +388,7 @@ public:
     }
   }
 
-  void addMetabolite(MetaboliteAmounts& m, string n, Integer_t a) const {
+  void addMetabolite(MetaboliteAmounts& m, string n, Integer a) const {
 
     if (a > 0) {
       if (m.find(n) != m.end()) {

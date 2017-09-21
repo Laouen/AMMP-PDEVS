@@ -29,15 +29,16 @@
 
 #include <limits>
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
 #include <algorithm>
 
 #include "../structures/space.hpp" // SpaceState, SpaceTask
-#include "../structures/types.hpp" // reaction_info_t, Integer_t
+#include "../structures/types.hpp" // reaction_info_t, Integer, RoutingTable
 #include "../libs/randomNumbers.hpp" // RealRandom
+#include "../libs/tuple_operators.hpp"
 #include "../libs/Logger.hpp"
 #include "../libs/TaskScheduler.hpp"
 
@@ -48,49 +49,45 @@ using namespace cadmium;
 
 namespace space {
 
-    // TODO: Ports must be defined by the model generator
-    template<typename MSG>
-    struct ports {
-        // custom ports
-        struct out : public out_port<MSG> {
-        };
-        struct in : public in_port<MSG> {
-        };
-    };
-
     /**
      * @author Laouen Mayal Louan Belloli
      *
-     * @struct space::state_type space.hpp
+     * @struct space::space space.hpp
      *
-     * @brief Represents a valid P-DEVS atomic space internal model state
+     * @brief Represents a valid P-DEVS atomic space model
      */
-    template<class MSG, class TIME>
-    struct InternalState {
-        string id;
-        TIME current_time;
-        TIME internal_time;
-        TIME biomass_request_time;
-        Address_t biomass_address;
-        MetaboliteAmounts metabolites;
-        map<string, enzyme_t> enzymes;
-        double volume;
-
-        TaskScheduler<TIME, SpaceTask<MSG>> tasks;
-    };
-
-    template<class MSG, class TIME>
+    template<class METABOLITES, class PRODUCT , class TIME>
     class space {
 
-        using model_ports=ports<MSG>;
 
     public:
 
-        InternalState<MSG, TIME> _state;
-
         // ports definition
-        using input_ports=tuple<typename model_ports::in>;
-        using output_ports=tuple<typename model_ports::out>;
+        // TODO: Ports must be externally defined by template typesnames
+        struct ports {
+            struct inner : public out_port<PRODUCT> {};
+            struct in : public in_port<METABOLITES> {};
+        };
+
+        using input_ports=tuple<typename ports::in>;
+        using output_ports=tuple<typename ports::inner>;
+
+        using output_bags=typename make_message_bags<output_ports>::type
+        using input_bags=typename make_message_bags<input_ports>::type
+
+        struct InternalState {
+            string id;
+            TIME current_time;
+            TIME internal_time;
+            MetaboliteAmounts metabolites;
+            map<string, Enzyme> enzymes;
+            RoutingTable<ReactionAddress> routing_table;
+            double volume;
+
+            TaskScheduler<TIME, SpaceTask<output_ports>> tasks;
+        };
+
+        InternalState _state;
 
         /********* Space constructors *************/
 
@@ -124,15 +121,15 @@ namespace space {
             if (this->_state.tasks.is_in_next(SpaceTask(SpaceState::SELECTING_FOR_REACTION))) {
 
                 // advance() must be called after the is_in_next() and before to add the
-                // SENDING_REACTION task
+                // SpaceState::SENDING_REACTION task
                 this->_state.tasks.advance();
 
                 // set a new task to send the selected metabolites.
                 // selected_reactants = selected_reactants
-                SpaceTask<MSG> selected_reactants(SpaceState::SENDING_REACTIONS);
-                this->selectMetabolitesToReact(selected_reactants.msgs);
-                this->mergeMessages(selected_reactants.msgs);
-                if (!selected_reactants.msgs.empty()) {
+                SpaceTask<output_ports> selected_reactants(SpaceState::SENDING_REACTIONS);
+                this->selectMetabolitesToReact(selected_reactants.message_bags);
+                if (!pmgbp::empty(selected_reactants.message_bags)) {
+                    pmgbp::map(selected_reactants.message_bags, space::mergeMessages);
                     this->_state.tasks.add(TIME_TO_SEND_FOR_REACTION, selected_reactants);
                 }
             } else {
@@ -140,56 +137,45 @@ namespace space {
                 this->_state.tasks.advance();
             }
 
-
             // setting new selection
             this->setNextSelection();
             this->logger.info("End internal_transition");
         }
 
-        void external_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+        void external_transition(TIME e, input_bags mbs) {
             this->logger.info("Begin external_transition");
 
-            bool select_biomass = false;
             bool show_metabolites = false;
 
             this->_state.current_time += e;
             this->_state.tasks.update(e);
 
-            for (const auto &x : get_messages<typename model_ports::in>(mbs)) {
-                if (x.biomass_request) {
-                    select_biomass = true;
-                } else {
-                    this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
-                }
+            for (const auto &x : get_messages<typename ports::in>(mbs)) {
+                this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
             }
 
-            if (select_biomass) this->selectForBiomass();
             this->setNextSelection();
 
             this->logger.info("End external_transition");
         }
 
-        void confluence_transition(TIME e, typename make_message_bags<input_ports>::type mbs) {
+        void confluence_transition(TIME e, input_bags mbs) {
             this->logger.info("Begin confluence_transition");
             internal_transition();
             external_transition(mbs, TIME::zero());
             this->logger.info("End confluence_transition");
         }
 
-        typename make_message_bags<output_ports>::type output() const {
+        output_bags output() const {
             this->logger.info("Begin output");
 
-            typename list<MSG>::const_iterator it;
-            typename vector<MSG>::iterator rt;
-            typename make_message_bags<output_ports>::type bags;
+            output_bags bags;
+            typename list<SpaceTask<output_ports>>::const_iterator it;
 
-            list<MSG> current_tasks = this->_state.tasks.next();
+            list<SpaceTask<output_ports>> current_tasks = this->_state.tasks.next();
             for (it = current_tasks.cbegin(); it != current_tasks.cend(); ++it) {
-                if (it->task_kind == SpaceState::SELECTING_FOR_REACTION) continue;
-
-                for (rt = it->msgs.cbegin(); rt != it->msgs.cend(); ++rt) {
-                    cadmium::get_messages<typename model_ports::out>(bags).emplace_back(*rt);
-                }
+                if (it->kind == SpaceState::SELECTING_FOR_REACTION) continue;
+                bags = it->message_bags;
             }
 
             this->logger.info("End output");
@@ -215,9 +201,9 @@ namespace space {
 
         /*********** Private attributes **********/
 
-        RealRandom<double>          _real_random;
-        IntegerRandom<Integer_t>    _integer_random;
-        Logger                      logger;
+        RealRandom<double> _real_random;
+        IntegerRandom<Integer> _integer_random;
+        Logger logger;
 
         /*********** Private attributes **********/
 
@@ -231,11 +217,16 @@ namespace space {
             this->_integer_random.seed(integer_rd());
         }
 
-        void selectMetabolitesToReact(vector<MSG> &m) {
-            MSG cm;
+        void push_to_correct_port(ReactionAddress address, output_bags& bags, const PRODUCT& p) {
+            int port_number = this->_state.routing_table.at(address);
+            pmgbp::get<PRODUCT>(bags, port_number).emplace_back(p);
+        }
+
+        void selectMetabolitesToReact(output_bags& bags) {
+            PRODUCT product;
             double rv, total, partial;
             map<string, double> sons, pons;
-            enzyme_t en;
+            Enzyme enzyme;
             reaction_info_t re;
             vector<string> enzyme_IDs;
 
@@ -251,14 +242,13 @@ namespace space {
 
             for (it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
                 partial = 0.0;
-                total = 0.0, rv = 0.0;
                 sons.clear();
                 pons.clear();
                 re.clear();
-                en.clear();
-                en = this->_state.enzymes.at(*it);
+                enzyme.clear();
+                enzyme = this->_state.enzymes.at(*it);
 
-                this->collectOns(en.handled_reactions, sons, pons);
+                this->collectOns(enzyme.handled_reactions, sons, pons);
 
 
                 // sons + pons can't be greater than 1. If that happen, they are normalized
@@ -285,13 +275,13 @@ namespace space {
                     partial += i->second;
                     if (rv < partial) {
                         // send message to trigger the reaction
-                        re = en.handled_reactions.at(i->first);
-                        cm.clear();
-                        cm.to = re.location; // TODO: use new routing mechanism
-                        cm.from = this->_state.id;
-                        cm.react_direction = Way_t::STP;
-                        cm.react_amount = 1;
-                        m.push_back(cm);
+                        re = enzyme.handled_reactions.at(i->first);
+                        product.clear();
+                        product.rid = re.id;
+                        product.from = this->_state.id;
+                        product.react_direction = Way_t::STP;
+                        product.react_amount = 1;
+                        this->push_to_correct_port(re.location, bags, product);
                         break;
                     }
                 }
@@ -317,13 +307,13 @@ namespace space {
                     partial += i->second;
                     if (rv < partial) {
                         // send message to trigger the reaction
-                        re = en.handled_reactions.at(i->first);
-                        cm.clear();
-                        cm.to = re.location;
-                        cm.from = this->_state.id;
-                        cm.react_direction = Way_t::PTS;
-                        cm.react_amount = 1;
-                        m.push_back(cm);
+                        re = enzyme.handled_reactions.at(i->first);
+                        product.clear();
+                        product.rid = re.id;
+                        product.from = this->_state.id;
+                        product.react_direction = Way_t::PTS;
+                        product.react_amount = 1;
+                        this->push_to_correct_port(re.location, bags, product);
                         break;
                     }
                 }
@@ -342,7 +332,7 @@ namespace space {
         }
 
         void unfoldEnzymes(vector<string> &ce) const {
-            map<string, enzyme_t>::const_iterator it;
+            map<string, Enzyme>::const_iterator it;
 
             for (it = this->_state.enzymes.cbegin(); it != this->_state.enzymes.cend(); ++it) {
                 ce.insert(ce.end(), it->second.amount, it->second.id);
@@ -438,28 +428,28 @@ namespace space {
          * @brief Merges all message unifying those with the same receiver address
          * @param m The non grouped messages to Unify
          */
-        void mergeMessages(vector<MSG> &m) const {
+        static void mergeMessages(cadmium::bag<PRODUCT> &m) const {
 
-            typename vector<MSG>::iterator it;
-            typename map<Address_t, MSG>::iterator mt;
-            map<Address_t, MSG> unMsgs;
+            typename cadmium::bag<PRODUCT>::iterator it;
+            typename map<string, PRODUCT>::iterator mt;
+            map<string, PRODUCT> unMsgs;
 
             for (it = m.begin(); it != m.end(); ++it) {
-                this->insertMessageMerging(unMsgs, *it);
+                space::insertMessageMerging(unMsgs, *it);
             }
 
             m.clear();
 
             for (mt = unMsgs.begin(); mt != unMsgs.end(); ++mt) {
-                m.push_back(mt->second);
+                m.emplace_back(mt->second);
             }
         }
 
-        void insertMessageMerging(map<Address_t, MSG> &ms, MSG &m) const {
+        static void insertMessageMerging(map<string, PRODUCT> &ms, PRODUCT &m) const {
 
             if (m.react_amount > 0) {
-                if (ms.find(m.to) != ms.end()) {
-                    ms.at(m.to).react_amount += m.react_amount;
+                if (ms.find(m.rid) != ms.end()) {
+                    ms.at(m.rid).react_amount += m.react_amount;
                 } else {
                     ms.insert({m.to, m});
                 }
@@ -473,7 +463,7 @@ namespace space {
         void setNextSelection() {
 
             if (this->thereIsMetabolites() && !this->thereIsNextSelection()) {
-                SpaceTask<MSG> selection_task(SpaceState::SELECTING_FOR_REACTION);
+                SpaceTask<output_ports> selection_task(SpaceState::SELECTING_FOR_REACTION);
                 this->_state.tasks.add(this->_state.internal_time, selection_task);
             }
         }
@@ -502,32 +492,6 @@ namespace space {
             return this->_state.tasks.exists(SpaceState::SELECTING_FOR_REACTION);
         }
 
-        void selectForBiomass() {
-
-            // Look for metabolites to send
-            MSG cm;
-            cm.to = this->_state.biomass_address;
-            cm.from = this->_state.id;
-            addMultipleMetabolites(cm.metabolites, this->_state.metabolites);
-
-            // Set a new task for output() to send the selected metabolites.
-            SpaceTask<MSG> send_biomass(SpaceState::SENDING_BIOMASS);
-            send_biomass.msgs.push_back(cm);
-            this->_state.tasks.add(this->_state.biomass_request_time, send_biomass);
-
-            // Once the metabolite are all send to biomass, there is no more metabolites in the space.
-            this->removeAllMetabolites();
-
-        }
-
-        void removeAllMetabolites() {
-
-            MetaboliteAmounts::iterator it;
-            for (it = this->_state.metabolites.begin();
-                 it != this->_state.metabolites.end(); ++it) {
-                it->second = 0;
-            }
-        }
 
         double sumAll(const map<string, double> &ons) const {
             double result = 0;
