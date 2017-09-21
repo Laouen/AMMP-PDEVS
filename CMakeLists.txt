@@ -14,7 +14,7 @@ set(SOURCES
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
 
-set(TEST_SOURCES libs structures)
+set(TEST_SOURCES libs structures test/cpp/libs)
 
 enable_testing()
 FILE(GLOB TestSources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/cpp/libs/*_test.cpp)

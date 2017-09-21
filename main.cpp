@@ -71,12 +71,12 @@ using top_model=cadmium::modeling::coupled_model<TIME, iports, oports, submodels
 
 int main() {
 
-  auto start = hclock::now(); //to measure simulation execution time
+    auto start = hclock::now(); //to measure simulation execution time
 
-  cadmium::engine::runner<NDTime, top_model> r{0};
-  r.runUntil(3000);
+    cadmium::engine::runner<NDTime, top_model> r{0};
+    r.runUntil(3000);
 
-  auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
-  cout << "Simulation took:" << elapsed << "sec" << endl;
-  return 0;
+    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
+    cout << "Simulation took:" << elapsed << "sec" << endl;
+    return 0;
 }

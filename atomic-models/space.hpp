@@ -38,7 +38,7 @@
 #include "../structures/space.hpp" // SpaceState, SpaceTask
 #include "../structures/types.hpp" // reaction_info_t, Integer, RoutingTable
 #include "../libs/randomNumbers.hpp" // RealRandom
-#include "../libs/tuple_operators.hpp"
+#include "TupleOperators.hpp"
 #include "../libs/Logger.hpp"
 #include "../libs/TaskScheduler.hpp"
 
@@ -59,10 +59,8 @@ namespace space {
     template<class METABOLITES, class PRODUCT , class TIME>
     class space {
 
-
     public:
 
-        // ports definition
         // TODO: Ports must be externally defined by template typesnames
         struct ports {
             struct inner : public out_port<PRODUCT> {};

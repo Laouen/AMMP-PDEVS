@@ -29,7 +29,7 @@ namespace pmgbp {
 
     template<int index, typename T, typename... Ts>
     struct get_tuple {
-        cadmium::bag<T> operator() (std::tuple<Ts...>& t, int position) {
+        cadmium::bag<T>& operator() (std::tuple<Ts...>& t, int position) {
 
             if (position == index) {
                 return std::get<index>(t).messages;
@@ -38,30 +38,20 @@ namespace pmgbp {
             if (position < index) {
                 return get_tuple<index - 1, T, Ts...>{}(t, position);
             }
-
-            throw TupleOperatorException("Index value out of range: "
-                                         + std::to_string(position)
-                                         + " > "
-                                         + std::to_string(index));
-
         }
     };
 
     template<typename T, typename... Ts>
     struct get_tuple<0, T, Ts...> {
-        cadmium::bag<T> operator() (std::tuple<Ts...>& t, int position) {
+        cadmium::bag<T>& operator() (std::tuple<Ts...>& t, int position) {
             if (position == 0) {
                 return std::get<0>(t).messages;
             }
-
-            throw TupleOperatorException("Index value out of range: "
-                                         + std::to_string(position)
-                                         + " > 0");
         }
     };
 
     template<typename T, typename... Ts>
-    T get(std::tuple<Ts...>& t, int position) {
+    cadmium::bag<T>& get(std::tuple<Ts...>& t, int position) {
 
         const auto size = std::tuple_size<std::tuple<Ts...>>::value;
         if (position < size) {
@@ -71,7 +61,7 @@ namespace pmgbp {
         throw TupleOperatorException("Index value out of range: "
                                      + std::to_string(position)
                                      + " > "
-                                     + std::to_string(size));
+                                     + std::to_string(size - 1));
     }
 
     template<int index, typename T, typename... Ts>
