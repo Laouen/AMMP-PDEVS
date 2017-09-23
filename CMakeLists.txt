@@ -3,13 +3,13 @@ project(PMGBP_PDEVS)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(../cadmium/include ../DESTimes atomic-models libs structures)
+include_directories(../cadmium/include ../DESTimes atomics libs structures)
 
 set(SOURCES
         structures/types.cpp
         libs/unit_definition.cpp
         main.cpp
-        atomic-models)
+        atomics)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
