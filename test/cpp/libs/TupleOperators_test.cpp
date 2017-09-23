@@ -11,6 +11,13 @@
 using namespace std;
 using namespace cadmium;
 
+void pow2_test(cadmium::bag<int>& a) {
+
+    for (cadmium::bag<int>::iterator it = a.begin(); it != a.end(); it++) {
+        *it = std::pow(*it, 2);
+    }
+}
+
 struct ports {
     struct one : public out_port<int> {};
     struct two : public out_port<int> {};
@@ -118,6 +125,26 @@ BOOST_AUTO_TEST_SUITE( empty_tuple_tests )
         }
 
         BOOST_CHECK_EQUAL(pmgbp::empty<int>(bags), true);
+    }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( merge_testing )
+
+    BOOST_AUTO_TEST_CASE( merge_testing_pow_two_function ) {
+
+        typename make_message_bags<output_ports>::type bags;
+
+        for (int k = 0; k < 10; k++) {
+            pmgbp::get<int>(bags, 0).emplace_back(k);
+        }
+
+        pmgbp::map<int>(bags, pow2_test);
+
+        for(int k = 0; k < 10; k++) {
+            BOOST_CHECK_EQUAL(pmgbp::get<int>(bags, 0)[k], std::pow(k, 2));
+        }
+
     }
 
 BOOST_AUTO_TEST_SUITE_END()

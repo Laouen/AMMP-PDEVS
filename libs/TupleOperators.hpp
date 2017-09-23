@@ -105,7 +105,7 @@ namespace pmgbp {
     template<typename T, typename... Ts>
     void map(std::tuple<Ts...>& t, void (*modifier)(cadmium::bag<T>&)) {
         const auto size = std::tuple_size<std::tuple<Ts...>>::value;
-        return map_tuple<size - 1, T, Ts...>{}(t, modifier);
+        map_tuple<size - 1, T, Ts...>{}(t, modifier);
     }
 }
 
