@@ -12,7 +12,7 @@
 using namespace std;
 
 // TODO: correctly separate by namespaces like space::, reaction::, etc.
-// TODO(new line): Models and model internal states also should be under the same namespaces
+// TODO(new line): Models and models internal states also should be under the same namespaces
 
 template <class ENTRY>
 struct RoutingTable {
@@ -159,7 +159,7 @@ ostream& operator<<(ostream& os, const Message_t& msg);
 ostream& operator<<(ostream& os, const Address_t& to);
 ostream& operator<<(ostream& os, const vector<string>& m);
 ostream& operator<<(ostream& os, const MetaboliteAmounts& m);
-ostream& operator<<(ostream& os, const SpaceState& s);
+ostream& operator<<(ostream& os, const pmgbp::structs::space::Status& s);
 ostream& operator<<(ostream& os, const BState_t& s);
 ostream& operator<<(ostream& os, const Way_t& s);
 
@@ -176,7 +176,7 @@ ostream& operator<<(ostream& os, const Way_t& s);
 struct reaction_info_t {
 
   string id;
-  ReactionAddress location;
+  pmgbp::structs::space::ReactionAddress location;
   MetaboliteAmounts  substrate_sctry;
   MetaboliteAmounts  products_sctry;
   double konSTP;
@@ -189,15 +189,15 @@ struct reaction_info_t {
   : id(), location(), konSTP(1), konPTS(1), reversible(false) {}
 
   reaction_info_t(
-    string                  other_id,
-    const Address_t&        other_location,
+    string other_id,
+    const pmgbp::structs::space::ReactionAddress& other_location,
     const MetaboliteAmounts& other_substrate_sctry,
     const MetaboliteAmounts& other_products_sctry,
-    double                  other_konSTP,
-    double                  other_konPTS,
-    double                  other_koffSTP,
-    double                  other_koffPTS,
-    bool                    other_reversible
+    double other_konSTP,
+    double other_konPTS,
+    double other_koffSTP,
+    double other_koffPTS,
+    bool other_reversible
     ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), koffPTS(other_koffPTS), koffSTP(other_koffSTP), reversible(other_reversible) {}
 
   reaction_info_t(const reaction_info_t& other)

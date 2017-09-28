@@ -14,8 +14,8 @@
 
 #include <boost/simulation/pdevs/atomic.hpp> // boost simulator include
 
-#include "../structures/types.hpp" // reaction_info_t, SpaceState, Integer
-#include "../libs/randomNumbers.hpp" // IntegerRandom
+#include "../structures/types.hpp" // reaction_info_t, Status, Integer
+#include "Random.hpp" // IntegerRandom
 
 
 using namespace boost::simulation::pdevs;
@@ -135,7 +135,7 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     comment("external init.");
-    //SpaceTask<TIME, MSG> new_task;
+    //Task<TIME, MSG> new_task;
     bool select_biomass = false;
     bool show_metabolites = false;
 

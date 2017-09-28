@@ -76,10 +76,6 @@ public:
         this->update(time_to_advance);
     }
 
-    bool empty() const {
-        return this->tasks_queue.empty();
-    }
-
     bool is_in_next(const ELEMENT& elem) const {
 
         std::list<ELEMENT> next_tasks = this->next();
@@ -88,7 +84,7 @@ public:
 
     bool exists(const ELEMENT& elem) const {
 
-        std::list<T>::const_iterator it;
+        typename std::list<T>::const_iterator it;
 
         for (it = this->tasks_queue.cbegin(); it != this->tasks_queue.cend(); ++it) {
             if (std::find(it->task_elements.begin(),

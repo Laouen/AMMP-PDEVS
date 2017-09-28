@@ -27,6 +27,8 @@
 #ifndef PMGBP_PDEVS_LOGGER_HPP
 #define PMGBP_PDEVS_LOGGER_HPP
 
+#include <string>
+
 // TODO: add option to log to files instead of the standard output
 class Logger {
 private:
@@ -38,7 +40,7 @@ public:
      * @details It construct a new instance of Logger without module name.
      */
 
-    Logger() {};
+    Logger() = default;
 
     /**
      * @brief Constructor with module name.
@@ -48,7 +50,7 @@ public:
      * @param other_module_name A std::string with the module name that will
      * use this instance to print logs.
      */
-    Logger(std::string other_module_name) {
+    explicit Logger(const std::string& other_module_name) {
         module_name = other_module_name;
     }
 
@@ -60,7 +62,7 @@ public:
      * @param other_module_name A std::string with the new module name that will
      * use this instance to print logs
      */
-    void setModuleName(std::string other_module_name) {
+    void setModuleName(const std::string& other_module_name) {
         module_name = other_module_name;
     }
 
@@ -88,7 +90,7 @@ public:
      *
      * @param msg The std::string to print
      */
-    void info(std::string msg) const {
+    void info(const std::string& msg) const {
 #ifdef show_info
         std::cout << "[INFO] - ";
 		std::cout << "[" + module_name + "] ";
@@ -104,7 +106,7 @@ public:
      *
      * @param msg The std::string to print
      */
-    void debug(std::string msg) const {
+    void debug(const std::string& msg) const {
 #ifdef show_debug
         std::cout << "[DEBUG] - ";
 		std::cout << "[" + module_name + "] ";
@@ -120,7 +122,7 @@ public:
      *
      * @param msg The std::string to print
      */
-    void error(std::string msg) const {
+    void error(const std::string& msg) const {
 #ifdef show_error
         std::cout << "[ERROR] - ";
 		std::cout << "[" + module_name + "] ";

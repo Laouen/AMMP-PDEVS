@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMGBBP_PDEVS_REACTION_ATOMIC_MODEL_HPP
-#define PMGBBP_PDEVS_REACTION_ATOMIC_MODEL_HPP
+#ifndef PMGBBP_PDEVS_MODEL_REACTION_HPP
+#define PMGBBP_PDEVS_MODEL_REACTION_HPP
 
 #include <limits> // numeric_limits
 #include <cstddef>
@@ -44,7 +44,7 @@
 #include <cadmium/modeling/message_bag.hpp>
 
 #include "../structures/types.hpp" // MetaboliteAmounts, RTask_t, Way_t, RTaskQueue_t
-#include "../libs/randomNumbers.hpp" // RealRandom
+#include "Random.hpp" // RealRandom
 
 using namespace std;
 using namespace cadmium;
@@ -166,7 +166,7 @@ public:
 
       map<string, MetaboliteAmounts>::const_iterator jt;
       typename RTaskQueue_t<TIME, MSG>::const_iterator it;
-      typename vector<MSG>::iterator mt
+      typename vector<MSG>::iterator mt;
 
       typename make_message_bags<output_ports>::type bags;
       MSG new_message;
