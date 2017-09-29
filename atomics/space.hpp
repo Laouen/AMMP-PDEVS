@@ -66,7 +66,7 @@ class space {
 
 public:
 
-    using Product=PORTS::output_type;
+    using Reactant=PORTS::output_type;
 
     using input_ports=PORTS::input_ports;
     using output_ports=PORTS::output_ports;
@@ -105,7 +105,7 @@ public:
     explicit space(const State &state_other) noexcept {
         this->_state = state_other;
         this->initialize_random_engines();
-        this->logger.setModuleName(this->_state.id);
+        this->logger.setModuleName("Space_" + this->_state.id);
     }
 
     /********* Space constructors *************/
@@ -127,8 +127,8 @@ public:
             // selected_reactants = selected_reactants
             Task<output_ports> selected_reactants(Status::SENDING_REACTIONS);
             this->selectMetabolitesToReact(selected_reactants.message_bags);
-            if (!pmgbp::empty(selected_reactants.message_bags)) {
-                pmgbp::map(selected_reactants.message_bags, space::mergeMessages);
+            if (!pmgbp::tuple::empty(selected_reactants.message_bags)) {
+                pmgbp::tuple::map(selected_reactants.message_bags, space::mergeMessages);
                 this->_state.tasks.add(TIME_TO_SEND_FOR_REACTION, selected_reactants);
             }
         } else {
@@ -169,12 +169,11 @@ public:
         this->logger.info("Begin output");
 
         output_bags bags;
-        typename list<Task<output_ports>>::const_iterator it;
 
         list<Task<output_ports>> current_tasks = this->_state.tasks.next();
-        for (it = current_tasks.cbegin(); it != current_tasks.cend(); ++it) {
-            if (it->kind == Status::SELECTING_FOR_REACTION) continue;
-            bags = it->message_bags;
+        for (const auto &task : current_tasks) {
+            if (task.kind == Status::SELECTING_FOR_REACTION) continue;
+            pmgbp::tuple::merge(bags, task.message_bags);
         }
 
         this->logger.info("End output");
@@ -186,7 +185,7 @@ public:
 
         TIME result = this->_state.tasks.time_advance();
 
-        if (result <= TIME::zero()) {
+        if (result < TIME::zero()) {
             this->logger.error("Bad time: negative time: " + result);
         }
 
@@ -216,36 +215,31 @@ private:
         this->_integer_random.seed(integer_rd());
     }
 
-    void push_to_correct_port(ReactionAddress address, output_bags& bags, const Product& p) {
+    void push_to_correct_port(ReactionAddress address, output_bags& bags, const Reactant& p) {
         int port_number = this->_state.routing_table.at(address);
-        pmgbp::get<Product>(bags, port_number).emplace_back(p);
+        pmgbp::tuple::get<Reactant>(bags, port_number).emplace_back(p);
     }
 
     void selectMetabolitesToReact(output_bags& bags) {
-        Product product;
+        Reactant product;
         double rv, total, partial;
         map<string, double> sons, pons;
         Enzyme enzyme;
         reaction_info_t re;
         vector<string> enzyme_IDs;
 
-        // Iterators
-        vector<string>::iterator it;
-        MetaboliteAmounts::iterator st;
-        map<string, double>::iterator i;
-
         // Enzyme are individually considered
         this->unfoldEnzymes(enzyme_IDs);
         // Enzymes are randomly iterated
         this->shuffleEnzymes(enzyme_IDs);
 
-        for (it = enzyme_IDs.begin(); it != enzyme_IDs.end(); ++it) {
-            partial = 0.0;
+        for (auto &eid : enzyme_IDs) {
+            partial;
             sons.clear();
             pons.clear();
             re.clear();
             enzyme.clear();
-            enzyme = this->_state.enzymes.at(*it);
+            enzyme = this->_state.enzymes.at(eid);
 
             this->collectOns(enzyme.handled_reactions, sons, pons);
 
@@ -269,16 +263,17 @@ private:
 
             rv = _real_random.drawNumber(0.0, 1.0);
 
-            for (i = sons.begin(); i != sons.end(); ++i) {
+            partial = 0.0;
+            for (auto &son : sons) {
 
-                partial += i->second;
+                partial += son.second;
                 if (rv < partial) {
                     // send message to trigger the reaction
-                    re = enzyme.handled_reactions.at(i->first);
+                    re = enzyme.handled_reactions.at(son.first);
                     product.clear();
                     product.rid = re.id;
                     product.from = this->_state.id;
-                    product.react_direction = Way_t::STP;
+                    product.react_direction = Way::STP;
                     product.react_amount = 1;
                     this->push_to_correct_port(re.location, bags, product);
                     break;
@@ -287,11 +282,11 @@ private:
 
             // update the metabolite amount in the space
             if (!re.empty()) {
-                for (st = re.substrate_sctry.begin(); st != re.substrate_sctry.end(); ++st) {
-                    if (this->_state.metabolites.find(st->first) !=
+                for (auto &metabolite : re.substrate_sctry) {
+                    if (this->_state.metabolites.find(metabolite.first) !=
                         this->_state.metabolites.end()) {
-                        assert(this->_state.metabolites.at(st->first) >= st->second);
-                        this->_state.metabolites.at(st->first) -= st->second;
+                        assert(this->_state.metabolites.at(metabolite.first) >= metabolite.second);
+                        this->_state.metabolites.at(metabolite.first) -= metabolite.second;
                     }
                 }
                 // once the reaction is set the enzyme was processed and it moves on to the
@@ -301,16 +296,16 @@ private:
 
             // if re is empty, then no one of the STP reactions have ben triggered
             // and the search continues with the PTS reactions.
-            for (i = pons.begin(); i != pons.end(); ++i) {
+            for (auto &pon : pons) {
 
-                partial += i->second;
+                partial += pon.second;
                 if (rv < partial) {
                     // send message to trigger the reaction
-                    re = enzyme.handled_reactions.at(i->first);
+                    re = enzyme.handled_reactions.at(pon.first);
                     product.clear();
                     product.rid = re.id;
                     product.from = this->_state.id;
-                    product.react_direction = Way_t::PTS;
+                    product.react_direction = Way::PTS;
                     product.react_amount = 1;
                     this->push_to_correct_port(re.location, bags, product);
                     break;
@@ -319,11 +314,11 @@ private:
 
             // update the metabolite amount in the space
             if (!re.empty()) {
-                for (st = re.products_sctry.begin(); st != re.products_sctry.end(); ++st) {
-                    if (this->_state.metabolites.find(st->first) !=
+                for (auto &metabolite : re.products_sctry) {
+                    if (this->_state.metabolites.find(metabolite.first) !=
                         this->_state.metabolites.end()) {
-                        assert(this->_state.metabolites.at(st->first) >= st->second);
-                        this->_state.metabolites.at(st->first) -= st->second;
+                        assert(this->_state.metabolites.at(metabolite.first) >= metabolite.second);
+                        this->_state.metabolites.at(metabolite.first) -= metabolite.second;
                     }
                 }
             }
@@ -331,10 +326,8 @@ private:
     }
 
     void unfoldEnzymes(vector<string> &ce) const {
-        map<string, Enzyme>::const_iterator it;
-
-        for (it = this->_state.enzymes.cbegin(); it != this->_state.enzymes.cend(); ++it) {
-            ce.insert(ce.end(), it->second.amount, it->second.id);
+        for (const auto &enzyme : this->_state.enzymes) {
+            ce.insert(ce.end(), enzyme.second.amount, enzyme.second.id);
         }
     }
 
@@ -345,30 +338,29 @@ private:
         shuffle(ce.begin(), ce.end(), g);
     }
 
-    void collectOns(const map<string, reaction_info_t> &r,
-                    map<string, double> &s,
-                    map<string, double> &p) {
+    void collectOns(const map<string, reaction_info_t> &reactions,
+                    map<string, double> &son,
+                    map<string, double> &pon) {
 
-        map<string, reaction_info_t>::const_iterator it;
         double threshold;
 
-        for (it = r.cbegin(); it != r.cend(); ++it) {
+        for (const auto &reaction : reactions) {
 
             // calculating the sons and pons
-            if (this->thereAreEnoughFor(it->second.substrate_sctry)) {
-                threshold = this->bindingThreshold(it->second.substrate_sctry,
-                                                   it->second.konSTP);
-                s.insert({it->first, threshold});
+            if (this->thereAreEnoughFor(reaction.second.substrate_sctry)) {
+                threshold = this->bindingThreshold(reaction.second.substrate_sctry,
+                                                   reaction.second.konSTP);
+                son.insert({reaction.first, threshold});
             } else {
-                s.insert({it->first, 0});
+                son.insert({reaction.first, 0});
             }
 
-            if (it->second.reversible && this->thereAreEnoughFor(it->second.products_sctry)) {
-                threshold = this->bindingThreshold(it->second.products_sctry,
-                                                   it->second.konPTS);
-                p.insert({it->first, threshold});
+            if (reaction.second.reversible && this->thereAreEnoughFor(reaction.second.products_sctry)) {
+                threshold = this->bindingThreshold(reaction.second.products_sctry,
+                                                   reaction.second.konPTS);
+                pon.insert({reaction.first, threshold});
             } else {
-                p.insert({it->first, 0});
+                pon.insert({reaction.first, 0});
             }
         }
     }
@@ -378,11 +370,10 @@ private:
         // calculation of the concentrations [A][B][C]
 
         double concentration = 1.0;
-        MetaboliteAmounts::const_iterator it;
-        for (it = sctry.cbegin(); it != sctry.cend(); ++it) {
-            if (this->_state.metabolites.find(it->first) != this->_state.metabolites.end()) {
-                concentration *=
-                        this->._state.metabolites.at(it->first) / (L * this->_state.volume);
+        for (const auto &metabolite : sctry) {
+            if (this->_state.metabolites.find(metabolite.first) != this->_state.metabolites.end()) {
+                Integer amount = this->._state.metabolites.at(metabolite.first);
+                concentration *= amount / (L * this->_state.volume);
             }
         }
 
@@ -393,18 +384,15 @@ private:
     }
 
     bool thereAreEnoughFor(const MetaboliteAmounts &stcry) const {
-        MetaboliteAmounts::const_iterator it;
-        bool local_metabolite, not_enough;
+        bool is_local, not_enough;
 
-        for (it = stcry.begin(); it != stcry.end(); ++it) {
-            local_metabolite =
-                    this->_state.metabolites.find(it->first) != this->_state.metabolites.end();
-            not_enough = this->_state.metabolites.at(it->first) < it->second;
-            if (local_metabolite && not_enough) {
+        for (const auto &metabolite : stcry) {
+            is_local = this->_state.metabolites.find(metabolite.first) != this->_state.metabolites.end();
+            not_enough = this->_state.metabolites.at(metabolite.first) < metabolite.second;
+            if (is_local && not_enough) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -412,39 +400,35 @@ private:
      * Takes all the metabolites from om with an amount grater than 0 and add them to m.
      */
     void addMultipleMetabolites(MetaboliteAmounts &m, const MetaboliteAmounts &om) {
-        MetaboliteAmounts::const_iterator it;
 
-        for (it = om.cbegin(); it != om.cend(); ++it) {
-            if (m.find(it->first) != m.end()) {
-                m.at(it->first) += it->second;
+        for (const auto &metabolite : om) {
+            if (m.find(metabolite.first) != m.end()) {
+                m.at(metabolite.first) += metabolite.second;
             } else {
-                m.insert({it->first, it->second});
+                m.insert({metabolite.first, metabolite.second});
             }
         }
     }
 
     /**
      * @brief Merges all message unifying those with the same receiver address
-     * @param m The non grouped messages to Unify
+     * @param messages The non grouped messages to Unify
      */
-    static void mergeMessages(cadmium::bag<Product> &m) const {
+    static void mergeMessages(cadmium::bag<Reactant> &messages) const {
+        map<string, Reactant> merged_messages;
 
-        typename cadmium::bag<Product>::iterator it;
-        typename map<string, Product>::iterator mt;
-        map<string, Product> unMsgs;
-
-        for (it = m.begin(); it != m.end(); ++it) {
-            space::insertMessageMerging(unMsgs, *it);
+        for (auto &product : messages) {
+            space::insertMessageMerging(merged_messages, product);
         }
 
-        m.clear();
+        messages.clear();
 
-        for (mt = unMsgs.begin(); mt != unMsgs.end(); ++mt) {
-            m.emplace_back(mt->second);
+        for (auto &merged_product : merged_messages) {
+            messages.emplace_back(merged_product.second);
         }
     }
 
-    static void insertMessageMerging(map<string, Product> &ms, Product &m) const {
+    static void insertMessageMerging(std::map<string, Reactant>& ms, Reactant &m) const {
 
         if (m.react_amount > 0) {
             if (ms.find(m.rid) != ms.end()) {
@@ -473,10 +457,8 @@ private:
      */
     bool thereIsMetabolites() const {
 
-        MetaboliteAmounts::const_iterator it;
-        for (it = this->_state.metabolites.cbegin();
-             it != this->_state.metabolites.cend(); ++it) {
-            if (it->second > 0) {
+        for (const auto &metabolite : this->_state.metabolites) {
+            if (metabolite.second > 0) {
                 return true;
             }
         }
@@ -495,18 +477,15 @@ private:
     double sumAll(const map<string, double> &ons) const {
         double result = 0;
 
-        map<string, double>::const_iterator it;
-        for (it = ons.cbegin(); it != ons.cend(); ++it) {
-            result += it->second;
+        for (const auto &on : ons) {
+            result += on.second;
         }
-
         return result;
     }
 
     void normalize(map<string, double> &ons, double t) {
-        map<string, double>::const_iterator it;
-        for (it = ons.begin(); it != ons.end(); ++it) {
-            it->second = it->second / t;
+        for (auto &on : ons) {
+            on.second /= t;
         }
     }
 };

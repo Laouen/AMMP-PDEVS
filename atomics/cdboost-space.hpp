@@ -135,7 +135,7 @@ public:
 
   void external(const vector<MSG>& mb, const TIME& t) noexcept {
     comment("external init.");
-    //Task<TIME, MSG> new_task;
+    //Task<TIME, REACTANT> new_task;
     bool select_biomass = false;
     bool show_metabolites = false;
 
@@ -399,7 +399,7 @@ public:
           cm.clear();
           cm.to = re.location;
           cm.from = _id;
-          cm.react_direction = Way_t::STP;
+          cm.react_direction = Way::STP;
           cm.react_amount = 1;
           m.push_back(cm);
           break;
@@ -424,7 +424,7 @@ public:
             cm.clear();
             cm.to = re.location;
             cm.from = _id;
-            cm.react_direction = Way_t::PTS;
+            cm.react_direction = Way::PTS;
             cm.react_amount = 1;
             m.push_back(cm);
             break;

@@ -32,9 +32,8 @@ struct RoutingTable {
 /********** Enums and renames *************/
 /******************************************/
 
-enum class RState_t { REJECTING = 1, REACTING = 0 };
 enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, IDLE = 2, WAITING = 3 };
-enum class Way_t { STP, PTS };
+enum class Way { STP, PTS };
 
 using Integer = unsigned long long;
 using MetaboliteAmounts  = map<string, Integer>;
@@ -62,13 +61,13 @@ template<class TIME, class MSG>
 struct RTask_t {
   RState_t    task_kind;
   TIME        time_left;
-  Way_t       direction;
+  Way       direction;
   Integer   amount;
   vector<MSG> toSend;
 
   RTask_t() {}
 
-  RTask_t(const TIME& other_t, const Way_t& other_d, const Integer& other_a)
+  RTask_t(const TIME& other_t, const Way& other_d, const Integer& other_a)
   : task_kind(RState_t::REACTING), time_left(other_t), direction(other_d), amount(other_a) {}
 
   RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
@@ -117,7 +116,7 @@ struct Message_t {
   
   // fields for reactions
   string from;
-  Way_t react_direction;
+  Way react_direction;
   Integer react_amount;
   
   // fields for spaces
@@ -129,7 +128,7 @@ struct Message_t {
   // field for biomass reaction request
   bool biomass_request;
 
-  Message_t(const Address_t& other_to, string other_from, const MetaboliteAmounts& other_m, Way_t other_rd, Integer other_ra, bool other_sr, bool other_br)
+  Message_t(const Address_t& other_to, string other_from, const MetaboliteAmounts& other_m, Way other_rd, Integer other_ra, bool other_sr, bool other_br)
   : to(other_to), from(other_from), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
 
   Message_t()
@@ -161,7 +160,7 @@ ostream& operator<<(ostream& os, const vector<string>& m);
 ostream& operator<<(ostream& os, const MetaboliteAmounts& m);
 ostream& operator<<(ostream& os, const pmgbp::structs::space::Status& s);
 ostream& operator<<(ostream& os, const BState_t& s);
-ostream& operator<<(ostream& os, const Way_t& s);
+ostream& operator<<(ostream& os, const Way& s);
 
 /*******************************************/
 /************** End Message_t **************/

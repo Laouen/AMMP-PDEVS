@@ -15,7 +15,7 @@ ostream& operator<<(ostream& os, const Address_t& to) {
 
 ostream& operator<<(ostream& os, const Message_t& msg) {
   os << "To: " << msg.to << endl;
-  os << "Metabolites: " << msg.metabolites << endl;
+  os << "Reactant: " << msg.metabolites << endl;
   os << "reaction way: " << msg.react_direction << endl;
   os << "show request: " << (msg.show_request ? "true" : "false") << endl;
   os << "send biomass: " << (msg.biomass_request ? "true" : "false");
@@ -77,13 +77,13 @@ ostream& operator<<(ostream& os, const BState_t& s) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const Way_t& s) {
+ostream& operator<<(ostream& os, const Way& s) {
 
   switch(s) {
-    case Way_t::STP:
+    case Way::STP:
       os << "STP";
       break;
-    case Way_t::PTS:
+    case Way::PTS:
       os << "PTS";
       break;
   }

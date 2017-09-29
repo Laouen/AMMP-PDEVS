@@ -13,7 +13,7 @@ namespace message {
     struct Products {
         std::string rid;
         std::string from;
-        Way_t rection_direction;
+        Way rection_direction;
         Integer amount;
 
         void clear() {

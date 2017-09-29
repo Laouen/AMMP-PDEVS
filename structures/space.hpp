@@ -57,14 +57,14 @@ struct ReactionAddress {
 /**********************************************/
 /***************** PORTS **********************/
 /**********************************************/
-template<class PRODUCT, class METABOLITES>
+template<class REACTANT, class PRODUCT>
 struct ports {
 
-    struct inner : public cadmium::out_port<PRODUCT> {};
-    struct in : public cadmium::in_port<METABOLITES> {};
+    struct inner : public cadmium::out_port<REACTANT> {};
+    struct in : public cadmium::in_port<PRODUCT> {};
 
-    using output_type=PRODUCT
-    using input_type=METABOLITES
+    using output_type=REACTANT;
+    using input_type=PRODUCT;
 
     using input_ports=std::tuple<typename in>;
     using output_ports=std::tuple<typename inner>
