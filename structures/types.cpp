@@ -1,9 +1,12 @@
 #include "types.hpp"
 
+using namespace std;
+using namespace pmgbp::types;
+
 ostream& operator<<(ostream& os, const Address_t& to) {
-  
+
   os << "[";
-  Address_t::const_iterator i = to.cbegin();
+  auto i = to.cbegin();
   while(i != to.cend()){
     os << *i;
     ++i;
@@ -13,19 +16,10 @@ ostream& operator<<(ostream& os, const Address_t& to) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const Message_t& msg) {
-  os << "To: " << msg.to << endl;
-  os << "Reactant: " << msg.metabolites << endl;
-  os << "reaction way: " << msg.react_direction << endl;
-  os << "show request: " << (msg.show_request ? "true" : "false") << endl;
-  os << "send biomass: " << (msg.biomass_request ? "true" : "false");
-  return os;
-}
-
 ostream& operator<<(ostream& os, const vector<string>& m) {
-  
+
   os << "[";
-  vector<string>::const_iterator i = m.cbegin();
+  auto i = m.cbegin();
   while(i != m.cend()){
     os << *i;
     ++i;
@@ -36,32 +30,15 @@ ostream& operator<<(ostream& os, const vector<string>& m) {
 }
 
 ostream& operator<<(ostream& os, const MetaboliteAmounts& m) {
-  
+
   os << "[";
-  MetaboliteAmounts::const_iterator i = m.cbegin();
+  auto i = m.cbegin();
   while(i != m.cend()){
     os << i->second << "-" << i->first;
     ++i;
     if (i != m.cend()) os << ", ";
   }
   os << "]";
-  return os;
-}
-
-ostream& operator<<(ostream& os, const SpaceState& s) {
-
-  switch(s) {
-    case SpaceState::SENDING_BIOMASS:
-      os << "SENDING_BIOMASS";
-      break;
-    case SpaceState::SENDING_REACTIONS:
-      os << "SENDING_REACTIONS";
-      break;
-    case SpaceState::SELECTING_FOR_REACTION:
-      os << "SELECTING_FOR_REACTION";
-      break;
-  }
-
   return os;
 }
 
@@ -82,23 +59,23 @@ ostream& operator<<(ostream& os, const Way& s) {
   switch(s) {
     case Way::STP:
       os << "STP";
-      break;
+          break;
     case Way::PTS:
       os << "PTS";
-      break;
+          break;
   }
 
   return os;
 }
 
-ostream& operator<<(ostream& os, const reaction_info_t& r) {
+ostream& operator<<(ostream& os, const ReactionInfo& r) {
 
-  cout << "id: " << r.id << endl;
-  cout << "Address: " << r.location << endl;
-  cout << "substrates: " << r.substrate_sctry << endl;
-  cout << "products: " << r.products_sctry << endl;
-  cout << "KonSTP: " << r.konSTP << endl;
-  cout << "KonPTS" << r.konPTS << endl;
-  cout << "reversible: " << ((r.reversible) ? "true" : "false");
+  os << "id: " << r.id << endl;
+  os << "Address: " << r.location << endl;
+  os << "substrates: " << r.substrate_sctry << endl;
+  os << "products: " << r.products_sctry << endl;
+  os << "KonSTP: " << r.konSTP << endl;
+  os << "KonPTS" << r.konPTS << endl;
+  os << "reversible: " << ((r.reversible) ? "true" : "false");
   return os;
 }

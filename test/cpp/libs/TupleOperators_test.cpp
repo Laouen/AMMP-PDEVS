@@ -462,4 +462,57 @@ BOOST_AUTO_TEST_SUITE( merge_testing )
 
     }
 
+
+
+    BOOST_AUTO_TEST_CASE( equals_tests ) {
+        typename make_message_bags<output_ports>::type bags_left;
+        typename make_message_bags<output_ports>::type bags_right;
+
+        pmgbp::tuple::get<int>(bags_left, 0).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_left, 1).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_left, 2).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_left, 3).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right, 0).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right, 1).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right, 2).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right, 3).emplace_back(1);
+
+        BOOST_CHECK(pmgbp::tuple::equals(bags_left, bags_right));
+
+        typename make_message_bags<output_ports>::type bags_left1;
+        typename make_message_bags<output_ports>::type bags_right1;
+
+        pmgbp::tuple::get<int>(bags_left1, 1).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_left1, 3).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right1, 1).emplace_back(1);
+        pmgbp::tuple::get<int>(bags_right1, 3).emplace_back(1);
+
+        BOOST_CHECK(pmgbp::tuple::equals(bags_left1, bags_right1));
+
+        typename make_message_bags<output_ports>::type bags_left2;
+        typename make_message_bags<output_ports>::type bags_right2;
+
+        for (int k = 0; k < 10; k++) {
+
+            pmgbp::tuple::get<int>(bags_left2, 1).emplace_back(k);
+            pmgbp::tuple::get<int>(bags_left2, 3).emplace_back(k);
+            pmgbp::tuple::get<int>(bags_right2, 1).emplace_back(k);
+            pmgbp::tuple::get<int>(bags_right2, 3).emplace_back(k);
+        }
+
+        BOOST_CHECK(pmgbp::tuple::equals(bags_left2, bags_right2));
+
+        typename make_message_bags<output_ports>::type bags_left3;
+        typename make_message_bags<output_ports>::type bags_right3;
+
+        for (int k = 0; k < 10; k++) {
+
+            pmgbp::tuple::get<int>(bags_left3, 1).emplace_back(k);
+            pmgbp::tuple::get<int>(bags_left3, 3).emplace_back(k);
+            pmgbp::tuple::get<int>(bags_right3, 0).emplace_back(k);
+        }
+
+        BOOST_CHECK(!pmgbp::tuple::equals(bags_left3, bags_right3));
+    }
+
 BOOST_AUTO_TEST_SUITE_END()

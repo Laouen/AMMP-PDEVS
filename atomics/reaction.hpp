@@ -24,8 +24,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PMGBBP_PDEVS_MODEL_REACTION_HPP
-#define PMGBBP_PDEVS_MODEL_REACTION_HPP
+#ifndef PMGBP_PDEVS_MODEL_REACTION_HPP
+#define PMGBP_PDEVS_MODEL_REACTION_HPP
 
 #include <limits> // numeric_limits
 #include <cstddef>
@@ -56,19 +56,20 @@ namespace models {
 
 using namespace std;
 using namespace cadmium;
-using namespace structs::reaction;
+using namespace pmgbp::types;
+using namespace pmgbp::structs::reaction;
 
 template<class PORTS, class TIME>
 class reaction {
 public:
 
-    using Product=PORTS::output_type;
+    using Product=typename PORTS::output_type;
 
-    using input_ports=PORTS::input_ports;
-    using output_ports=PORTS::output_ports;
+    using input_ports=typename PORTS::input_ports;
+    using output_ports=typename PORTS::output_ports;
 
-    using output_bags=typename make_message_bags<output_ports>::type
-    using input_bags=typename make_message_bags<input_ports>::type
+    using output_bags=typename make_message_bags<output_ports>::type;
+    using input_bags=typename make_message_bags<input_ports>::type;
 
     /**
      *
@@ -81,7 +82,7 @@ public:
      * reaction atomic model.
      *
      */
-    struct State{
+    struct state_type{
         string id;
         TIME rate;
         map<string, MetaboliteAmounts> substrate_sctry; // the stoichiometry is separated by compartments
@@ -97,7 +98,7 @@ public:
     };
 
     RealRandom<double> real_random; // used for uniform random number
-    State _state;
+    state_type state;
 
     reaction() noexcept = default;
 
@@ -108,26 +109,26 @@ public:
      *
      * @param initialized_state A reaction::state_type already initialized.
      */
-    explicit reaction(const State& initialized_state) noexcept {
+    explicit reaction(const state_type& initialized_state) noexcept {
 
-        this->_state = initialized_state;
+        this->state = initialized_state;
 
         // real_random is initialized with a random generator engine
         random_device real_rd; // Random generator engine
         real_random.seed(real_rd());
-        this->logger.setModuleName("Reaction_" + this->_state.id);
+        this->logger.setModuleName("Reaction_" + this->state.id);
     }
 
     void internal_transition() {
         this->logger.info("Begin internal_transition");
-        this->_state.tasks.advance();
+        this->state.tasks.advance();
         this->logger.info("End internal_transition");
     }
 
     void external_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin external_transition");
 
-        this->_state.tasks.update(e);
+        this->state.tasks.update(e);
 
         // Inserting new accepted metabolites
         map<pair<string, Way>, int> rejected = {}; // first = STP, second = PTS
@@ -136,19 +137,19 @@ public:
         // New task for the rejected metabolites to be send it.
         output_bags rejected_metabolites;
         sendBackRejected(rejected, rejected_metabolites);
-        this->_state.tasks.add(this->_state.reject_time, rejected_metabolites);
+        this->state.tasks.add(this->state.reject_time, rejected_metabolites);
 
         // looking for new reactions
         output_bags products;
         this->lookForNewReactions(products);
-        this->_state.tasks.add(this->_state.rate, products);
+        this->state.tasks.add(this->state.rate, products);
         this->logger.info("End external_transition");
     }
 
     void confluence_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin confluence_transition");
         internal_transition();
-        external_transition(TIME(0), mbs);
+        external_transition(TIME::zero(), mbs);
         this->logger.info("End confluence_transition");
     }
 
@@ -157,7 +158,7 @@ public:
 
         output_bags bags;
 
-        list<output_bags> outputs = this->_state.tasks.next();
+        list<output_bags> outputs = this->state.tasks.next();
         for (const auto &current_bags: outputs) {
             pmgbp::tuple::merge(bags, current_bags);
         }
@@ -169,17 +170,17 @@ public:
     TIME time_advance() const {
         this->logger.info("Begin time_advance");
 
-        TIME result = this->_state.tasks.time_advance();
+        TIME result = this->state.tasks.time_advance();
 
-        if (result < TIME::zero()) {
-            this->logger.error("Bad time: negative time: " + result);
-        }
+//        if (result < TIME::zero()) {
+//            this->logger.error("Bad time: negative time: " + result);
+//        }
 
         this->logger.info("End time_advance");
         return result;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<Product,TIME>::State& i) {}
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<PORTS,TIME>::state_type& i) {}
 
 private:
 
@@ -190,7 +191,7 @@ private:
     ***************************************/
 
     void push_to_correct_port(string metabolite_id, output_bags& bags, const Product& m) const {
-        int port_number = this->_state.routing_table.at(metabolite_id);
+        int port_number = this->state.routing_table.at(metabolite_id);
         pmgbp::tuple::get<Product>(bags, port_number).emplace_back(m);
     }
 
@@ -199,18 +200,18 @@ private:
 
         for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
 
-            if (x.react_direction == Way::STP) {
+            if (x.reaction_direction == Way::STP) {
 
                 // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
-                for (int i = 0; i < x.react_amount; ++i) {
-                    if (acceptedMetabolites(_state.koff_STP)) _state.substrate_comps.at(x.from) += 1;
+                for (int i = 0; i < x.reaction_amount; ++i) {
+                    if (acceptedMetabolites(state.koff_STP)) state.substrate_comps.at(x.from) += 1;
                     else increaseRejected(rejected, x.from, Way::STP);
                 }
             } else {
 
                 // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
-                for (int i = 0; i < x.react_amount; ++i) {
-                    if (acceptedMetabolites(_state.koff_PTS)) _state.product_comps.at(x.from) += 1;
+                for (int i = 0; i < x.reaction_amount; ++i) {
+                    if (acceptedMetabolites(state.koff_PTS)) state.product_comps.at(x.from) += 1;
                     else increaseRejected(rejected, x.from, Way::PTS);
                 }
             }
@@ -221,7 +222,7 @@ private:
         return (real_random.drawNumber(0.0, 1.0) > k);
     }
 
-    void increaseRejected(map<pair<string, Way>, int>& rejected, string compartment, Way direction) {
+    void increaseRejected(map<pair<string, Way>, int>& rejected, const string& compartment, Way direction) {
 
         // insert rejected information compartment and rejected reaction direction
         pair<string, Way> key = make_pair(compartment, direction);
@@ -238,18 +239,18 @@ private:
         for ( const auto &it : rejected) {
 
             if (it.first.second == Way::STP) {
-                assert(_state.substrate_sctry.find(it.first.first) != _state.substrate_sctry.end());
+                assert(state.substrate_sctry.find(it.first.first) != state.substrate_sctry.end());
 
-                for (const auto &metabolite : _state.substrate_sctry.at(it.first.first)) {
+                for (const auto &metabolite : state.substrate_sctry.at(it.first.first)) {
 
                     message.clear();
                     message.metabolites.insert({metabolite.first, it.second*metabolite.second});
                     this->push_to_correct_port(metabolite.first, bags, message);
                 }
             } else {
-                assert(_state.products_sctry.find(it.first.first) != _state.products_sctry.end());
+                assert(state.products_sctry.find(it.first.first) != state.products_sctry.end());
 
-                for (const auto &metabolite : _state.products_sctry.at(it.first.first)) {
+                for (const auto &metabolite : state.products_sctry.at(it.first.first)) {
 
                     message.clear();
                     message.metabolites.insert({metabolite.first, it.second*metabolite.second});
@@ -262,13 +263,13 @@ private:
     void lookForNewReactions(output_bags& bags) {
 
         Product message;
-        Integer stp_ready = totalReadyFor(_state.substrate_comps);
-        Integer pts_ready = totalReadyFor(_state.product_comps);
+        Integer stp_ready = totalReadyFor(state.substrate_comps);
+        Integer pts_ready = totalReadyFor(state.product_comps);
 
         if (stp_ready > 0) {
 
-            this->removeMetabolites(_state.substrate_comps, stp_ready);
-            for (const auto &compartment_sctry : _state.products_sctry) {
+            this->removeMetabolites(state.substrate_comps, stp_ready);
+            for (const auto &compartment_sctry : state.products_sctry) {
 
                 for (const auto &metabolite : compartment_sctry.second) {
                     message.clear();
@@ -280,8 +281,8 @@ private:
 
         if (pts_ready > 0) {
 
-            this->removeMetabolites(_state.product_comps, pts_ready);
-            for (const auto &compartment_sctry : _state.substrate_sctry) {
+            this->removeMetabolites(state.product_comps, pts_ready);
+            for (const auto &compartment_sctry : state.substrate_sctry) {
 
                 for (const auto &metabolite : compartment_sctry.second) {
                     message.clear();
@@ -316,4 +317,4 @@ private:
 }
 }
 
-#endif
+#endif //PMGBP_PDEVS_MODEL_REACTION_HPP

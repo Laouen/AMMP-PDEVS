@@ -40,7 +40,7 @@
 #include <TupleOperators.hpp>
 
 #include "../structures/space.hpp" // Status, Task
-#include "../structures/types.hpp" // reaction_info_t, Integer, RoutingTable
+#include "../structures/types.hpp" // ReactionInfo, Integer, RoutingTable
 
 #define TIME_TO_SEND_FOR_REACTION TIME({0,0,0,1}) // 1 millisecond
 namespace pmgbp {
@@ -48,7 +48,8 @@ namespace models {
 
 using namespace std;
 using namespace cadmium;
-using namespace structs::space;
+using namespace pmgbp::types;
+using namespace pmgbp::structs::space;
 
     /**
      * @author Laouen Mayal Louan Belloli
@@ -66,15 +67,15 @@ class space {
 
 public:
 
-    using Reactant=PORTS::output_type;
+    using Reactant=typename PORTS::output_type;
 
-    using input_ports=PORTS::input_ports;
-    using output_ports=PORTS::output_ports;
+    using input_ports=typename PORTS::input_ports;
+    using output_ports=typename PORTS::output_ports;
 
-    using output_bags=typename make_message_bags<output_ports>::type
-    using input_bags=typename make_message_bags<input_ports>::type
+    using output_bags=typename make_message_bags<output_ports>::type;
+    using input_bags=typename make_message_bags<input_ports>::type;
 
-    struct State {
+    struct state_type {
         string id;
         TIME current_time;
         TIME internal_time;
@@ -86,7 +87,7 @@ public:
         TaskScheduler<TIME, Task<output_ports>> tasks;
     };
 
-    State _state;
+    state_type state;
 
     /********* Space constructors *************/
 
@@ -102,10 +103,10 @@ public:
      * @param state_other - The model initial internal state.
      * @tparam state_other - space::state_type
      */
-    explicit space(const State &state_other) noexcept {
-        this->_state = state_other;
+    explicit space(const state_type &state_other) noexcept {
+        this->state = state_other;
         this->initialize_random_engines();
-        this->logger.setModuleName("Space_" + this->_state.id);
+        this->logger.setModuleName("Space_" + this->state.id);
     }
 
     /********* Space constructors *************/
@@ -115,13 +116,13 @@ public:
     void internal_transition() {
         this->logger.info("Begin internal_transition");
 
-        this->_state.current_time += this->_state.tasks.time_advance();
+        this->state.current_time += this->state.tasks.time_advance();
 
-        if (this->_state.tasks.is_in_next(Task(Status::SELECTING_FOR_REACTION))) {
+        if (this->state.tasks.is_in_next(Task<output_ports>(Status::SELECTING_FOR_REACTION))) {
 
             // advance() must be called after the is_in_next() and before to add the
             // Status::SENDING_REACTION task
-            this->_state.tasks.advance();
+            this->state.tasks.advance();
 
             // set a new task to send the selected metabolites.
             // selected_reactants = selected_reactants
@@ -129,11 +130,11 @@ public:
             this->selectMetabolitesToReact(selected_reactants.message_bags);
             if (!pmgbp::tuple::empty(selected_reactants.message_bags)) {
                 pmgbp::tuple::map(selected_reactants.message_bags, space::mergeMessages);
-                this->_state.tasks.add(TIME_TO_SEND_FOR_REACTION, selected_reactants);
+                this->state.tasks.add(TIME_TO_SEND_FOR_REACTION, selected_reactants);
             }
         } else {
 
-            this->_state.tasks.advance();
+            this->state.tasks.advance();
         }
 
         // setting new selection
@@ -146,11 +147,11 @@ public:
 
         bool show_metabolites = false;
 
-        this->_state.current_time += e;
-        this->_state.tasks.update(e);
+        this->state.current_time += e;
+        this->state.tasks.update(e);
 
         for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
-            this->addMultipleMetabolites(this->_state.metabolites, x.metabolites);
+            this->addMultipleMetabolites(this->state.metabolites, x.metabolites);
         }
 
         this->setNextSelection();
@@ -161,7 +162,7 @@ public:
     void confluence_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin confluence_transition");
         internal_transition();
-        external_transition(mbs, TIME::zero());
+        external_transition(TIME::zero(), mbs);
         this->logger.info("End confluence_transition");
     }
 
@@ -170,7 +171,7 @@ public:
 
         output_bags bags;
 
-        list<Task<output_ports>> current_tasks = this->_state.tasks.next();
+        list<Task<output_ports>> current_tasks = this->state.tasks.next();
         for (const auto &task : current_tasks) {
             if (task.kind == Status::SELECTING_FOR_REACTION) continue;
             pmgbp::tuple::merge(bags, task.message_bags);
@@ -183,15 +184,17 @@ public:
     TIME time_advance() const {
         this->logger.info("Begin time_advance");
 
-        TIME result = this->_state.tasks.time_advance();
+        TIME result = this->state.tasks.time_advance();
 
-        if (result < TIME::zero()) {
-            this->logger.error("Bad time: negative time: " + result);
-        }
+//        if (result < TIME::zero()) {
+//            this->logger.error("Bad time: negative time: " + result);
+//        }
 
         this->logger.info("End time_advance");
         return result;
     }
+
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename space<PORTS,TIME>::state_type& i) {}
 
     /********** P-DEVS functions **************/
 
@@ -216,16 +219,16 @@ private:
     }
 
     void push_to_correct_port(ReactionAddress address, output_bags& bags, const Reactant& p) {
-        int port_number = this->_state.routing_table.at(address);
+        int port_number = this->state.routing_table.at(address);
         pmgbp::tuple::get<Reactant>(bags, port_number).emplace_back(p);
     }
 
     void selectMetabolitesToReact(output_bags& bags) {
-        Reactant product;
+        Reactant reactant;
         double rv, total, partial;
         map<string, double> sons, pons;
         Enzyme enzyme;
-        reaction_info_t re;
+        ReactionInfo re;
         vector<string> enzyme_IDs;
 
         // Enzyme are individually considered
@@ -239,7 +242,7 @@ private:
             pons.clear();
             re.clear();
             enzyme.clear();
-            enzyme = this->_state.enzymes.at(eid);
+            enzyme = this->state.enzymes.at(eid);
 
             this->collectOns(enzyme.handled_reactions, sons, pons);
 
@@ -270,12 +273,12 @@ private:
                 if (rv < partial) {
                     // send message to trigger the reaction
                     re = enzyme.handled_reactions.at(son.first);
-                    product.clear();
-                    product.rid = re.id;
-                    product.from = this->_state.id;
-                    product.react_direction = Way::STP;
-                    product.react_amount = 1;
-                    this->push_to_correct_port(re.location, bags, product);
+                    reactant.clear();
+                    reactant.rid = re.id;
+                    reactant.from = this->state.id;
+                    reactant.reaction_direction = Way::STP;
+                    reactant.reaction_amount = 1;
+                    this->push_to_correct_port(re.location, bags, reactant);
                     break;
                 }
             }
@@ -283,10 +286,10 @@ private:
             // update the metabolite amount in the space
             if (!re.empty()) {
                 for (auto &metabolite : re.substrate_sctry) {
-                    if (this->_state.metabolites.find(metabolite.first) !=
-                        this->_state.metabolites.end()) {
-                        assert(this->_state.metabolites.at(metabolite.first) >= metabolite.second);
-                        this->_state.metabolites.at(metabolite.first) -= metabolite.second;
+                    if (this->state.metabolites.find(metabolite.first) !=
+                        this->state.metabolites.end()) {
+                        assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
+                        this->state.metabolites.at(metabolite.first) -= metabolite.second;
                     }
                 }
                 // once the reaction is set the enzyme was processed and it moves on to the
@@ -302,12 +305,12 @@ private:
                 if (rv < partial) {
                     // send message to trigger the reaction
                     re = enzyme.handled_reactions.at(pon.first);
-                    product.clear();
-                    product.rid = re.id;
-                    product.from = this->_state.id;
-                    product.react_direction = Way::PTS;
-                    product.react_amount = 1;
-                    this->push_to_correct_port(re.location, bags, product);
+                    reactant.clear();
+                    reactant.rid = re.id;
+                    reactant.from = this->state.id;
+                    reactant.reaction_direction = Way::PTS;
+                    reactant.reaction_amount = 1;
+                    this->push_to_correct_port(re.location, bags, reactant);
                     break;
                 }
             }
@@ -315,10 +318,10 @@ private:
             // update the metabolite amount in the space
             if (!re.empty()) {
                 for (auto &metabolite : re.products_sctry) {
-                    if (this->_state.metabolites.find(metabolite.first) !=
-                        this->_state.metabolites.end()) {
-                        assert(this->_state.metabolites.at(metabolite.first) >= metabolite.second);
-                        this->_state.metabolites.at(metabolite.first) -= metabolite.second;
+                    if (this->state.metabolites.find(metabolite.first) !=
+                        this->state.metabolites.end()) {
+                        assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
+                        this->state.metabolites.at(metabolite.first) -= metabolite.second;
                     }
                 }
             }
@@ -326,7 +329,7 @@ private:
     }
 
     void unfoldEnzymes(vector<string> &ce) const {
-        for (const auto &enzyme : this->_state.enzymes) {
+        for (const auto &enzyme : this->state.enzymes) {
             ce.insert(ce.end(), enzyme.second.amount, enzyme.second.id);
         }
     }
@@ -338,9 +341,9 @@ private:
         shuffle(ce.begin(), ce.end(), g);
     }
 
-    void collectOns(const map<string, reaction_info_t> &reactions,
-                    map<string, double> &son,
-                    map<string, double> &pon) {
+    void collectOns(const map<string, ReactionInfo>& reactions,
+                    map<string, double>& son,
+                    map<string, double>& pon) {
 
         double threshold;
 
@@ -371,9 +374,9 @@ private:
 
         double concentration = 1.0;
         for (const auto &metabolite : sctry) {
-            if (this->_state.metabolites.find(metabolite.first) != this->_state.metabolites.end()) {
-                Integer amount = this->._state.metabolites.at(metabolite.first);
-                concentration *= amount / (L * this->_state.volume);
+            if (this->state.metabolites.find(metabolite.first) != this->state.metabolites.end()) {
+                Integer amount = this->state.metabolites.at(metabolite.first);
+                concentration *= amount / (L * this->state.volume);
             }
         }
 
@@ -387,8 +390,8 @@ private:
         bool is_local, not_enough;
 
         for (const auto &metabolite : stcry) {
-            is_local = this->_state.metabolites.find(metabolite.first) != this->_state.metabolites.end();
-            not_enough = this->_state.metabolites.at(metabolite.first) < metabolite.second;
+            is_local = this->state.metabolites.find(metabolite.first) != this->state.metabolites.end();
+            not_enough = this->state.metabolites.at(metabolite.first) < metabolite.second;
             if (is_local && not_enough) {
                 return false;
             }
@@ -414,7 +417,7 @@ private:
      * @brief Merges all message unifying those with the same receiver address
      * @param messages The non grouped messages to Unify
      */
-    static void mergeMessages(cadmium::bag<Reactant> &messages) const {
+    static void mergeMessages(cadmium::bag<Reactant> &messages) {
         map<string, Reactant> merged_messages;
 
         for (auto &product : messages) {
@@ -428,13 +431,13 @@ private:
         }
     }
 
-    static void insertMessageMerging(std::map<string, Reactant>& ms, Reactant &m) const {
+    static void insertMessageMerging(std::map<string, Reactant>& ms, Reactant &m) {
 
-        if (m.react_amount > 0) {
+        if (m.reaction_amount > 0) {
             if (ms.find(m.rid) != ms.end()) {
-                ms.at(m.rid).react_amount += m.react_amount;
+                ms.at(m.rid).reaction_amount += m.reaction_amount;
             } else {
-                ms.insert({m.to, m});
+                ms.insert({m.rid, m});
             }
         }
     }
@@ -447,7 +450,7 @@ private:
 
         if (this->thereIsMetabolites() && !this->thereIsNextSelection()) {
             Task<output_ports> selection_task(Status::SELECTING_FOR_REACTION);
-            this->_state.tasks.add(this->_state.internal_time, selection_task);
+            this->state.tasks.add(this->state.internal_time, selection_task);
         }
     }
 
@@ -457,7 +460,7 @@ private:
      */
     bool thereIsMetabolites() const {
 
-        for (const auto &metabolite : this->_state.metabolites) {
+        for (const auto &metabolite : this->state.metabolites) {
             if (metabolite.second > 0) {
                 return true;
             }
@@ -470,7 +473,7 @@ private:
      * @return True if there is a selection task, otherwise false.
      */
     bool thereIsNextSelection() const {
-        return this->_state.tasks.exists(Status::SELECTING_FOR_REACTION);
+        return this->state.tasks.exists(Task<output_ports >(Status::SELECTING_FOR_REACTION));
     }
 
 

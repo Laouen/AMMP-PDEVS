@@ -7,6 +7,7 @@ include_directories(../cadmium/include ../DESTimes atomics libs structures)
 
 set(SOURCES
         structures/types.cpp
+        structures/space.cpp
         libs/unit_definition.cpp
         main.cpp
         atomics)

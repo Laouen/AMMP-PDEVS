@@ -7,7 +7,11 @@
 
 #include <vector>
 #include <string>
+
 #include <cadmium/modeling/message_bag.hpp>
+#include <cadmium/modeling/ports.hpp>
+
+#include <TupleOperators.hpp>
 
 namespace pmgbp {
 namespace structs {
@@ -43,8 +47,13 @@ struct ReactionAddress {
         return this->compartment == o.compartment && this->reaction_set == o.reaction_set;
     }
 
+    inline bool operator<(const ReactionAddress& o) const {
+        return (this->compartment < o.compartment) ||
+                ((this->compartment == o.compartment) && (this->reaction_set < o.reaction_set));
+    }
+
     bool empty() const {
-        return this->compartment == "" && this->reaction_set == "";
+        return this->compartment.empty() && this->reaction_set.empty();
     }
 
     void clear() {
@@ -66,8 +75,8 @@ struct ports {
     using output_type=REACTANT;
     using input_type=PRODUCT;
 
-    using input_ports=std::tuple<typename in>;
-    using output_ports=std::tuple<typename inner>
+    using input_ports=std::tuple<in>;
+    using output_ports=std::tuple<inner>;
 };
 
 /*******************************************/
@@ -86,7 +95,7 @@ struct Task {
         this->message_bags = other.message_bags;
     }
 
-    Task(Status other_kind) {
+    explicit Task(Status other_kind) {
         kind = other_kind;
     }
 
@@ -95,13 +104,12 @@ struct Task {
         bool result = (kind == o.kind);
 
         if ((kind == Status::SENDING_REACTIONS) || (kind == Status::SENDING_BIOMASS)) {
-            result = result && (message_bags == o.message_bags);
+            result = result && pmgbp::tuple::equals(message_bags, o.message_bags);
         }
 
         return result;
     }
 };
-
 
 /*******************************************/
 /**************** End Task *****************/
@@ -110,5 +118,8 @@ struct Task {
 }
 }
 }
+
+std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::Status& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::ReactionAddress& s);
 
 #endif //PMGBP_PDEVS_SPACE_STRUCTURES_HPP

@@ -1,5 +1,5 @@
-#ifndef BOOST_SIMULATION_TYPES_H
-#define BOOST_SIMULATION_TYPES_H
+#ifndef PMGBP_TYPES_HPP
+#define PMGBP_TYPES_HPP
 
 #include <iostream>
 #include <string>
@@ -9,10 +9,10 @@
 
 #include "space.hpp"
 
-using namespace std;
+namespace pmgbp {
+namespace types {
 
-// TODO: correctly separate by namespaces like space::, reaction::, etc.
-// TODO(new line): Models and models internal states also should be under the same namespaces
+using namespace std;
 
 template <class ENTRY>
 struct RoutingTable {
@@ -36,7 +36,7 @@ enum class BState_t { ENOUGH = 0, NOT_ENOUGH = 1, IDLE = 2, WAITING = 3 };
 enum class Way { STP, PTS };
 
 using Integer = unsigned long long;
-using MetaboliteAmounts  = map<string, Integer>;
+using MetaboliteAmounts = map<string, Integer>;
 
 /******************************************/
 /******** End enums and renames ***********/
@@ -54,116 +54,46 @@ const long double MOL = 1e-6;
 /******************************************/
 
 /*******************************************/
-/**************** RTask_t ******************/
-/*******************************************/
-
-template<class TIME, class MSG>
-struct RTask_t {
-  RState_t    task_kind;
-  TIME        time_left;
-  Way       direction;
-  Integer   amount;
-  vector<MSG> toSend;
-
-  RTask_t() {}
-
-  RTask_t(const TIME& other_t, const Way& other_d, const Integer& other_a)
-  : task_kind(RState_t::REACTING), time_left(other_t), direction(other_d), amount(other_a) {}
-
-  RTask_t(const TIME& other_t, const vector<MSG>& other_ts)
-  : task_kind(RState_t::REJECTING), time_left(other_t), toSend(other_ts) {};
-
-  RTask_t(const RTask_t<TIME, MSG>& other) 
-  : task_kind(other.task_kind), time_left(other.time_left), direction(other.direction), amount(other.amount), toSend(other.toSend) {}
-
-  inline bool operator<(const RTask_t<TIME, MSG>& o) const {
-
-    bool result;
-    if (time_left != o.time_left) result = (time_left < o.time_left);
-    else                          result = (task_kind < o.task_kind);
-
-    return result;
-  }
-
-  inline bool operator==(const RTask_t<TIME, MSG>& o)  const { 
-
-    if (task_kind == RState_t::REJECTING) {
-      return (time_left == o.time_left) && (toSend == o.toSend);
-    } else {
-      return (time_left == o.time_left) && (direction == o.direction) && (amount == o.amount);
-    }
-  }
-
-};
-
-template<class TIME, class MSG>
-using RTaskQueue_t = list< RTask_t<TIME, MSG> >;
-
-/*******************************************/
-/************** End RTask_t ****************/
-/*******************************************/
-
-
-/*******************************************/
-/**************** Message_t ****************/
+/***************** Message *****************/
 /*******************************************/
 
 using Address_t = list<string>;
 
-struct Message_t {
-  
-  Address_t to;
-  
-  // fields for reactions
-  string from;
-  Way react_direction;
-  Integer react_amount;
-  
-  // fields for spaces
-  MetaboliteAmounts metabolites;
-  
-  // field for show request
-  bool show_request;
-  
-  // field for biomass reaction request
-  bool biomass_request;
+struct Product {
+    MetaboliteAmounts metabolites;
 
-  Message_t(const Address_t& other_to, string other_from, const MetaboliteAmounts& other_m, Way other_rd, Integer other_ra, bool other_sr, bool other_br)
-  : to(other_to), from(other_from), metabolites(other_m), react_direction(other_rd), react_amount(other_ra), show_request(other_sr), biomass_request(other_br) {}
+    bool operator==(const Product& other) const {
+        return metabolites.size() == other.metabolites.size() &&
+                std::equal(metabolites.begin(), metabolites.end(), other.metabolites.begin());;
+    }
 
-  Message_t()
-  :to(), from(""), metabolites(), react_direction(), react_amount(), show_request(false), biomass_request(false) {}
-
-  Message_t(const Message_t& other)
-  : to(other.to), from(other.from), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
-
-  Message_t(Message_t& other)
-  : to(other.to), from(other.from), metabolites(other.metabolites), react_direction(other.react_direction), react_amount(other.react_amount), show_request(other.show_request), biomass_request(other.biomass_request) {}
-
-  void clear() {
-    to.clear();
-    from = "";
-    react_amount = 0;
-    metabolites.clear();
-    show_request = false;
-    biomass_request = false;
-  }
-
-  bool empty() {
-    return to.empty() && metabolites.empty() && (from == "") && (react_amount == 0);
-  }
+    void clear() {
+        metabolites.clear();
+    }
 };
 
-ostream& operator<<(ostream& os, const Message_t& msg);
-ostream& operator<<(ostream& os, const Address_t& to);
-ostream& operator<<(ostream& os, const vector<string>& m);
-ostream& operator<<(ostream& os, const MetaboliteAmounts& m);
-ostream& operator<<(ostream& os, const pmgbp::structs::space::Status& s);
-ostream& operator<<(ostream& os, const BState_t& s);
-ostream& operator<<(ostream& os, const Way& s);
+struct Reactant {
+    string rid;
+    string from;
+    Way reaction_direction;
+    Integer reaction_amount;
+
+    bool operator==(const Reactant& other) const {
+        return rid == other.rid &&
+                from == other.from &&
+                reaction_amount == other.reaction_amount &&
+                reaction_direction == other.reaction_direction;
+    }
+
+    void clear() {
+        rid = "";
+        from = "";
+        reaction_amount = 0;
+    }
+};
 
 /*******************************************/
-/************** End Message_t **************/
+/************** End Messages ***************/
 /*******************************************/
 
 
@@ -171,23 +101,21 @@ ostream& operator<<(ostream& os, const Way& s);
 /************* Data info type **************/
 /*******************************************/
 
-// TODO this type must be removed after the new implementation.
-struct reaction_info_t {
+struct ReactionInfo {
 
   string id;
   pmgbp::structs::space::ReactionAddress location;
   MetaboliteAmounts  substrate_sctry;
   MetaboliteAmounts  products_sctry;
-  double konSTP;
-  double konPTS;
+  double konSTP = 1;
+  double konPTS = 1;
   double koffPTS;
   double koffSTP;
-  bool reversible;
+  bool reversible = false;
 
-  reaction_info_t()
-  : id(), location(), konSTP(1), konPTS(1), reversible(false) {}
+  ReactionInfo() = default;
 
-  reaction_info_t(
+  ReactionInfo(
     string other_id,
     const pmgbp::structs::space::ReactionAddress& other_location,
     const MetaboliteAmounts& other_substrate_sctry,
@@ -199,7 +127,7 @@ struct reaction_info_t {
     bool other_reversible
     ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), koffPTS(other_koffPTS), koffSTP(other_koffSTP), reversible(other_reversible) {}
 
-  reaction_info_t(const reaction_info_t& other)
+  ReactionInfo(const ReactionInfo& other)
   : id(other.id), location(other.location), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), koffPTS(other.koffPTS), koffSTP(other.koffSTP), reversible(other.reversible) {}
 
   void clear() {
@@ -217,7 +145,7 @@ struct reaction_info_t {
   }
 };
 
-ostream& operator<<(ostream& os, const reaction_info_t& r);
+ostream& operator<<(ostream& os, const ReactionInfo& r);
 
 
 /*******************************************/
@@ -231,12 +159,12 @@ ostream& operator<<(ostream& os, const reaction_info_t& r);
 struct Enzyme {
   string      id;
   Integer   amount;
-  map<string, reaction_info_t> handled_reactions;
+  map<string, ReactionInfo> handled_reactions;
 
   Enzyme()
   : id(""), amount(0), handled_reactions() {};
 
-  Enzyme(string other_id, const Integer& other_amount, const map<string, reaction_info_t>& other_handled_reactions)
+  Enzyme(string other_id, const Integer& other_amount, const map<string, ReactionInfo>& other_handled_reactions)
   : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
 
   Enzyme(const Enzyme& other)
@@ -254,12 +182,14 @@ struct Enzyme {
 /*********** Data enzyme type ************/
 /*******************************************/
 
+}
+}
+
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Address_t& to);
+std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& m);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::MetaboliteAmounts& m);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::BState_t& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Way& s);
 
 
-
-
-/******************************************/
-/******** End type definations ************/
-/******************************************/
-
-#endif // BOOST_SIMULATION_TYPES_H
+#endif // PMGBP_TYPES_HPP

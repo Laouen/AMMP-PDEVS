@@ -20,18 +20,18 @@ using namespace cadmium;
 template <typename PORTS, class TIME>
 class router {
 public:
-    using input_ports=PORTS::input_ports;
-    using output_ports=PORTS::output_ports;
+    using input_ports=typename PORTS::input_ports;
+    using output_ports=typename PORTS::output_ports;
 
-    using output_bags=typename make_message_bags<output_ports>::type
-    using input_bags=typename make_message_bags<input_ports>::type
+    using output_bags=typename make_message_bags<output_ports>::type;
+    using input_bags=typename make_message_bags<input_ports>::type;
 
-    struct State {
+    struct state_type {
         output_bags output;
         map<string, int> routing_table;
     };
 
-    State _state;
+    state_type state;
 
     router() noexcept = default;
 
@@ -43,7 +43,7 @@ public:
 
     void internal_transition() {
         this->logger.info("Begin internal_transition");
-        pmgbp::tuple::map<PORTS::output_type>(this->_state.output, router::clear_bag);
+        pmgbp::tuple::map<typename PORTS::output_type>(this->state.output, router::clear_bag);
         this->logger.info("End internal_transition");
     }
 
@@ -58,14 +58,14 @@ public:
     void confluence_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin confluence_transition");
         internal_transition();
-        external_transition(mbs, TIME::zero());
+        external_transition(TIME::zero(), mbs);
         this->logger.info("End confluence_transition");
     }
 
     TIME time_advance() const {
         this->logger.info("Begin time_advance");
         TIME next_internal = TIME::infinity();
-        if (!pmgbp::tuple::empty(this->_state.output)) {
+        if (!pmgbp::tuple::empty(this->state.output)) {
             next_internal = TIME::zero();
         }
         this->logger.info("End time_advance");
@@ -75,20 +75,22 @@ public:
     output_bags output() const {
         this->logger.info("Begin output");
         this->logger.info("End output");
-        return this->_state.output;
+        return this->state.output;
     }
+
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename router<PORTS,TIME>::state_type& i) {}
 
 private:
 
     Logger logger;
 
-    static void clear_bag(cadmium::bag<PORTS::output_type>& bag) {
+    static void clear_bag(cadmium::bag<typename PORTS::output_type>& bag) {
         bag.clear();
     }
 
-    void push_to_correct_port(const PORTS::output_type& message) {
-        int port_num = this->_state.routing_table.at(message.rid);
-        pmgbp::tuple::get<PORTS::output_type>(this->_state.output, port_num).emplace_back(message);
+    void push_to_correct_port(const typename PORTS::output_type& message) {
+        int port_num = this->state.routing_table.at(message.rid);
+        pmgbp::tuple::get<typename PORTS::output_type>(this->state.output, port_num).emplace_back(message);
     }
 };
 

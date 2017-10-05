@@ -156,6 +156,28 @@ void merge(std::tuple<Ts...> &l, const std::tuple<Ts...> &r) {
     const auto size = std::tuple_size<std::tuple<Ts...>>::value;
     merge_tuple<size - 1, Ts...>{}(l, r);
 }
+
+        template <int index, typename... Ts>
+        struct equals_tuple {
+            bool operator()(const std::tuple<Ts...>& l, const std::tuple<Ts...>& r) {
+                bool current_equal = std::get<index>(l).messages == std::get<index>(r).messages;
+                return current_equal && equals_tuple<index - 1, Ts...>{}(l, r);
+            }
+        };
+
+        template <typename... Ts>
+        struct equals_tuple<0, Ts...> {
+            bool operator()(const std::tuple<Ts...>& l, const std::tuple<Ts...>& r) {
+                return std::get<0>(l).messages == std::get<0>(r).messages;
+            }
+        };
+
+
+        template <typename... Ts>
+        bool equals(const std::tuple<Ts...>& l, const std::tuple<Ts...>& r) {
+            const auto size = std::tuple_size<std::tuple<Ts...>>::value;
+            equals_tuple<size - 1, Ts...>{}(l, r);
+        }
 }
 }
 
