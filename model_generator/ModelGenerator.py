@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from SBMLParser import SBMLParser
+from ModelCodeGenerator import ModelCodeGenerator
 
 
 class ModelStructure:
@@ -55,8 +56,13 @@ class ModelGenerator:
     Generates a model structure from a SBML file using the SBMLParser to get the information
     """
 
-    def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id,
-                 reactions=None, enzymes=None):
+    def __init__(self,
+                 sbml_file,
+                 extra_cellular_id,
+                 periplasm_id,
+                 cytoplasm_id,
+                 reactions=None,
+                 enzymes=None):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -71,8 +77,14 @@ class ModelGenerator:
         :param reactions: The parser.reactions loaded objects. Optional, used to avoid re parsing
         :param enzymes: T parser.enzymes luaded objects. Optional, used to avoid re parsing
         """
-        self.parser = SBMLParser(sbml_file, extra_cellular_id, periplasm_id,
-                                 cytoplasm_id, reactions, enzymes)
+
+        self.coder = ModelCodeGenerator()
+        self.parser = SBMLParser(sbml_file,
+                                 extra_cellular_id,
+                                 periplasm_id,
+                                 cytoplasm_id,
+                                 reactions,
+                                 enzymes)
 
         periplasm_sets = ['outer', 'inner', 'trans']
         special_comp_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
@@ -84,3 +96,10 @@ class ModelGenerator:
         self.organelles = [ModelStructure(comp_id, self.parser, ['membrane'])
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_comp_ids]
+
+
+    def generate_reaction_set(self, compartment):
+
+        for reaction_set in compartment.reaction_sets:
+            for reaction in reaction_set:
+                self.coder.write_atomic_model('reaction', reaction.rid, [], len(reaction.routing_table), 1, 'Product', 'Reactant')

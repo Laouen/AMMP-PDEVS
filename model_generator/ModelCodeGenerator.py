@@ -104,15 +104,15 @@ class ModelCodeGenerator:
     def write_atomic_model_ports(self, model_name, out_ports, in_ports):
 
         output_ports_def = '\n\t'.join([self.atomic_port_template.format(out_in='out',
-                                                                       port_number=port_number,
-                                                                       message_type='OUTPUT_TYPE')
+                                                                         port_number=port_number,
+                                                                         message_type='OUTPUT_TYPE')
                                       for port_number in range(out_ports)])
 
         output_ports_names = ','.join(['out_' + str(port_number) for port_number in range(out_ports)])
 
         input_ports_def = '\n\t'.join([self.atomic_port_template.format(out_in='in',
-                                                                      port_number=port_number,
-                                                                      message_type='INPUT_TYPE')
+                                                                        port_number=port_number,
+                                                                        message_type='INPUT_TYPE')
                            for port_number in range(in_ports)])
 
         input_ports_names = ','.join(['in_' + str(port_number) for port_number in range(in_ports)])

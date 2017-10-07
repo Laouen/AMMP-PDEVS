@@ -295,7 +295,7 @@ class SBMLParser:
 
         return self.model.find('species', {'id': specie_id}).get('compartment')
 
-    def get_reaction_routing_table(self, reaction, comp_id):
+7    def get_reaction_routing_table(self, reaction, comp_id):
         """
         :param reaction: The reaction node from the SBML xml file
         :type reaction: bs4.element.Tag
