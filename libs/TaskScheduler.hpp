@@ -14,6 +14,8 @@ struct Tasks {
     TIME time_left;
     std::list<ELEMENT> task_elements;
 
+    Tasks() = default;
+
     Tasks(TIME time, ELEMENT task_element) {
         this->time_left = time;
         this->task_elements.push_back(task_element);
@@ -24,6 +26,8 @@ template <class TIME, class ELEMENT>
 class TaskScheduler {
 public:
     using T = Tasks<TIME, ELEMENT>;
+
+    TaskScheduler() = default;
 
     void add(TIME time_left, ELEMENT element) {
         assert(time_left >= TIME({0}));
@@ -46,17 +50,17 @@ public:
         }
     }
 
-    std::list<ELEMENT> next() const {
-        if(this->tasks_queue.empty()) {
-            return std::list<ELEMENT>();
-        }
+    const std::list<ELEMENT>& next() const {
 
-        return this->tasks_queue.front().task_elements;
+        if (!this->tasks_queue.empty()) {
+            return this->tasks_queue.front().task_elements;
+        }
+        return this->empty_task.task_elements;
     }
 
     TIME time_advance() const {
         if(this->tasks_queue.empty()) {
-            return TIME("inf");
+            return TIME::infinity();
         }
         return this->tasks_queue.front().time_left;
     }
@@ -96,7 +100,12 @@ public:
         return false;
     }
 
+    const typename std::list<T>& queue() const {
+        return this->tasks_queue;
+    }
+
 private:
+    T empty_task;
     typename std::list<T> tasks_queue;
 };
 

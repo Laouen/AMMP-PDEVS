@@ -77,8 +77,7 @@ public:
 
     struct state_type {
         string id;
-        TIME current_time;
-        TIME internal_time;
+        TIME interval_time;
         MetaboliteAmounts metabolites;
         map<string, Enzyme> enzymes;
         RoutingTable<ReactionAddress> routing_table;
@@ -116,8 +115,6 @@ public:
     void internal_transition() {
         this->logger.info("Begin internal_transition");
 
-        this->state.current_time += this->state.tasks.time_advance();
-
         if (this->state.tasks.is_in_next(Task<output_ports>(Status::SELECTING_FOR_REACTION))) {
 
             // advance() must be called after the is_in_next() and before to add the
@@ -147,7 +144,6 @@ public:
 
         bool show_metabolites = false;
 
-        this->state.current_time += e;
         this->state.tasks.update(e);
 
         for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
@@ -194,7 +190,21 @@ public:
         return result;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename space<PORTS,TIME>::state_type& i) {}
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename space<PORTS,TIME>::state_type& s) {
+        os << "ID: Space_" << s.id << " ";
+
+        os << "enzyme [kind amount " << s.enzymes.size() << "]: ";
+        for(const auto& enzyme : s.enzymes) {
+            os << "(" << enzyme.second.id << ", " << enzyme.second.amount << ") ";
+        }
+
+        os << "metabolites [specie amount " << s.metabolites.size() << "]: ";
+        for(const auto& metabolite : s.metabolites) {
+            os << "(" << metabolite.first << ", " << metabolite.second << ") ";
+        }
+
+        return os;
+    }
 
     /********** P-DEVS functions **************/
 
@@ -450,7 +460,7 @@ private:
 
         if (this->thereIsMetabolites() && !this->thereIsNextSelection()) {
             Task<output_ports> selection_task(Status::SELECTING_FOR_REACTION);
-            this->state.tasks.add(this->state.internal_time, selection_task);
+            this->state.tasks.add(this->state.interval_time, selection_task);
         }
     }
 

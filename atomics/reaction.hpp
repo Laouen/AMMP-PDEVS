@@ -180,7 +180,16 @@ public:
         return result;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<PORTS,TIME>::state_type& i) {}
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<PORTS,TIME>::state_type& s) {
+        os << "Reaction_" << s.id << " ";
+        os << "Tasks in process: ";
+
+        for (const auto& task : s.tasks.queue()) {
+            os << "Tasks [ time_left: " << task.time_left;
+            os << " jobs amount " << task.task_elements.size() << " ]";
+        }
+
+    }
 
 private:
 

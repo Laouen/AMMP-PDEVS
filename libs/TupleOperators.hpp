@@ -69,7 +69,42 @@ cadmium::bag<T>& get(std::tuple<Ts...> &t, int position) {
                                  + std::to_string(size - 1));
 }
 
+template<int index, typename T, typename... Ts>
+struct cget_tuple {
+    const cadmium::bag<T>& operator()(const std::tuple<Ts...> &t, int position) {
 
+        if (position == index) {
+            return std::get<index>(t).messages;
+        }
+
+        if (position < index) {
+            return get_tuple<index - 1, T, Ts...>{}(t, position);
+        }
+    }
+};
+
+template<typename T, typename... Ts>
+struct cget_tuple<0, T, Ts...> {
+    const cadmium::bag<T>& operator()(const std::tuple<Ts...> &t, int position) {
+        if (position == 0) {
+            return std::get<0>(t).messages;
+        }
+    }
+};
+
+template<typename T, typename... Ts>
+const cadmium::bag<T>& cget(const std::tuple<Ts...> &t, int position) {
+
+    const auto size = std::tuple_size<std::tuple<Ts...>>::value;
+    if (position < size) {
+        return cget_tuple<size - 1, T, Ts...>{}(t, position);
+    }
+
+    throw Exception("Index value out of range: "
+                    + std::to_string(position)
+                    + " > "
+                    + std::to_string(size - 1));
+}
 /*****************************************/
 /**************** EMPTY ******************/
 /*****************************************/

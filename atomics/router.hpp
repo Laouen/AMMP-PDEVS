@@ -27,6 +27,7 @@ public:
     using input_bags=typename make_message_bags<input_ports>::type;
 
     struct state_type {
+        string id;
         output_bags output;
         map<string, int> routing_table;
     };
@@ -37,6 +38,7 @@ public:
 
     explicit router(const string& id) {
         this->logger.setModuleName("Router_" + id);
+        this->state.id = id;
     }
 
     /********** P-DEVS functions **************/
@@ -78,7 +80,16 @@ public:
         return this->state.output;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename router<PORTS,TIME>::state_type& i) {}
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename router<PORTS,TIME>::state_type& s) {
+        os << "Router_" << s.id << " ";
+        const auto size = std::tuple_size<decltype(s.output)>::value;
+
+        os << "Messages per port number: ";
+        for (int port_number = 0; port_number < size; port_number++) {
+            os << "(" << port_number << ", ";
+            os << pmgbp::tuple::cget<typename PORTS::output_type>(s.output, port_number).size() << ")";
+        }
+    }
 
 private:
 
