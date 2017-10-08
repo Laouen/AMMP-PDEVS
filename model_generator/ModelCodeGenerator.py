@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 
 class ModelCodeGenerator:
     """
@@ -47,19 +48,22 @@ class ModelCodeGenerator:
 
     def write_atomic_model(self, model_class, model_id, parameters, out_ports, in_ports, output_type, input_type):
 
-        model_name = model_class + "_" + model_id
+        model_name = model_class + '_' + model_id
+        parameters = map(json.dumps, [model_id] + parameters)
 
         self.write_atomic_model_ports(model_name, out_ports, in_ports)
 
         self.write(self.atomic_template.format(model_name=model_name,
                                                model_class=model_class,
-                                               parameters=', '.join([model_id] + parameters),
+                                               parameters=',\n'.join(parameters),
                                                output_type=output_type,
                                                input_type=input_type))
 
+        return model_name
+
     def write_coupled_model(self, model_id, submodels, ports, eic, eoc, ic):
 
-        model_name = "coupled_" + model_id
+        model_name = 'coupled_' + model_id
 
         oiports_cpp = {'out': [], 'in': []}
         ports_cpp = []
@@ -100,6 +104,8 @@ class ModelCodeGenerator:
                                                 eic=', '.join(eic_cpp),
                                                 eoc=', '.join(eoc_cpp),
                                                 ic=', '.join(ic_cpp)))
+
+        return model_name
 
     def write_atomic_model_ports(self, model_name, out_ports, in_ports):
 

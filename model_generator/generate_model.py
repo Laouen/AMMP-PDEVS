@@ -34,8 +34,10 @@ if __name__ == '__main__':
                                FLAGS.periplasm,
                                FLAGS.cytoplasm)
 
+    """
     with open("pickles/reactions.pickle", "wb") as reaction_file:
         pickle.dump(generator.parser.reactions, reaction_file)
 
     with open("pickles/enzymes.pickle", "wb") as enzymes_file:
         pickle.dump(generator.parser.enzymes, enzymes_file)
+    """

@@ -293,9 +293,9 @@ class SBMLParser:
         :return: The cid (Compartment ID) from where the specie id passed as parameter belongs
         """
 
-        return self.model.find('species', {'id': specie_id}).get('compartment')
+        return self.model.find('species', {'id': specie_id}).get('compartment');
 
-7    def get_reaction_routing_table(self, reaction, comp_id):
+    def get_reaction_routing_table(self, reaction, comp_id):
         """
         :param reaction: The reaction node from the SBML xml file
         :type reaction: bs4.element.Tag
@@ -366,6 +366,7 @@ class SBMLParser:
 
         stoichiometry = self.parse_stoichiometry(reaction)
         species = stoichiometry['listOfReactants'].keys() + stoichiometry['listOfProducts'].keys()
+        species = list(set(species))  # remove duplicates
         location = self.get_location(species)
         routing_table = self.get_reaction_routing_table(reaction, location.cid)
         parameters = {

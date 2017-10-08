@@ -38,9 +38,10 @@ class ModelStructure:
         self.routing_table = {(comp_id, r): p for r, p in zip(routing_sets, rs_len)}
 
         # Building reaction sets
+        self.reaction_sets = {}
         for reaction_set in internal_reaction_sets:
             reaction_ids = parser.get_reaction_set_ids(comp_id, reaction_set)
-            self.reaction_sets = {rid: parser.reactions[rid] for rid in reaction_ids}
+            self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
 
         # Building space
         reaction_locations = parser.get_reaction_locations(comp_id)
@@ -97,9 +98,51 @@ class ModelGenerator:
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_comp_ids]
 
+    def generate_reaction_sets(self, compartment):
 
-    def generate_reaction_set(self, compartment):
+        return [self.generate_reaction_set(compartment.id, rsn, reaction_set)
+                for rsn, reaction_set in compartment.reaction_sets.iteritems()]
 
-        for reaction_set in compartment.reaction_sets:
-            for reaction in reaction_set:
-                self.coder.write_atomic_model('reaction', reaction.rid, [], len(reaction.routing_table), 1, 'Product', 'Reactant')
+    def generate_reaction_set(self, cid, rsn, reaction_set):
+        reaction_set_id = cid + '_' + rsn
+        router = self.coder.write_atomic_model('router',
+                                               reaction_set_id,
+                                               [],  # TODO: put correct parameters
+                                               len(reaction_set),
+                                               1,
+                                               'Reactant',
+                                               'Reactant')
+        submodels = [router]
+        eic = [(0, router, 0)]
+        eoc = []
+        ic = []
+        total_out_ports = 0
+        for rid, parameters in reaction_set.iteritems():
+            output_port_amount = max(parameters['routing_table'].values()) + 1
+            total_out_ports = max(output_port_amount, total_out_ports)
+            reaction = self.coder.write_atomic_model('reaction',
+                                                     rid,
+                                                     [],  # TODO: put correct parameters
+                                                     output_port_amount,
+                                                     1,
+                                                     'Product',
+                                                     'Reactant')
+            ic.append((router, 0, reaction, 0))
+            eoc += [(reaction, port_number, port_number)
+                    for port_number in range(output_port_amount)]
+            submodels.append(reaction)
+
+        ports = [(0, 'Reactant', 'in')]
+        ports += [(port_number, 'Product', 'out') for port_number in range(total_out_ports)]
+
+        return self.coder.write_coupled_model(reaction_set_id,
+                                              submodels,
+                                              ports,
+                                              eic,
+                                              eoc,
+                                              ic)
+
+    def generate_compartment(self, compartment):
+
+        reaction_sets = self.generate_reaction_sets(compartment)
+        
