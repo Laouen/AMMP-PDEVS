@@ -9,7 +9,7 @@ using eocs_{model_name} = std::tuple<{eoc}>;
 using ics_{model_name} = std::tuple<{ic}>;
 
 template<typename TIME>
-struct reaction_set: public cadmium::modeling::coupled_model<
+struct {model_name}: public cadmium::modeling::coupled_model<
         TIME,
         oports_{model_name},
         iports_{model_name},

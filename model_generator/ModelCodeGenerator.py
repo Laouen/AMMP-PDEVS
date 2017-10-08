@@ -105,7 +105,13 @@ class ModelCodeGenerator:
                                                 eoc=', '.join(eoc_cpp),
                                                 ic=', '.join(ic_cpp)))
 
-        return model_name
+        input_ports_amount = max(port_number for (port_number, _, out_in)
+                                 in ports if out_in == 'in') + 1
+
+        output_ports_amount = max(port_number for (port_number, _, out_in)
+                                  in ports if out_in == 'out') + 1
+
+        return (model_name, input_ports_amount, output_ports_amount)
 
     def write_atomic_model_ports(self, model_name, out_ports, in_ports):
 

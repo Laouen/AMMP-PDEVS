@@ -142,7 +142,46 @@ class ModelGenerator:
                                               eoc,
                                               ic)
 
-    def generate_compartment(self, compartment):
+    def generate_organelle(self, compartment):
 
         reaction_sets = self.generate_reaction_sets(compartment)
-        
+        print reaction_sets
+        space = self.coder.write_atomic_model('space',
+                                              compartment.id,
+                                              [],
+                                              len(reaction_sets),
+                                              1,
+                                              'Reactants',
+                                              'Products')
+        submodels = [space] + [model for (model, _, _) in reaction_sets]
+
+        ic = [(space, i, reaction_sets[i][0], 0) for i in range(len(reaction_sets))]
+        ic += [(reaction_set, 0, space, 0) for (reaction_set, _, _) in reaction_sets]
+
+        # All membranes use output port 0 to send messages to the space, this is why the
+        # coupled output port amount is one less than the max output port amount of its
+        # submodels.
+        out_port_amount = max([out_port_amount for (_, _, out_port_amount) in reaction_sets])
+        ports = [(0, 'Reactants', 'in')]
+        ports += [(port_number, 'Product', 'out') for port_number in range(out_port_amount - 1)]
+
+        # if the output port amount is equal to 1, then the model only sends messages to the space
+        # and there is no external communication, thus, it must not be linked in the EOC.
+        # Because the port 0 of each reaction set goes to the space, the output ports range is
+        # [1, .. , output port amount)
+        eoc = [(reaction_set, port_number, port_number - 1)
+               for (reaction_set, _, output_port_amount) in reaction_sets
+               for port_number in range(1, output_port_amount)]
+
+        # if the output port amount is equal to 1, then the model only sends messages to the space
+        # and there is no external communication, thus, it must not be linked in the EIC
+        eic = [(0, reaction_set, 0)
+               for (reaction_set, _, output_port_amount) in reaction_sets
+               if output_port_amount > 1]
+
+        return self.coder.write_coupled_model(compartment.id,
+                                              submodels,
+                                              ports,
+                                              eic,
+                                              eoc,
+                                              ic)
