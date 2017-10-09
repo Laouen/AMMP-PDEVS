@@ -5,6 +5,19 @@ from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
 
 
+PRODUCT_MESSAGE_TYPE = 'Product'
+REACTANT_MESSAGE_TYPE = 'Reactant'
+
+REACTION_MODEL_CLASS = 'reaction'
+ROUTER_MODEL_CLASS = 'router'
+SPACE_MODEL_CLASS = 'space'
+
+TRANS = 'trans'
+INNER = 'inner'
+OUTER = 'outer'
+BULK = 'bulk'
+
+
 class ModelStructure:
 
     def __init__(self, comp_id, parser, internal_reaction_sets=None, external_reaction_sets=None):
@@ -32,7 +45,7 @@ class ModelStructure:
         # Building routing table, each reaction can be reached using the port
         # that the routing table indicates. Each port communicates the space with
         # a different reaction_set
-        internal_reaction_sets.append('bulk')
+        internal_reaction_sets = [BULK] + internal_reaction_sets
         routing_sets = internal_reaction_sets + external_reaction_sets
         rs_len = range(len(routing_sets))
         self.routing_table = {(comp_id, r): p for r, p in zip(routing_sets, rs_len)}
@@ -87,7 +100,7 @@ class ModelGenerator:
                                  reactions,
                                  enzymes)
 
-        periplasm_sets = ['outer', 'inner', 'trans']
+        periplasm_sets = [OUTER, INNER, TRANS]
         special_comp_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
 
         # TODO: correctly set the cytoplasm and extra cellular space external reaction sets
@@ -99,20 +112,20 @@ class ModelGenerator:
                            if comp_id not in special_comp_ids]
 
     def generate_reaction_sets(self, compartment):
-
-        return [self.generate_reaction_set(compartment.id, rsn, reaction_set)
-                for rsn, reaction_set in compartment.reaction_sets.iteritems()]
+        cid = compartment.id
+        return {(cid, rsn): self.generate_reaction_set(compartment.id, rsn, reaction_set)
+                for rsn, reaction_set in compartment.reaction_sets.iteritems()}
 
     def generate_reaction_set(self, cid, rsn, reaction_set):
         reaction_set_id = cid + '_' + rsn
-        router = self.coder.write_atomic_model('router',
+        router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
                                                reaction_set_id,
                                                [],  # TODO: put correct parameters
                                                len(reaction_set),
                                                1,
-                                               'Reactant',
-                                               'Reactant')
-        submodels = [router]
+                                               REACTANT_MESSAGE_TYPE,
+                                               REACTANT_MESSAGE_TYPE)
+        sub_models = [router]
         eic = [(0, router, 0)]
         eoc = []
         ic = []
@@ -120,67 +133,117 @@ class ModelGenerator:
         for rid, parameters in reaction_set.iteritems():
             output_port_amount = max(parameters['routing_table'].values()) + 1
             total_out_ports = max(output_port_amount, total_out_ports)
-            reaction = self.coder.write_atomic_model('reaction',
+            reaction = self.coder.write_atomic_model(REACTION_MODEL_CLASS,
                                                      rid,
                                                      [],  # TODO: put correct parameters
                                                      output_port_amount,
                                                      1,
-                                                     'Product',
-                                                     'Reactant')
+                                                     PRODUCT_MESSAGE_TYPE,
+                                                     REACTANT_MESSAGE_TYPE)
             ic.append((router, 0, reaction, 0))
             eoc += [(reaction, port_number, port_number)
                     for port_number in range(output_port_amount)]
-            submodels.append(reaction)
+            sub_models.append(reaction)
 
-        ports = [(0, 'Reactant', 'in')]
-        ports += [(port_number, 'Product', 'out') for port_number in range(total_out_ports)]
+        ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
+        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out')
+                  for port_number in range(total_out_ports)]
 
         return self.coder.write_coupled_model(reaction_set_id,
-                                              submodels,
+                                              sub_models,
                                               ports,
                                               eic,
                                               eoc,
                                               ic)
 
-    def generate_organelle(self, compartment):
+    def generate_organelle_compartment(self, compartment):
 
         reaction_sets = self.generate_reaction_sets(compartment)
-        print reaction_sets
-        space = self.coder.write_atomic_model('space',
+        space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               compartment.id,
                                               [],
                                               len(reaction_sets),
                                               1,
-                                              'Reactants',
-                                              'Products')
-        submodels = [space] + [model for (model, _, _) in reaction_sets]
-
-        ic = [(space, i, reaction_sets[i][0], 0) for i in range(len(reaction_sets))]
-        ic += [(reaction_set, 0, space, 0) for (reaction_set, _, _) in reaction_sets]
+                                              REACTANT_MESSAGE_TYPE,
+                                              PRODUCT_MESSAGE_TYPE)
+        sub_models = [space] + [reaction_set for (reaction_set, _, _) in reaction_sets.values()]
 
         # All membranes use output port 0 to send messages to the space, this is why the
         # coupled output port amount is one less than the max output port amount of its
-        # submodels.
-        out_port_amount = max([out_port_amount for (_, _, out_port_amount) in reaction_sets])
-        ports = [(0, 'Reactants', 'in')]
-        ports += [(port_number, 'Product', 'out') for port_number in range(out_port_amount - 1)]
+        # sub_models.
+        out_port_amount = max([out_port_amount for (_, _, out_port_amount) in reaction_sets.values()])
+        in_ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
+        out_ports = [(port_number, PRODUCT_MESSAGE_TYPE, 'out')
+                     for port_number in range(out_port_amount - 1)]
+        ports = in_ports + out_ports
+
+        ic = []
+        for (rs_cid, rs_name), port_number in compartment.routing_table.iteritems():
+            # Organelle spaces do not send metabolites to other compartments without passing through
+            # their membranes, that is the assert
+            assert rs_cid == compartment.id
+            ic += [(space, port_number, reaction_sets[rs_name][0], 0),
+                   (reaction_sets[rs_name][0], 0, space, 0)]
 
         # if the output port amount is equal to 1, then the model only sends messages to the space
         # and there is no external communication, thus, it must not be linked in the EOC.
         # Because the port 0 of each reaction set goes to the space, the output ports range is
         # [1, .. , output port amount)
         eoc = [(reaction_set, port_number, port_number - 1)
-               for (reaction_set, _, output_port_amount) in reaction_sets
+               for (reaction_set, _, output_port_amount) in reaction_sets.values()
                for port_number in range(1, output_port_amount)]
 
         # if the output port amount is equal to 1, then the model only sends messages to the space
         # and there is no external communication, thus, it must not be linked in the EIC
         eic = [(0, reaction_set, 0)
-               for (reaction_set, _, output_port_amount) in reaction_sets
+               for (reaction_set, _, output_port_amount) in reaction_sets.values()
                if output_port_amount > 1]
 
         return self.coder.write_coupled_model(compartment.id,
-                                              submodels,
+                                              sub_models,
+                                              ports,
+                                              eic,
+                                              eoc,
+                                              ic)
+
+    # bulk compartments are cytoplasm and extracellular space, they represent the space where the
+    # cell and the organelles live
+    def generate_bulk_compartment(self, compartment):
+        cid = compartment.id
+        reaction_sets = self.generate_reaction_sets(compartment)
+        assert len(reaction_sets) == 1  # cytoplasm has no membranes
+
+        bulk = reaction_sets[BULK][0]
+
+        output_port_amount = max(compartment.routing_table.values()) + 1
+        space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
+                                              cid,
+                                              [],
+                                              output_port_amount,
+                                              1,
+                                              REACTANT_MESSAGE_TYPE,
+                                              PRODUCT_MESSAGE_TYPE)
+
+        sub_models = [space, bulk]
+
+        in_ports = [(0, PRODUCT_MESSAGE_TYPE, 'in')]
+        out_ports = [(port_number, REACTANT_MESSAGE_TYPE, 'out')
+                     for (rs_cid, _), port_number in compartment.routing_table.iteritems()
+                     if rs_cid != cid]
+        ports = in_ports + out_ports
+
+        bulk_port_number = compartment.routing_table[(cid, BULK)]
+        ic = [(space, bulk_port_number, bulk, 0), (bulk, 0, space, 0)]
+
+        internal_rs_amount = len(reaction_sets)
+        eoc = [(space, port_number, port_number - internal_rs_amount)
+               for (rs_cid, _), port_number in compartment.routing_table.iteritems()
+               if rs_cid != cid]
+
+        eic = [(0, space, 0)]
+
+        return self.coder.write_coupled_model(cid,
+                                              sub_models,
                                               ports,
                                               eic,
                                               eoc,

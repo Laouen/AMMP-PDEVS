@@ -46,7 +46,14 @@ class ModelCodeGenerator:
         self.model_file = open(model_name + '.hpp', 'wb')
         self.port_file = open(model_name + '_ports.hpp', 'wb')
 
-    def write_atomic_model(self, model_class, model_id, parameters, out_ports, in_ports, output_type, input_type):
+    def write_atomic_model(self,
+                           model_class,
+                           model_id,
+                           parameters,
+                           out_ports,
+                           in_ports,
+                           output_type,
+                           input_type):
 
         model_name = model_class + '_' + model_id
         parameters = map(json.dumps, [model_id] + parameters)
@@ -61,7 +68,7 @@ class ModelCodeGenerator:
 
         return model_name
 
-    def write_coupled_model(self, model_id, submodels, ports, eic, eoc, ic):
+    def write_coupled_model(self, model_id, sub_models, ports, eic, eoc, ic):
 
         model_name = 'coupled_' + model_id
 
@@ -100,7 +107,7 @@ class ModelCodeGenerator:
                                                 ports='\n'.join(ports_cpp),
                                                 oports=', '.join(oiports_cpp['out']),
                                                 iports=', '.join(oiports_cpp['in']),
-                                                submodels=', '.join(submodels),
+                                                sub_models=', '.join(sub_models),
                                                 eic=', '.join(eic_cpp),
                                                 eoc=', '.join(eoc_cpp),
                                                 ic=', '.join(ic_cpp)))
@@ -111,21 +118,22 @@ class ModelCodeGenerator:
         output_ports_amount = max(port_number for (port_number, _, out_in)
                                   in ports if out_in == 'out') + 1
 
-        return (model_name, input_ports_amount, output_ports_amount)
+        return model_name, input_ports_amount, output_ports_amount
 
     def write_atomic_model_ports(self, model_name, out_ports, in_ports):
 
         output_ports_def = '\n\t'.join([self.atomic_port_template.format(out_in='out',
                                                                          port_number=port_number,
                                                                          message_type='OUTPUT_TYPE')
-                                      for port_number in range(out_ports)])
+                                        for port_number in range(out_ports)])
 
-        output_ports_names = ','.join(['out_' + str(port_number) for port_number in range(out_ports)])
+        output_ports_names = ','.join(['out_' + str(port_number)
+                                       for port_number in range(out_ports)])
 
         input_ports_def = '\n\t'.join([self.atomic_port_template.format(out_in='in',
                                                                         port_number=port_number,
                                                                         message_type='INPUT_TYPE')
-                           for port_number in range(in_ports)])
+                                       for port_number in range(in_ports)])
 
         input_ports_names = ','.join(['in_' + str(port_number) for port_number in range(in_ports)])
 
