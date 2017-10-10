@@ -11,6 +11,7 @@ import progressbar  # sudo pip install progressbar
 import re
 from bs4 import BeautifulSoup  # sudo pip install beautifulsoup, lxml
 from collections import defaultdict
+from constants import *
 
 
 class IllegalCompartmentCombination(Exception):
@@ -322,32 +323,32 @@ class SBMLParser:
         # key and the location as the value. The map can be loaded from a file allowing different
         # compartment combination interpretations.
 
-        compartments = set([self.get_compartment(s) for s in set(species)])
+        compartment_ids = set([self.get_compartment(s) for s in set(species)])
         location = None
-        if len(compartments) == 1:
-            location = Location(compartments.pop(), 'bulk')
+        if len(compartment_ids) == 1:
+            location = Location(compartment_ids.pop(), BULK)
 
-        elif len(compartments) == 2:
-            if self.periplasm_id in compartments:  # Periplasm inner or outer membrane
+        elif len(compartment_ids) == 2:
+            if self.periplasm_id in compartment_ids:  # Periplasm inner or outer membrane
 
-                compartments.discard(self.periplasm_id)
-                reaction_sets = {self.extra_cellular_id: 'outer', self.cytoplasm_id: 'inner'}
-                location = Location(self.periplasm_id, reaction_sets[compartments.pop()])
-            elif self.cytoplasm_id in compartments:
+                compartment_ids.discard(self.periplasm_id)
+                reaction_sets = {self.extra_cellular_id: OUTER, self.cytoplasm_id: INNER}
+                location = Location(self.periplasm_id, reaction_sets[compartment_ids.pop()])
+            elif self.cytoplasm_id in compartment_ids:
 
-                compartments.discard(self.cytoplasm_id)
-                if self.extra_cellular_id in compartments:  # Periplasm trans membrane
-                    location = Location(self.periplasm_id, 'trans')
+                compartment_ids.discard(self.cytoplasm_id)
+                if self.extra_cellular_id in compartment_ids:  # Periplasm trans membrane
+                    location = Location(self.periplasm_id, TRANS)
                 else:  # Organelle membrane to cytoplasm
-                    location = Location(compartments.pop(), 'membrane')
+                    location = Location(compartment_ids.pop(), MEMBRANE)
 
-        elif len(compartments) == 3:  # Periplasm trans membrane
-            if {self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id} == compartments:
-                location = Location(self.periplasm_id, 'trans')
+        elif len(compartment_ids) == 3:  # Periplasm trans membrane
+            if {self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id} == compartment_ids:
+                location = Location(self.periplasm_id, TRANS)
 
         if location is None:
             raise IllegalCompartmentCombination('Illegal compartment combination ' +
-                                                str(compartments))
+                                                str(compartment_ids))
         
         return location
 

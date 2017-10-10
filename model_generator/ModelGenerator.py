@@ -3,19 +3,7 @@
 
 from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
-
-
-PRODUCT_MESSAGE_TYPE = 'Product'
-REACTANT_MESSAGE_TYPE = 'Reactant'
-
-REACTION_MODEL_CLASS = 'reaction'
-ROUTER_MODEL_CLASS = 'router'
-SPACE_MODEL_CLASS = 'space'
-
-TRANS = 'trans'
-INNER = 'inner'
-OUTER = 'outer'
-BULK = 'bulk'
+from constants import *
 
 
 class ModelStructure:
@@ -45,10 +33,17 @@ class ModelStructure:
         # Building routing table, each reaction can be reached using the port
         # that the routing table indicates. Each port communicates the space with
         # a different reaction_set
+        # initial ports are for IC (internal reaction sets)
         internal_reaction_sets = [BULK] + internal_reaction_sets
-        routing_sets = internal_reaction_sets + external_reaction_sets
-        rs_len = range(len(routing_sets))
-        self.routing_table = {(comp_id, r): p for r, p in zip(routing_sets, rs_len)}
+        routing_sets = internal_reaction_sets
+        port_numbers = range(len(routing_sets))
+        self.routing_table = {(comp_id, r): p for r, p in zip(routing_sets, port_numbers)}
+
+        # TODO: port numbers must be the same for reaction sets from the same compartment
+        # final ports are for EOC (external reaction sets from other compartments)
+        port_numbers = range(len(self.routing_table),
+                             len(self.routing_table) + len(external_reaction_sets))
+        self.routing_table.update({k: p for k, p in zip(external_reaction_sets, port_numbers)})
 
         # Building reaction sets
         self.reaction_sets = {}
@@ -102,18 +97,33 @@ class ModelGenerator:
 
         periplasm_sets = [OUTER, INNER, TRANS]
         special_comp_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
+        cytoplasm_external_reaction_sets = [(periplasm_id, reaction_set)
+                                            for reaction_set in [INNER, TRANS]]
+        organelle_membranes = [(comp_id, MEMBRANE)
+                               for comp_id in self.parser.get_compartments()
+                               if comp_id not in special_comp_ids]
+        cytoplasm_external_reaction_sets += organelle_membranes
 
-        # TODO: correctly set the cytoplasm and extra cellular space external reaction sets
+        extra_cellular_external_reaction_sets = [(periplasm_id, reaction_set)
+                                                 for reaction_set in [OUTER, TRANS]]
+
         self.periplasm = ModelStructure(periplasm_id, self.parser, periplasm_sets)
-        self.extra_cellular = ModelStructure(extra_cellular_id, self.parser)
-        self.cytoplasm = ModelStructure(cytoplasm_id, self.parser)
-        self.organelles = [ModelStructure(comp_id, self.parser, ['membrane'])
+
+        self.extra_cellular = ModelStructure(extra_cellular_id,
+                                             self.parser,
+                                             external_reaction_sets=extra_cellular_external_reaction_sets)
+
+        self.cytoplasm = ModelStructure(cytoplasm_id,
+                                        self.parser,
+                                        external_reaction_sets=cytoplasm_external_reaction_sets)
+
+        self.organelles = [ModelStructure(comp_id, self.parser, [MEMBRANE])
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_comp_ids]
 
     def generate_reaction_sets(self, compartment):
         cid = compartment.id
-        return {(cid, rsn): self.generate_reaction_set(compartment.id, rsn, reaction_set)
+        return {(cid, rsn): self.generate_reaction_set(cid, rsn, reaction_set)
                 for rsn, reaction_set in compartment.reaction_sets.iteritems()}
 
     def generate_reaction_set(self, cid, rsn, reaction_set):
@@ -161,7 +171,7 @@ class ModelGenerator:
         reaction_sets = self.generate_reaction_sets(compartment)
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               compartment.id,
-                                              [],
+                                              [],  # TODO: pot correct parameters
                                               len(reaction_sets),
                                               1,
                                               REACTANT_MESSAGE_TYPE,
@@ -248,3 +258,40 @@ class ModelGenerator:
                                               eic,
                                               eoc,
                                               ic)
+
+    def generate_top(self):
+
+        cytoplasm_model = self.generate_bulk_compartment(self.cytoplasm)
+        extra_cellular_model = self.generate_bulk_compartment(self.extra_cellular)
+        periplasm_model = self.generate_organelle_compartment(self.periplasm)
+
+        sub_models = [cytoplasm_model, extra_cellular_model, periplasm_model]
+
+        organelle_models = {}
+        for organelle in self.organelles:
+            organelle_models[organelle] = self.generate_organelle_compartment(organelle)
+            sub_models.append(organelle_models[organelle])
+
+        ports = []
+        eoc = []
+        eic = []
+        ic = []
+        for organelle in self.organelles:
+            (organelle_model, _, output_port_amount) = organelle_models[organelle]
+
+            cytoplasm_to_organelle_port = next(port_number
+                                               for (cid, _), port_number
+                                               in self.cytoplasm.routing_table.iteritems()
+                                               if cid == organelle)
+            ic.append([(organelle_model, 0, cytoplasm_model, 0),
+                       (cytoplasm_model, cytoplasm_to_organelle_port, organelle_model, 0)])
+
+            if output_port_amount > 1:
+                extra_cellular_to_organelle = next(port_number
+                                                   for (cid, _), port_number
+                                                   in self.extra_cellular.routing_table.iteritems()
+                                                   if cid == organelle)
+                ic.append([(organelle_model, 1, extra_cellular_model, 0),
+                           (extra_cellular_model, extra_cellular_to_organelle, organelle_model, 0)])
+
+        return self.coder.write_coupled_model('cell', sub_models, ports, eic, eoc, ic)
