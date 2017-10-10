@@ -69,7 +69,7 @@ using router_test_uninitialized=models::router<router_ports, TIME>;
 template<class TIME>
 class router_test : public router_test_uninitialized<TIME> {
 public:
-    router_test(): router_test_uninitialized<TIME>("Test") {};
+    router_test(): router_test_uninitialized<TIME>("../test.xml") {};
 };
 
 /*******************************************/

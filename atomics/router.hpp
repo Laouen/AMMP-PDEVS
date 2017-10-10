@@ -11,6 +11,8 @@
 #include <TupleOperators.hpp>
 #include <Logger.hpp>
 
+#include <tinyxml2.h>
+
 namespace pmgbp {
 namespace models {
 
@@ -36,9 +38,37 @@ public:
 
     router() noexcept = default;
 
-    explicit router(const string& id) {
-        this->logger.setModuleName("Router_" + id);
-        this->state.id = id;
+//    explicit router(const string& id) {
+//        this->logger.setModuleName("Router_" + id);
+//        this->state.id = id;
+//    }
+
+    explicit router(const char* xml_file) {
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLError opened = doc.LoadFile(xml_file);
+        assert(opened == tinyxml2::XML_SUCCESS);
+
+        tinyxml2::XMLElement* root = doc.RootElement();
+        this->state.id = root->FirstChildElement("id")->GetText();
+        cout << this->state.id << endl;
+        logger.setModuleName(this->state.id);
+
+        tinyxml2::XMLElement* routing_table = root->FirstChildElement("routingTable");
+        tinyxml2::XMLElement* row = routing_table->FirstChildElement();
+        string key;
+        int port_number;
+        while (row != nullptr) {
+            key = row->Attribute("entry");
+            port_number = std::stoi(row->GetText());
+            this->state.routing_table.insert({key, port_number});
+            row = row->NextSiblingElement();
+        }
+
+        logger.debug("Begin routing table:");
+        for (const auto& row : this->state.routing_table) {
+            logger.debug(row.first + ": " + to_string(row.second));
+        }
+        logger.debug("End routing table:");
     }
 
     /********** P-DEVS functions **************/

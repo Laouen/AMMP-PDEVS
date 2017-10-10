@@ -3,12 +3,13 @@ project(PMGBP_PDEVS)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(../cadmium/include ../DESTimes atomics libs structures)
+include_directories(../cadmium/include ../DESTimes atomics libs structures vendor/tinyxml2)
 
 set(SOURCES
         structures/types.cpp
         structures/space.cpp
         libs/unit_definition.cpp
+        vendor/tinyxml2/tinyxml2.cpp
         main.cpp
         atomics)
 

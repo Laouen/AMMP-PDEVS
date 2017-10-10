@@ -27,6 +27,11 @@
 #ifndef PMGBP_PDEVS_LOGGER_HPP
 #define PMGBP_PDEVS_LOGGER_HPP
 
+#define show_log
+#define show_info
+#define show_debug
+#define show_error
+
 #include <string>
 
 // TODO: add option to log to files instead of the standard output
