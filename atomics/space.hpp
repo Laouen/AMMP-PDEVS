@@ -38,6 +38,7 @@
 #include <Logger.hpp>
 #include <TaskScheduler.hpp>
 #include <TupleOperators.hpp>
+#include <tinyxml2.h>
 
 #include "../structures/space.hpp" // Status, Task
 #include "../structures/types.hpp" // ReactionInfo, Integer, RoutingTable
@@ -106,6 +107,121 @@ public:
         this->state = state_other;
         this->initialize_random_engines();
         this->logger.setModuleName("Space_" + this->state.id);
+    }
+
+    explicit space(const char* xml_file) {
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLError opened = doc.LoadFile(xml_file);
+        assert(opened == tinyxml2::XML_SUCCESS);
+
+        // id
+        tinyxml2::XMLElement* root = doc.RootElement();
+        this->state.id = root->FirstChildElement("id")->GetText();
+        logger.setModuleName(this->state.id);
+
+        // interval_time
+        this->state.interval_time = TIME(root->FirstChildElement("internal_time")->GetText());
+
+        // metabolites
+        tinyxml2::XMLElement* metabolites = root->FirstChildElement("metabolites");
+        tinyxml2::XMLElement* row = metabolites->FirstChildElement();
+        string specie;
+        int amount;
+        while (row != nullptr) {
+            specie = row->Attribute("specie");
+            amount = std::stoi(row->GetText());
+            this->state.metabolites.insert({specie, amount});
+            row = row->NextSiblingElement();
+        }
+
+        // enzymes
+        tinyxml2::XMLElement* handled_reaction;
+        tinyxml2::XMLElement* stoichiometry;
+        tinyxml2::XMLElement* enzymes;
+        string enzyme_id, reaction_id, compartment_id, reaction_set_name;
+        int enzyme_amount, stoichiometry_amount;
+        Enzyme enzyme;
+        double konSTP, koffSTP, konPTS, koffPTS;
+        bool reversible;
+        ReactionAddress location;
+        MetaboliteAmounts  substrate_sctry, products_sctry;
+        map<string, ReactionInfo> handled_reactions;
+        ReactionInfo reaction_information;
+
+        enzymes = root->FirstChildElement("metabolites");
+        row = enzymes->FirstChildElement();
+        while (row != nullptr) {
+
+            handled_reactions.clear();
+            handled_reaction = row->FirstChildElement("handledReactions");
+
+            while (handled_reaction != nullptr) {
+                substrate_sctry.clear();
+                products_sctry.clear();
+
+                reaction_id = handled_reaction->FirstChildElement("id")->GetText();
+                compartment_id = handled_reaction->FirstChildElement("compartmentId")->GetText();
+                reaction_id = handled_reaction->FirstChildElement("reactionSetName")->GetText();
+                location = ReactionAddress(compartment_id, reaction_id);
+                konSTP = std::stod(handled_reaction->FirstChildElement("konSTP")->GetText());
+                konPTS = std::stod(handled_reaction->FirstChildElement("konPTS")->GetText());
+                koffSTP = std::stod(handled_reaction->FirstChildElement("koffSTP")->GetText());
+                koffPTS = std::stod(handled_reaction->FirstChildElement("koffPTS")->GetText());
+                reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
+
+                stoichiometry = handled_reaction->FirstChildElement("substrateStoichiometry");
+                while (stoichiometry != nullptr) {
+                    specie = row->Attribute("specie");
+                    stoichiometry_amount = std::stoi(row->GetText());
+                    substrate_sctry.insert({specie, stoichiometry_amount});
+                    stoichiometry = stoichiometry->NextSiblingElement();
+                }
+
+                stoichiometry = handled_reaction->FirstChildElement("productStoichiometry");
+                while (stoichiometry != nullptr) {
+                    specie = row->Attribute("specie");
+                    stoichiometry_amount = std::stoi(row->GetText());
+                    products_sctry.insert({specie, stoichiometry_amount});
+                    stoichiometry = stoichiometry->NextSiblingElement();
+                }
+
+                reaction_information = ReactionInfo(reaction_id,
+                                                    location,
+                                                    substrate_sctry,
+                                                    products_sctry,
+                                                    konSTP,
+                                                    konPTS,
+                                                    koffSTP,
+                                                    koffPTS,
+                                                    reversible);
+                handled_reactions.insert({reaction_id, reaction_information});
+                handled_reaction = handled_reaction->NextSiblingElement();
+            }
+
+            enzyme_id = row->Attribute("id");
+            enzyme_amount = std::stoi(row->Attribute("amount"));
+
+            enzyme = Enzyme(enzyme_id, enzyme_amount, handled_reactions);
+
+            this->state.enzymes.insert({enzyme_id, enzyme});
+            row = row->NextSiblingElement();
+        }
+
+        // routing_table
+        tinyxml2::XMLElement* routing_table;
+        int port_number;
+        ReactionAddress address;
+
+        routing_table = root->FirstChildElement("routingTable");
+        row = routing_table->FirstChildElement();
+        while (row != nullptr) {
+            compartment_id = row->Attribute("compartmentId");
+            reaction_set_name = row->Attribute("reactionSetName");
+            port_number = std::stoi(row->GetText());
+            address = ReactionAddress(compartment_id, reaction_set_name);
+            this->state.routing_table.insert(address, port_number);
+            row = row->NextSiblingElement();
+        }
     }
 
     /********* Space constructors *************/

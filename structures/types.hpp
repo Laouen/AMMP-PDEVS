@@ -26,6 +26,10 @@ struct RoutingTable {
             return -1;
         }
     }
+
+    void insert(const ENTRY& entry, int port) {
+        entries.insert({entry, port});
+    }
 };
 
 /******************************************/

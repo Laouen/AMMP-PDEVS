@@ -38,11 +38,6 @@ public:
 
     router() noexcept = default;
 
-//    explicit router(const string& id) {
-//        this->logger.setModuleName("Router_" + id);
-//        this->state.id = id;
-//    }
-
     explicit router(const char* xml_file) {
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
@@ -50,7 +45,6 @@ public:
 
         tinyxml2::XMLElement* root = doc.RootElement();
         this->state.id = root->FirstChildElement("id")->GetText();
-        cout << this->state.id << endl;
         logger.setModuleName(this->state.id);
 
         tinyxml2::XMLElement* routing_table = root->FirstChildElement("routingTable");
