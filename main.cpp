@@ -54,7 +54,7 @@ using reaction_test_uninitialized=models::reaction<reaction_ports, TIME>;
 template<class TIME>
 class reaction_test : public reaction_test_uninitialized<TIME> {
 public:
-    reaction_test(): reaction_test_uninitialized<TIME>(typename reaction_test_uninitialized<TIME>::state_type()) {};
+    reaction_test(): reaction_test_uninitialized<TIME>("../parameters.xml", "reaction_test") {};
 };
 
 /*******************************************/
@@ -69,7 +69,7 @@ using router_test_uninitialized=models::router<router_ports, TIME>;
 template<class TIME>
 class router_test : public router_test_uninitialized<TIME> {
 public:
-    router_test(): router_test_uninitialized<TIME>("../test.xml") {};
+    router_test(): router_test_uninitialized<TIME>("../parameters.xml", "router_test") {};
 };
 
 /*******************************************/
@@ -109,12 +109,12 @@ using space_test_uninitialized=models::space<space_ports, TIME>;
 template<class TIME>
 class space_test : public space_test_uninitialized<TIME> {
 public:
-    space_test(): space_test_uninitialized<TIME>(typename space_test_uninitialized<TIME>::state_type()) {};
+    space_test(): space_test_uninitialized<TIME>("../parameters.xml", "space_test") {};
 };
 
 /*******************************************/
 
-/****** Reaction set coupled model definition *********/
+/****** TOP coupled model definition *********/
 
 using iports_top= std::tuple<>;
 using oports_top= std::tuple<>;

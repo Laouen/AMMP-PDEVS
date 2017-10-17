@@ -38,31 +38,38 @@ public:
 
     router() noexcept = default;
 
-    explicit router(const char* xml_file) {
+    /**
+     * @brief Parser constructor
+     * @details Construct a new router atomic model instance by opening and parsing the xml
+     * file in the path xml_file.
+     *
+     * @param xml_file path where the xml file containing all the parameters is located.
+     * @param id model id.
+     */
+    explicit router(const char* xml_file, const char* id) {
+        this->state.id = id;
+        logger.setModuleName("Router" + this->state.id);
+
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
         assert(opened == tinyxml2::XML_SUCCESS);
 
-        tinyxml2::XMLElement* root = doc.RootElement();
-        this->state.id = root->FirstChildElement("id")->GetText();
-        logger.setModuleName(this->state.id);
+        tinyxml2::XMLElement* root = doc.RootElement()
+                ->FirstChildElement("routers")
+                ->FirstChildElement(id);
 
+        // Read routing table
         tinyxml2::XMLElement* routing_table = root->FirstChildElement("routingTable");
-        tinyxml2::XMLElement* row = routing_table->FirstChildElement();
+        tinyxml2::XMLElement* entry = routing_table->FirstChildElement();
         string key;
         int port_number;
-        while (row != nullptr) {
-            key = row->Attribute("entry");
-            port_number = std::stoi(row->GetText());
+        while (entry != nullptr) {
+            key = entry->Attribute("metaboliteId");
+            port_number = std::stoi(entry->Attribute("port"));
             this->state.routing_table.insert({key, port_number});
-            row = row->NextSiblingElement();
-        }
 
-        logger.debug("Begin routing table:");
-        for (const auto& row : this->state.routing_table) {
-            logger.debug(row.first + ": " + to_string(row.second));
+            entry = entry->NextSiblingElement();
         }
-        logger.debug("End routing table:");
     }
 
     /********** P-DEVS functions **************/

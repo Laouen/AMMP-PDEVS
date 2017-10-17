@@ -48,6 +48,7 @@
 #include <TaskScheduler.hpp>
 #include <Logger.hpp>
 #include <TupleOperators.hpp>
+#include <tinyxml2.h>
 
 #include "../structures/reaction.hpp"
 
@@ -97,7 +98,6 @@ public:
         TaskScheduler<TIME, output_bags> tasks;
     };
 
-    RealRandom<double> real_random; // used for uniform random number
     state_type state;
 
     reaction() noexcept = default;
@@ -110,13 +110,103 @@ public:
      * @param initialized_state A reaction::state_type already initialized.
      */
     explicit reaction(const state_type& initialized_state) noexcept {
-
         this->state = initialized_state;
-
-        // real_random is initialized with a random generator engine
-        random_device real_rd; // Random generator engine
-        real_random.seed(real_rd());
         this->logger.setModuleName("Reaction_" + this->state.id);
+
+        // Initialize random generators
+        this->initialize_random_engines();
+    }
+
+    /**
+     * @brief Parser constructor
+     * @details Construct a new reaction atomic model instance by opening and parsing the xml
+     * file in the path xml_file.
+     *
+     * @param xml_file path where the xml file containing all the parameters is located.
+     * @param id model id.
+     */
+    explicit reaction(const char* xml_file, const char* id) {
+        this->state.id = id;
+        this->logger.setModuleName("Reaction_" + this->state.id);
+
+        // Initialize random generators
+        this->initialize_random_engines();
+
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLError opened = doc.LoadFile(xml_file);
+        assert(opened == tinyxml2::XML_SUCCESS);
+
+        tinyxml2::XMLElement* root = doc.RootElement()
+                ->FirstChildElement("reactions")
+                ->FirstChildElement(id);
+
+
+        // Read simple state parameters
+        this->state.rate = TIME(root->FirstChildElement("rate")->GetText());
+        this->state.reject_time = TIME(root->FirstChildElement("rejectTime")->GetText());
+        this->state.koff_STP = std::stod(root->FirstChildElement("koffSTP")->GetText());
+        this->state.koff_PTS = std::stod(root->FirstChildElement("koffPTS")->GetText());
+
+        // Read stoichiometry by compartments
+        tinyxml2::XMLElement* compartment;
+        tinyxml2::XMLElement* stoichiometry_specie;
+        MetaboliteAmounts  substrate_sctry, products_sctry;
+        string specie_id, cid;
+        int specie_amount;
+
+        compartment = root
+                ->FirstChildElement("stoichiometryByCompartments")
+                ->FirstChildElement("compartment");
+        while (compartment != nullptr) {
+
+            cid = compartment->FirstChildElement("id")->GetText();
+
+            substrate_sctry.clear();
+            stoichiometry_specie = compartment->FirstChildElement("substrate")->FirstChildElement();
+            while (stoichiometry_specie != nullptr) {
+                specie_id = stoichiometry_specie->Attribute("id");
+                specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                substrate_sctry.insert({specie_id, specie_amount});
+
+                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+            }
+            if (!substrate_sctry.empty()) {
+                this->state.substrate_sctry.insert({cid, substrate_sctry});
+                this->state.substrate_comps.insert({cid, 0});
+            }
+
+            products_sctry.clear();
+            stoichiometry_specie = compartment->FirstChildElement("product")->FirstChildElement();
+            while (stoichiometry_specie != nullptr) {
+                specie_id = stoichiometry_specie->Attribute("id");
+                specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                products_sctry.insert({specie_id, specie_amount});
+
+                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+            }
+            if (!products_sctry.empty()) {
+                this->state.products_sctry.insert({cid, products_sctry});
+                this->state.product_comps.insert({cid, 0});
+            }
+
+            compartment = compartment->NextSiblingElement();
+        }
+
+        // Read routing_table
+        tinyxml2::XMLElement* routing_table;
+        tinyxml2::XMLElement* entry;
+        int port_number;
+        string metabolite_id;
+
+        routing_table = root->FirstChildElement("routingTable");
+        entry = routing_table->FirstChildElement();
+        while (entry != nullptr) {
+            metabolite_id = entry->Attribute("metaboliteId");
+            port_number = std::stoi(entry->Attribute("port"));
+            this->state.routing_table.insert(metabolite_id, port_number);
+
+            entry = entry->NextSiblingElement();
+        }
     }
 
     void internal_transition() {
@@ -193,11 +283,23 @@ public:
 
 private:
 
+    /*********** Private attributes **********/
+
+    RealRandom<double> real_random; // used for uniform random number
     Logger logger;
+
+    /*********** Private attributes **********/
 
     /***************************************
     ********* helper functions *************
     ***************************************/
+
+    void initialize_random_engines() {
+
+        // real_random is initialized with a random generator engine
+        random_device real_rd; // Random generator engine
+        this->real_random.seed(real_rd());
+    }
 
     void push_to_correct_port(string metabolite_id, output_bags& bags, const Product& m) const {
         int port_number = this->state.routing_table.at(metabolite_id);
@@ -228,7 +330,7 @@ private:
     }
 
     bool acceptedMetabolites(double k) {
-        return (real_random.drawNumber(0.0, 1.0) > k);
+        return (this->real_random.drawNumber(0.0, 1.0) > k);
     }
 
     void increaseRejected(map<pair<string, Way>, int>& rejected, const string& compartment, Way direction) {

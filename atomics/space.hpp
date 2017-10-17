@@ -97,7 +97,7 @@ public:
     space() noexcept = default;
 
     /**
-     * @brief Constructs a new space instance using the internal state passed
+     * @brief Constructs a new space atomic model instance using the internal state passed
      * as parameter as the initial model state.
      *
      * @param state_other - The model initial internal state.
@@ -105,41 +105,59 @@ public:
      */
     explicit space(const state_type &state_other) noexcept {
         this->state = state_other;
-        this->initialize_random_engines();
         this->logger.setModuleName("Space_" + this->state.id);
+
+        // Initialize random generators
+        this->initialize_random_engines();
     }
 
-    explicit space(const char* xml_file) {
+    /**
+     * @brief Parser constructor
+     * @details Construct a new space atomic model instance by opening and parsing the xml
+     * file in the path xml_file.
+     *
+     * @param xml_file path where the xml file containing all the parameters is located.
+     * @param id model id.
+     */
+    explicit space(const char* xml_file, const char* id) {
+        this->state.id = id;
+        logger.setModuleName("Space_" + this->state.id);
+
+        // Initialize random generators
+        this->initialize_random_engines();
+
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
         assert(opened == tinyxml2::XML_SUCCESS);
 
-        // id
-        tinyxml2::XMLElement* root = doc.RootElement();
-        this->state.id = root->FirstChildElement("id")->GetText();
-        logger.setModuleName(this->state.id);
+        tinyxml2::XMLElement* root = doc.RootElement()
+                ->FirstChildElement("spaces")
+                ->FirstChildElement(id);
 
-        // interval_time
-        this->state.interval_time = TIME(root->FirstChildElement("internal_time")->GetText());
 
-        // metabolites
+        // Read interval_time
+        this->state.interval_time = TIME(root->FirstChildElement("internalTime")->GetText());
+
+        // Read metabolites
         tinyxml2::XMLElement* metabolites = root->FirstChildElement("metabolites");
-        tinyxml2::XMLElement* row = metabolites->FirstChildElement();
+        tinyxml2::XMLElement* metabolite = metabolites->FirstChildElement();
         string specie;
         int amount;
-        while (row != nullptr) {
-            specie = row->Attribute("specie");
-            amount = std::stoi(row->GetText());
+        while (metabolite != nullptr) {
+            specie = metabolite->Attribute("id");
+            amount = std::stoi(metabolite->Attribute("amount"));
             this->state.metabolites.insert({specie, amount});
-            row = row->NextSiblingElement();
+            metabolite = metabolite->NextSiblingElement();
         }
 
-        // enzymes
+        // Read enzymes
         tinyxml2::XMLElement* handled_reaction;
+        tinyxml2::XMLElement* address;
         tinyxml2::XMLElement* stoichiometry;
-        tinyxml2::XMLElement* enzymes;
-        string enzyme_id, reaction_id, compartment_id, reaction_set_name;
-        int enzyme_amount, stoichiometry_amount;
+        tinyxml2::XMLElement* enzyme_entry;
+        tinyxml2::XMLElement* stoichiometry_specie;
+        string enzyme_id, reaction_id, cid, rsn, specie_id;
+        int enzyme_amount, specie_amount;
         Enzyme enzyme;
         double konSTP, koffSTP, konPTS, koffPTS;
         bool reversible;
@@ -148,41 +166,45 @@ public:
         map<string, ReactionInfo> handled_reactions;
         ReactionInfo reaction_information;
 
-        enzymes = root->FirstChildElement("metabolites");
-        row = enzymes->FirstChildElement();
-        while (row != nullptr) {
+        enzyme_entry = root->FirstChildElement("enzymes")->FirstChildElement();
+        while (enzyme_entry != nullptr) {
 
             handled_reactions.clear();
-            handled_reaction = row->FirstChildElement("handledReactions");
-
+            handled_reaction = enzyme_entry->FirstChildElement("handledReactions")->FirstChildElement();
             while (handled_reaction != nullptr) {
                 substrate_sctry.clear();
                 products_sctry.clear();
 
                 reaction_id = handled_reaction->FirstChildElement("id")->GetText();
-                compartment_id = handled_reaction->FirstChildElement("compartmentId")->GetText();
-                reaction_id = handled_reaction->FirstChildElement("reactionSetName")->GetText();
-                location = ReactionAddress(compartment_id, reaction_id);
+                address = handled_reaction->FirstChildElement("address");
+                cid = address->Attribute("cid");
+                rsn = address->Attribute("rsn");
+                location = ReactionAddress(cid, rsn);
                 konSTP = std::stod(handled_reaction->FirstChildElement("konSTP")->GetText());
                 konPTS = std::stod(handled_reaction->FirstChildElement("konPTS")->GetText());
                 koffSTP = std::stod(handled_reaction->FirstChildElement("koffSTP")->GetText());
                 koffPTS = std::stod(handled_reaction->FirstChildElement("koffPTS")->GetText());
                 reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
 
-                stoichiometry = handled_reaction->FirstChildElement("substrateStoichiometry");
-                while (stoichiometry != nullptr) {
-                    specie = row->Attribute("specie");
-                    stoichiometry_amount = std::stoi(row->GetText());
-                    substrate_sctry.insert({specie, stoichiometry_amount});
-                    stoichiometry = stoichiometry->NextSiblingElement();
+                stoichiometry = handled_reaction->FirstChildElement("stoichiometry");
+                stoichiometry_specie = stoichiometry
+                        ->FirstChildElement("substrate")
+                        ->FirstChildElement();
+                while (stoichiometry_specie != nullptr) {
+                    specie_id = stoichiometry_specie->Attribute("id");
+                    specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                    substrate_sctry.insert({specie_id, specie_amount});
+
+                    stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
                 }
 
-                stoichiometry = handled_reaction->FirstChildElement("productStoichiometry");
-                while (stoichiometry != nullptr) {
-                    specie = row->Attribute("specie");
-                    stoichiometry_amount = std::stoi(row->GetText());
-                    products_sctry.insert({specie, stoichiometry_amount});
-                    stoichiometry = stoichiometry->NextSiblingElement();
+                stoichiometry_specie = stoichiometry->FirstChildElement("product")->FirstChildElement();
+                while (stoichiometry_specie != nullptr) {
+                    specie_id = stoichiometry_specie->Attribute("id");
+                    specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                    products_sctry.insert({specie_id, specie_amount});
+
+                    stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
                 }
 
                 reaction_information = ReactionInfo(reaction_id,
@@ -198,29 +220,29 @@ public:
                 handled_reaction = handled_reaction->NextSiblingElement();
             }
 
-            enzyme_id = row->Attribute("id");
-            enzyme_amount = std::stoi(row->Attribute("amount"));
+            enzyme_id = enzyme_entry->FirstChildElement("id")->GetText();
+            enzyme_amount = std::stoi(enzyme_entry->FirstChildElement("amount")->GetText());
 
             enzyme = Enzyme(enzyme_id, enzyme_amount, handled_reactions);
 
             this->state.enzymes.insert({enzyme_id, enzyme});
-            row = row->NextSiblingElement();
+            enzyme_entry = enzyme_entry->NextSiblingElement();
         }
 
-        // routing_table
+        // Read routing_table
         tinyxml2::XMLElement* routing_table;
+        tinyxml2::XMLElement* entry;
         int port_number;
-        ReactionAddress address;
 
         routing_table = root->FirstChildElement("routingTable");
-        row = routing_table->FirstChildElement();
-        while (row != nullptr) {
-            compartment_id = row->Attribute("compartmentId");
-            reaction_set_name = row->Attribute("reactionSetName");
-            port_number = std::stoi(row->GetText());
-            address = ReactionAddress(compartment_id, reaction_set_name);
-            this->state.routing_table.insert(address, port_number);
-            row = row->NextSiblingElement();
+        entry = routing_table->FirstChildElement();
+        while (entry != nullptr) {
+            cid = entry->Attribute("cid");
+            rsn = entry->Attribute("rsn");
+            port_number = std::stoi(entry->Attribute("port"));
+            this->state.routing_table.insert(ReactionAddress(cid, rsn), port_number);
+
+            entry = entry->NextSiblingElement();
         }
     }
 
@@ -328,8 +350,8 @@ private:
 
     /*********** Private attributes **********/
 
-    RealRandom<double> _real_random;
-    IntegerRandom<Integer> _integer_random;
+    RealRandom<double> real_random;
+    IntegerRandom<Integer> integer_random;
     Logger logger;
 
     /*********** Private attributes **********/
@@ -338,10 +360,10 @@ private:
 
         // The random attributes must be initialized with a random generator variables
         random_device real_rd;
-        this->_real_random.seed(real_rd());
+        this->real_random.seed(real_rd());
 
         random_device integer_rd;
-        this->_integer_random.seed(integer_rd());
+        this->integer_random.seed(integer_rd());
     }
 
     void push_to_correct_port(ReactionAddress address, output_bags& bags, const Reactant& p) {
@@ -390,7 +412,7 @@ private:
             // Depending to which intervals rv belongs, the enzyme triggers
             // the corresponding reaction or do nothing (last interval).
 
-            rv = _real_random.drawNumber(0.0, 1.0);
+            rv = real_random.drawNumber(0.0, 1.0);
 
             partial = 0.0;
             for (auto &son : sons) {
