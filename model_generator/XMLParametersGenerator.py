@@ -6,7 +6,11 @@ from lxml import etree
 
 class XMLParametersGenerator:
 
-    def __init__(self):
+    def __init__(self, model_dir='../', xml_file='parameters'):
+
+        self.xml_file = open(model_dir + os.sep + xml_file + '.xml', 'wb')
+        self.xml_file_path = self.xml_file.name()
+
         self.parameters = etree.Element('parameters')
 
         self.spaces = etree.Element('spaces')
@@ -152,6 +156,10 @@ class XMLParametersGenerator:
 
     def print_parameters(self):
         print etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True)
+
+    def save_xml(self):
+        self.xml_file.write(etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True))
+        self.xml_file.flush()
 
     @staticmethod
     def generate_table(table, table_name, entry_name, attributes, value_attribute):

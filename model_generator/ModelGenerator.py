@@ -3,6 +3,7 @@
 
 from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
+from XMLParametersGenerator import XMLParametersGenerator
 from constants import *
 import os
 
@@ -70,7 +71,7 @@ class ModelStructure:
         reaction_parameters = parser.get_reaction_parameters(cid)
         metabolites = {specie: parser.metabolite_amounts[specie]
                        for specie in parser.parse_compartments_species()[cid].keys()}
-        self.space = {
+        self.space_parameters = {
             'cid': cid,
             'interval_time': parser.interval_times[cid],
             'metabolites': metabolites,
@@ -89,7 +90,6 @@ class ModelGenerator:
                  extra_cellular_id,
                  periplasm_id,
                  cytoplasm_id,
-                 parameters_path=os.curdir,
                  reactions=None,
                  enzymes=None):
         """
@@ -108,8 +108,7 @@ class ModelGenerator:
         :param enzymes: T parser.enzymes luaded objects. Optional, used to avoid re parsing
         """
 
-        self.parameter_file = open(parameters_path + os.sep + 'parameters.xml', 'w')
-
+        self.parameter_writer = XMLParametersGenerator()
         self.coder = ModelCodeGenerator()
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
@@ -155,9 +154,10 @@ class ModelGenerator:
         router_routing_table = {rid: port
                                 for rid, port
                                 in zip(reaction_set.keys(), range(reaction_set))}
+        self.parameter_writer.add_router(rs_id, router_routing_table)
         router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
                                                rs_id,
-                                               [self.parameter_file.name, rs_id],
+                                               [self.parameter_writer.xml_file_path, rs_id],
                                                len(router_routing_table),
                                                1,
                                                REACTANT_MESSAGE_TYPE,
@@ -170,9 +170,10 @@ class ModelGenerator:
         for rid, parameters in reaction_set.iteritems():
             output_port_amount = max(parameters['routing_table'].values()) + 1
             total_out_ports = max(output_port_amount, total_out_ports)
+            self.parameter_writer.add_reaction(rid, parameters)
             reaction = self.coder.write_atomic_model(REACTION_MODEL_CLASS,
                                                      rid,
-                                                     [self.parameter_file.name, rid],
+                                                     [self.parameter_writer.xml_file_path, rid],
                                                      output_port_amount,
                                                      1,
                                                      PRODUCT_MESSAGE_TYPE,
@@ -186,6 +187,7 @@ class ModelGenerator:
         ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out')
                   for port_number in range(total_out_ports)]
 
+
         return self.coder.write_coupled_model(rs_id,
                                               sub_models,
                                               ports,
@@ -197,9 +199,12 @@ class ModelGenerator:
 
         reaction_sets = self.generate_reaction_sets(compartment)
 
+        self.parameter_writer.add_space(compartment.id,
+                                        compartment.space_parameters,
+                                        compartment.routing_table)
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               compartment.id,
-                                              [self.parameter_file.name, compartment.id],
+                                              [self.parameter_writer.xml_file_path, compartment.id],
                                               len(reaction_sets),
                                               1,
                                               REACTANT_MESSAGE_TYPE,
@@ -253,11 +258,14 @@ class ModelGenerator:
 
         bulk = reaction_sets[BULK][0]
 
+        self.parameter_writer.add_space(cid,
+                                        compartment.space_parameters,
+                                        compartment.routing_table)
         # port numbers starts in zero -> port amount = max{port numbers} + 1.
         output_port_amount = max(compartment.routing_table.values()) + 1
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               cid,
-                                              [self.parameter_file.name, cid],
+                                              [self.parameter_writer.xml_file_path, cid],
                                               output_port_amount,
                                               1,
                                               REACTANT_MESSAGE_TYPE,
@@ -310,4 +318,5 @@ class ModelGenerator:
                     ic.append((extra_cellular_model, e_port_number, model_name, rs_port_number))
                     ic.append((model_name, 1, extra_cellular_model, 0))
 
+        self.parameter_writer.save_xml()
         return self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)

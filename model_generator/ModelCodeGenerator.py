@@ -7,7 +7,7 @@ class ModelCodeGenerator:
     Writes c++ cadmium model code to the <model_name>.hpp file.
     """
 
-    def __init__(self, model_name='top', template_folder='templates'):
+    def __init__(self, model_dir='../', model_name='top', template_folder='templates'):
         self.model_name = model_name
 
         # atomic template
@@ -43,8 +43,8 @@ class ModelCodeGenerator:
                             '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
                             '{sub_model_2},{sub_model_2}_ports::in_{port_number_2}>'
 
-        self.model_file = open(model_name + '.hpp', 'wb')
-        self.port_file = open(model_name + '_ports.hpp', 'wb')
+        self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
+        self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
 
     def write_atomic_model(self,
                            model_class,

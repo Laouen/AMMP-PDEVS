@@ -34,6 +34,8 @@ if __name__ == '__main__':
                                FLAGS.periplasm,
                                FLAGS.cytoplasm)
 
+    generator.generate_top()
+
     """
     with open("pickles/reactions.pickle", "wb") as reaction_file:
         pickle.dump(generator.parser.reactions, reaction_file)
