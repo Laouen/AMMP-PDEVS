@@ -2,6 +2,7 @@
 import os
 import json
 
+
 class ModelCodeGenerator:
     """
     Writes c++ cadmium model code to the <model_name>.hpp file.
@@ -39,9 +40,9 @@ class ModelCodeGenerator:
                             '{sub_model_name}_ports::out_{sub_model_port_number},' \
                             '{model_name}_out_{model_port_number}>'
 
-        self.ic_template =  'cadmium::modeling::IC<' \
-                            '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
-                            '{sub_model_2},{sub_model_2}_ports::in_{port_number_2}>'
+        self.ic_template = 'cadmium::modeling::IC<' \
+                           '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
+                           '{sub_model_2},{sub_model_2}_ports::in_{port_number_2}>'
 
         self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')

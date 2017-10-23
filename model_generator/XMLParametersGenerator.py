@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from lxml import etree
+import os
 
 
 class XMLParametersGenerator:
@@ -9,7 +10,7 @@ class XMLParametersGenerator:
     def __init__(self, model_dir='../', xml_file='parameters'):
 
         self.xml_file = open(model_dir + os.sep + xml_file + '.xml', 'wb')
-        self.xml_file_path = self.xml_file.name()
+        self.xml_file_path = self.xml_file.name
 
         self.parameters = etree.Element('parameters')
 
@@ -171,8 +172,8 @@ class XMLParametersGenerator:
             if type(key_values) is not tuple:
                 key_values = tuple([key_values])
 
-            for k, v in zip(attributes, key_values):
-                entry.set(k, str(v))
+                for k, v in zip(attributes, key_values):
+                    entry.set(k, str(v))
 
             entry.set(value_attribute, str(port_number))
             xml_table.append(entry)

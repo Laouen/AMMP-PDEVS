@@ -5,7 +5,6 @@ from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
 from XMLParametersGenerator import XMLParametersGenerator
 from constants import *
-import os
 
 
 class ModelStructure:
@@ -103,7 +102,6 @@ class ModelGenerator:
         the sbml file
         :param cytoplasm_id: The cytoplasm ID, this ID must be one of the compartments IDs from
         the sbml file
-        :param parameters_path: The path to the xml file where to write the model parameter values
         :param reactions: The parser.reactions loaded objects. Optional, used to avoid re parsing
         :param enzymes: T parser.enzymes luaded objects. Optional, used to avoid re parsing
         """
@@ -186,7 +184,6 @@ class ModelGenerator:
         ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
         ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out')
                   for port_number in range(total_out_ports)]
-
 
         return self.coder.write_coupled_model(rs_id,
                                               sub_models,
