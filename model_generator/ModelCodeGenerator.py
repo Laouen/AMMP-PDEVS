@@ -8,7 +8,7 @@ class ModelCodeGenerator:
     Writes c++ cadmium model code to the <model_name>.hpp file.
     """
 
-    def __init__(self, model_dir='../', model_name='top', template_folder='templates'):
+    def __init__(self, model_dir='..', model_name='top', template_folder='templates'):
         self.model_name = model_name
 
         # atomic template
@@ -57,13 +57,13 @@ class ModelCodeGenerator:
                            input_type):
 
         model_name = model_class + '_' + model_id
-        parameters = map(json.dumps, [model_id] + parameters)
+        parameters = map(json.dumps, parameters)
 
         self.write_atomic_model_ports(model_name, out_ports, in_ports)
 
         self.write(self.atomic_template.format(model_name=model_name,
                                                model_class=model_class,
-                                               parameters=',\n'.join(parameters),
+                                               parameters=',\n\t\t'.join(parameters),
                                                output_type=output_type,
                                                input_type=input_type))
 
@@ -113,11 +113,13 @@ class ModelCodeGenerator:
                                                 eoc=', '.join(eoc_cpp),
                                                 ic=', '.join(ic_cpp)))
 
-        input_ports_amount = max(port_number for (port_number, _, out_in)
-                                 in ports if out_in == 'in') + 1
+        input_port_numbers = [port_number for (port_number, _, out_in) in ports if out_in == 'in']
+        # If there is no input ports -> max = -1 -> output_ports_amount = -1 +1 = 0
+        input_ports_amount = max(input_port_numbers + [-1]) + 1
 
-        output_ports_amount = max(port_number for (port_number, _, out_in)
-                                  in ports if out_in == 'out') + 1
+        output_port_numbers = [port_number for (port_number, _, out_in) in ports if out_in == 'out']
+        # If there is no output ports -> max = -1 -> output_ports_amount = -1 +1 = 0
+        output_ports_amount = max(output_port_numbers + [-1]) + 1
 
         return model_name, input_ports_amount, output_ports_amount
 

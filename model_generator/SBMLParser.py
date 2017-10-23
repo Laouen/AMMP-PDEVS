@@ -14,6 +14,10 @@ from collections import defaultdict
 from constants import *
 
 
+def not_empty_intersection(a, b):
+    return (set(a) & set(b)) != set()
+
+
 class IllegalCompartmentCombination(Exception):
     pass
 
@@ -149,22 +153,23 @@ class SBMLParser:
         compartment
         :rtype: list[str]
         """
-
-        species = set(self.parse_compartments_species()[comp_id].keys())
-        return {rid: params
-                for rid, params in self.reactions.items()
-                if len(species.intersection(params['species'])) > 0}
+        compartment_species = self.parse_compartments_species()[comp_id].keys()
+        return {rid: reaction_parameters
+                for rid, reaction_parameters in self.reactions.items()
+                if not_empty_intersection(compartment_species, reaction_parameters['species'])}
 
     def get_enzymes(self, reactions):
         """
         :param reactions: A set of rid (reaction IDs).
         :type: set[str]
-        :return: The list of eid (enzyme IDs) that handle the reactions passed as parameter
-        :rtype: list[str]
+        :return: The dictionary of eid (enzyme IDs) as keys and enzyme parameters as values
+        of the enzymes that handle the reactions passed as parameter. All enzyme that handles at
+        least one of the reactions is added.
+        :rtype: dict[str, dict[str, any]]
         """
-        return {eid: enzyme
-                for eid, enzyme in self.enzymes.items()
-                if len(reactions.intersection(enzyme['handled_reactions'])) > 0}
+        return {eid: enzyme_parameters
+                for eid, enzyme_parameters in self.enzymes.items()
+                if not_empty_intersection(enzyme_parameters['handled_reactions'], reactions)}
 
     def get_enzyme_ids(self, reaction):
         """

@@ -7,8 +7,8 @@ using {model_name}_template = pmgbp::models::{model_class}<{model_name}_ports, T
 template<typename TIME>
 class {model_name} : public {model_name}_template<TIME> {{
 public:
-    {model_name}(): {model_name}_template<TIME>(typename {model_name}_template<TIME>::state_type(
+    {model_name}(): {model_name}_template<TIME>(
         {parameters}
-    )) {{}}
+    ) {{}}
 }};
 /**************************************************************************************************/

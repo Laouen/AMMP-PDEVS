@@ -149,9 +149,10 @@ class ModelGenerator:
     def generate_reaction_set(self, cid, rsn, reaction_set):
         rs_id = '_'.join([cid, rsn])
 
-        router_routing_table = {rid: port
-                                for rid, port
-                                in zip(reaction_set.keys(), range(reaction_set))}
+        port_numbers = range(len(reaction_set))
+        router_routing_table = {rid: port_number
+                                for rid, port_number
+                                in zip(reaction_set.keys(), port_numbers)}
         self.parameter_writer.add_router(rs_id, router_routing_table)
         router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
                                                rs_id,
@@ -253,7 +254,7 @@ class ModelGenerator:
         reaction_sets = self.generate_reaction_sets(compartment)
         assert len(reaction_sets) == 1  # cytoplasm has no membranes
 
-        bulk = reaction_sets[BULK][0]
+        bulk = reaction_sets[(cid, BULK)][0]
 
         self.parameter_writer.add_space(cid,
                                         compartment.space_parameters,

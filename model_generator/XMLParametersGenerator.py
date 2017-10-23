@@ -7,7 +7,7 @@ import os
 
 class XMLParametersGenerator:
 
-    def __init__(self, model_dir='../', xml_file='parameters'):
+    def __init__(self, model_dir='..', xml_file='parameters'):
 
         self.xml_file = open(model_dir + os.sep + xml_file + '.xml', 'wb')
         self.xml_file_path = self.xml_file.name
@@ -52,8 +52,8 @@ class XMLParametersGenerator:
 
         xml_stoichiometry_by_compartments = etree.Element('stoichiometryByCompartments')
 
-        product_compartments = parameters.product_by_compartment.keys()
-        reactant_compartments = parameters.reactant_by_compartment.keys()
+        product_compartments = parameters['product_by_compartment'].keys()
+        reactant_compartments = parameters['reactant_by_compartment'].keys()
 
         compartments = set(product_compartments + reactant_compartments)
 
@@ -65,7 +65,7 @@ class XMLParametersGenerator:
             xml_compartment.append(xml_cid)
 
             if cid in reactant_compartments:
-                stoichiometry = parameters.product_by_compartment[cid]
+                stoichiometry = parameters['reactant_by_compartment'][cid]
                 xml_stoichiometry = self.generate_table(stoichiometry,
                                                         'substrate',
                                                         'specie',
@@ -74,7 +74,7 @@ class XMLParametersGenerator:
                 xml_compartment.append(xml_stoichiometry)
 
             if cid in product_compartments:
-                stoichiometry = parameters.product_by_compartment[cid]
+                stoichiometry = parameters['product_by_compartment'][cid]
                 xml_stoichiometry = self.generate_table(stoichiometry,
                                                         'product',
                                                         'specie',
@@ -84,6 +84,7 @@ class XMLParametersGenerator:
 
             xml_stoichiometry_by_compartments.append(xml_compartment)
         xml_reaction.append(xml_stoichiometry_by_compartments)
+        self.reactions.append(xml_reaction)
 
     def add_space(self, model_id, parameters, routing_table):
         xml_space = etree.Element(model_id)
@@ -109,7 +110,7 @@ class XMLParametersGenerator:
 
         cid = parameters['cid']
         xml_enzymes = etree.Element('enzymes')
-        for eid, enzyme_parameters in parameters['enzymes']:
+        for eid, enzyme_parameters in parameters['enzymes'].iteritems():
             xml_enzyme = etree.Element('enzyme')
 
             parameter_keys = ['id', 'amount']
@@ -137,23 +138,26 @@ class XMLParametersGenerator:
 
                 stoichiometry = etree.Element('stoichiometry')
 
-                product = reaction_parameters['product_by_compartment'][cid]
-                xml_product = self.generate_table(product,
-                                                  'product',
-                                                  'specie',
-                                                  ['id'],
-                                                  'amount')
-                stoichiometry.append(xml_product)
+                if cid in reaction_parameters['product_by_compartment'].keys():
+                    product = reaction_parameters['product_by_compartment'][cid]
+                    xml_product = self.generate_table(product,
+                                                      'product',
+                                                      'specie',
+                                                      ['id'],
+                                                      'amount')
+                    stoichiometry.append(xml_product)
 
-                substrate = reaction_parameters['reactant_by_compartment'][cid]
-                xml_substrate = self.generate_table(substrate,
-                                                    'substrate',
-                                                    'specie',
-                                                    ['id'],
-                                                    'amount')
-                stoichiometry.append(xml_substrate)
+                if cid in reaction_parameters['reactant_by_compartment'].keys():
+                    substrate = reaction_parameters['reactant_by_compartment'][cid]
+                    xml_substrate = self.generate_table(substrate,
+                                                        'substrate',
+                                                        'specie',
+                                                        ['id'],
+                                                        'amount')
+                    stoichiometry.append(xml_substrate)
             xml_enzymes.append(xml_enzyme)
         xml_space.append(xml_enzymes)
+        self.spaces.append(xml_space)
 
     def print_parameters(self):
         print etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True)
