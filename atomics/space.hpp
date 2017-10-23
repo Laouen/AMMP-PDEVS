@@ -136,7 +136,7 @@ public:
 
 
         // Read interval_time
-        this->state.interval_time = TIME(root->FirstChildElement("internalTime")->GetText());
+        this->state.interval_time = TIME(root->FirstChildElement("intervalTime")->GetText());
 
         // Read metabolites
         tinyxml2::XMLElement* metabolites = root->FirstChildElement("metabolites");

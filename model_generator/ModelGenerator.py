@@ -19,7 +19,7 @@ class ModelStructure:
         :param parser: A SBMLParser with the sbml file loaded.
         :param external_reaction_sets:  A dictionary of all the related external reaction sets
         grouped by their compartments. Optional.
-        :type external_reaction_sets: Dictionary of (cid, List of rs)
+        :type external_reaction_sets: dict[str, list[str]]
         """
 
         if membranes is None:
@@ -67,11 +67,15 @@ class ModelStructure:
             self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
 
         # Building space
-        reaction_locations = parser.get_reaction_locations(cid)
+        reaction_parameters = parser.get_reaction_parameters(cid)
+        metabolites = {specie: parser.metabolite_amounts[specie]
+                       for specie in parser.parse_compartments_species()[cid].keys()}
         self.space = {
-            'species': parser.parse_compartments_species()[cid].keys(),
-            'reaction_locations': reaction_locations,
-            'enzymes': parser.get_enzymes(set(reaction_locations.keys()))
+            'cid': cid,
+            'interval_time': parser.interval_times[cid],
+            'metabolites': metabolites,
+            'reaction_parameters': reaction_parameters,
+            'enzymes': parser.get_enzymes(reaction_parameters.keys())
         }
 
 

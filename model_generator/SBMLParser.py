@@ -40,6 +40,9 @@ class Location:
         else:
             return False
 
+    def as_tuple(self):
+        return tuple([self.cid, self.rsn])
+
 
 class SBMLParser:
     """
@@ -84,8 +87,10 @@ class SBMLParser:
         self.konPTSs = defaultdict(lambda: 0)
         self.koffSTPs = defaultdict(lambda: 0)
         self.koffPTSs = defaultdict(lambda: 0)
+        self.metabolite_amounts = defaultdict(lambda: 0)
         self.rates = defaultdict(lambda: '0:0:0:1')
         self.reject_times = defaultdict(lambda: '0:0:0:1')
+        self.interval_times = defaultdict(lambda: '0:0:0:1')
 
         self.load_sbml_file(sbml_file)
 
@@ -138,14 +143,16 @@ class SBMLParser:
 
         return self.compartment_species
 
-    def get_reaction_locations(self, comp_id):
+    def get_reaction_parameters(self, comp_id):
         """
-        :return: All the reactions that uses species from the compartment and its locations
+        :return: All the reaction parameters for the reactions that uses species from the
+        compartment
         :rtype: list[str]
         """
 
         species = set(self.parse_compartments_species()[comp_id].keys())
-        return {rid: params['location'] for rid, params in self.reactions.items()
+        return {rid: params
+                for rid, params in self.reactions.items()
                 if len(species.intersection(params['species'])) > 0}
 
     def get_enzymes(self, reactions):
@@ -155,8 +162,9 @@ class SBMLParser:
         :return: The list of eid (enzyme IDs) that handle the reactions passed as parameter
         :rtype: list[str]
         """
-        return [eid for eid, enzyme in self.enzymes.items() 
-                if len(reactions.intersection(enzyme['handled_reactions'])) > 0]
+        return {eid: enzyme
+                for eid, enzyme in self.enzymes.items()
+                if len(reactions.intersection(enzyme['handled_reactions'])) > 0}
 
     def get_enzyme_ids(self, reaction):
         """
@@ -381,6 +389,7 @@ class SBMLParser:
         location = self.get_location(species)
         routing_table = self.get_reaction_routing_table(reaction, location.cid)
         parameters = {
+            'rid': rid,
             'location': location,  # used by the space
             'reversible': False if reaction.get('reversible') == 'false' else True,
             'species': species,
