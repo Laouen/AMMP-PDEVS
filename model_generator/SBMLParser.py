@@ -46,8 +46,13 @@ class SBMLParser:
     Parses and retrieve SBML information to generate a CADMIUM P-DEVS model
     """
 
-    def __init__(self, sbml_file, extra_cellular_id, periplasm_id, cytoplasm_id,
-                 reactions=None, enzymes=None):
+    def __init__(self,
+                 sbml_file,
+                 extra_cellular_id,
+                 periplasm_id,
+                 cytoplasm_id,
+                 reactions=None,
+                 enzymes=None):
         """
         class SBMLParser:
         SBMLParser constructor
@@ -73,11 +78,14 @@ class SBMLParser:
         self.enzymes = enzymes
 
         # Not in the SBML model parameters
+        # TODO: refactor default dict values to be set in the class init method parameters
         self.enzyme_amounts = defaultdict(lambda: 0)
         self.konSTPs = defaultdict(lambda: 0)
         self.konPTSs = defaultdict(lambda: 0)
         self.koffSTPs = defaultdict(lambda: 0)
         self.koffPTSs = defaultdict(lambda: 0)
+        self.rates = defaultdict(lambda: '0:0:0:1')
+        self.reject_times = defaultdict(lambda: '0:0:0:1')
 
         self.load_sbml_file(sbml_file)
 
@@ -367,26 +375,40 @@ class SBMLParser:
 
         stoichiometry = self.parse_stoichiometry(reaction)
         species = stoichiometry['listOfReactants'].keys() + stoichiometry['listOfProducts'].keys()
+        product_by_compartment = self.separate_by_compartment(stoichiometry['listOfProducts'])
+        reactant_by_compartment = self.separate_by_compartment(stoichiometry['listOfReactants'])
         species = list(set(species))  # remove duplicates
         location = self.get_location(species)
         routing_table = self.get_reaction_routing_table(reaction, location.cid)
         parameters = {
-            # TODO(Routing): location is currently not used in the atomic model,
-            # but should be used to determine which port to send the metabolites
-            'location': location,
+            'location': location,  # used by the space
             'reversible': False if reaction.get('reversible') == 'false' else True,
             'species': species,
-            'substrate_sctry': stoichiometry['listOfReactants'],
-            'products_sctry': stoichiometry['listOfProducts'],
+            'product_by_compartment': product_by_compartment,
+            'reactant_by_compartment': reactant_by_compartment,
             'routing_table': routing_table,
-            'konSTP': self.konSTPs[rid],
-            'konPTS': self.konPTSs[rid],
+            'konSTP': self.konSTPs[rid],  # used by the space
+            'konPTS': self.konPTSs[rid],  # used by the space
             'koffSTP': self.koffSTPs[rid],
-            'koffPTS': self.koffPTSs[rid]
+            'koffPTS': self.koffPTSs[rid],
+            'rate': self.rates[rid],
+            'rejectTime': self.reject_times[rid]
         }
 
         self.parse_enzymes(reaction)
         self.reactions[rid] = parameters
+
+    def separate_by_compartment(self, stoichiometry):
+        separated_stoichiometry = {}
+
+        for specie, amount in stoichiometry.iteritems():
+            cid = self.get_compartment(specie)
+            if cid not in separated_stoichiometry.keys():
+                separated_stoichiometry[cid] = {specie: amount}
+            else:
+                separated_stoichiometry[cid][specie] = amount
+
+        return separated_stoichiometry
 
     @staticmethod
     def parse_stoichiometry(reaction):
