@@ -57,8 +57,8 @@ class ModelStructure:
         port_number = len(self.routing_table)
         for external_cid, reaction_sets in external_reaction_sets.iteritems():
             for reaction_set in reaction_sets:
-                port_number += 1
                 self.routing_table[(external_cid, reaction_set)] = port_number
+                port_number += 1
 
         # Building reaction sets
         self.reaction_sets = {}

@@ -119,12 +119,12 @@ class XMLParametersGenerator:
                 xml_parameter.text = str(enzyme_parameters[key])
                 xml_enzyme.append(xml_parameter)
 
+            xml_handled_reactions = etree.Element('handledReactions')
             for rid in enzyme_parameters['handled_reactions']:
                 reaction_parameters = parameters['reaction_parameters'][rid]
-
                 xml_reaction = etree.Element('reaction')
 
-                parameter_keys = ['rid', 'rejectTime', 'konSTP', 'konPTS',
+                parameter_keys = ['rid', 'konSTP', 'konPTS',
                                   'koffSTP', 'koffPTS', 'reversible']
                 for key in parameter_keys:
                     parameter = etree.Element(key)
@@ -136,7 +136,7 @@ class XMLParametersGenerator:
                 xml_address.set('rsn', reaction_parameters['location'].rsn)
                 xml_reaction.append(xml_address)
 
-                stoichiometry = etree.Element('stoichiometry')
+                xml_stoichiometry = etree.Element('stoichiometry')
 
                 if cid in reaction_parameters['product_by_compartment'].keys():
                     product = reaction_parameters['product_by_compartment'][cid]
@@ -145,7 +145,7 @@ class XMLParametersGenerator:
                                                       'specie',
                                                       ['id'],
                                                       'amount')
-                    stoichiometry.append(xml_product)
+                    xml_stoichiometry.append(xml_product)
 
                 if cid in reaction_parameters['reactant_by_compartment'].keys():
                     substrate = reaction_parameters['reactant_by_compartment'][cid]
@@ -154,7 +154,12 @@ class XMLParametersGenerator:
                                                         'specie',
                                                         ['id'],
                                                         'amount')
-                    stoichiometry.append(xml_substrate)
+                    xml_stoichiometry.append(xml_substrate)
+                xml_reaction.append(xml_stoichiometry)
+
+                xml_handled_reactions.append(xml_reaction)
+            xml_enzyme.append(xml_handled_reactions)
+
             xml_enzymes.append(xml_enzyme)
         xml_space.append(xml_enzymes)
         self.spaces.append(xml_space)
@@ -176,8 +181,8 @@ class XMLParametersGenerator:
             if type(key_values) is not tuple:
                 key_values = tuple([key_values])
 
-                for k, v in zip(attributes, key_values):
-                    entry.set(k, str(v))
+            for k, v in zip(attributes, key_values):
+                entry.set(k, str(v))
 
             entry.set(value_attribute, str(port_number))
             xml_table.append(entry)
