@@ -40,6 +40,9 @@
 #include "structures/types.hpp"
 #include "structures/router.hpp"
 
+#include "model_json_exporter.hpp"
+
+
 using namespace std;
 using namespace pmgbp;
 using hclock=chrono::high_resolution_clock;
@@ -116,15 +119,28 @@ public:
 
 /****** TOP coupled model definition *********/
 
-using iports_top= std::tuple<>;
-using oports_top= std::tuple<>;
+struct in_0: public cadmium::in_port<int>{};
+struct in_1: public cadmium::in_port<int>{};
+
+struct out_0: public cadmium::out_port<int>{};
+
+using iports_top= std::tuple<in_0, in_1>;
+using oports_top= std::tuple<out_0>;
 using submodels_top = cadmium::modeling::models_tuple<space_test, reaction_set>;
-using eics_top = std::tuple<>;
-using eocs_top = std::tuple<>;
+using eics_top = std::tuple<cadmium::modeling::EIC<in_0,space_test,space_ports::in>>;
+using eocs_top = std::tuple<cadmium::modeling::EOC<reaction_set,reaction_set_out,out_0>>;
 using ics_top = std::tuple<cadmium::modeling::IC<space_test, space_ports::inner, reaction_set , reaction_set_in>>;
 
 template<typename TIME>
-using top_model=cadmium::modeling::coupled_model<TIME, iports_top, oports_top, submodels_top, eics_top, eocs_top, ics_top>;
+struct top_model: public cadmium::modeling::coupled_model<
+        TIME,
+        iports_top,
+        oports_top,
+        submodels_top,
+        eics_top,
+        eocs_top,
+        ics_top
+> {};
 
 /*******************************************/
 
@@ -150,12 +166,14 @@ using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
 int main() {
 
-    auto start = hclock::now(); //to measure simulation execution time
+    export_model_to_json<NDTime, top_model>("test_1.json", 0);
 
-    cadmium::engine::runner<NDTime, top_model, logger_top> r{{0}};
-    r.runUntil({3000});
-
-    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
-    cout << "Simulation took:" << elapsed << "sec" << endl;
+//    auto start = hclock::now(); //to measure simulation execution time
+//
+//    cadmium::engine::runner<NDTime, top_model, logger_top> r{{0}};
+//    r.runUntil({3000});
+//
+//    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
+//    cout << "Simulation took:" << elapsed << "sec" << endl;
     return 0;
 }

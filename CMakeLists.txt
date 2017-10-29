@@ -3,7 +3,14 @@ project(PMGBP_PDEVS)
 
 set(CMAKE_CXX_STANDARD 14)
 
-include_directories(../cadmium/include ../DESTimes atomics libs structures vendor/tinyxml2)
+include_directories(
+        ../cadmium/include
+        ../DESTimes
+        atomics
+        libs
+        structures
+        vendor/tinyxml2
+        vendor/DEVSDiagramer/model_json_exporter)
 
 set(SOURCES
         structures/types.cpp
@@ -11,7 +18,8 @@ set(SOURCES
         libs/unit_definition.cpp
         vendor/tinyxml2/tinyxml2.cpp
         main.cpp
-        atomics)
+        atomics
+        vendor/DEVSDiagramer/model_json_exporter)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
