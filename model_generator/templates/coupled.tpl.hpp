@@ -11,8 +11,8 @@ using ics_{model_name} = std::tuple<{ic}>;
 template<typename TIME>
 struct {model_name}: public cadmium::modeling::coupled_model<
         TIME,
-        oports_{model_name},
         iports_{model_name},
+        oports_{model_name},
         sub_models_{model_name},
         eics_{model_name},
         eocs_{model_name},
