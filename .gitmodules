@@ -1,3 +1,6 @@
 [submodule "vendor/tinyxml2"]
 	path = vendor/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
+[submodule "vendor/DEVSDiagramer"]
+	path = vendor/DEVSDiagramer
+	url = git@github.com:Laouen/DEVSDiagramer.git
