@@ -1,5 +1,7 @@
 /*************************** coupled model {model_name} *******************************************/
-{ports}
+struct {model_name}_ports {{
+    {ports}
+}};
 
 using oports_{model_name} = std::tuple<{oports}>;
 using iports_{model_name} = std::tuple<{iports}>;

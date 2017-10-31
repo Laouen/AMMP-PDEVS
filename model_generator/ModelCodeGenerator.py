@@ -24,21 +24,21 @@ class ModelCodeGenerator:
         self.coupled_template = open(coupled_tpl_path, 'r').read()
 
         # port template
-        self.atomic_port_template = 'struct {out_in}_{port_number} : public ' \
-                                    'cadmium::{out_in}_port<{message_type}> {{}};'
+        self.atomic_port_template = 'struct {out_in}_{port_number}: public ' \
+                                    'cadmium::{out_in}_port<{message_type}>{{}};'
 
-        self.coupled_port_template = 'struct {model_name}_{out_in}_{port_number}: public ' \
-                                     'cadmium::{out_in}_port<pmgbp::types::{message_type}>{{}};'
+        self.port_template = 'struct {out_in}_{port_number}: public ' \
+                             'cadmium::{out_in}_port<pmgbp::types::{message_type}>{{}};'
 
         self.eic_template = 'cadmium::modeling::EIC<' \
-                            '{model_name}_in_{model_port_number},' \
+                            '{model_name}_ports::in_{model_port_number},' \
                             '{sub_model_name},' \
                             '{sub_model_name}_ports::in_{sub_model_port_number}>'
 
         self.eoc_template = 'cadmium::modeling::EOC<' \
                             '{sub_model_name},' \
                             '{sub_model_name}_ports::out_{sub_model_port_number},' \
-                            '{model_name}_out_{model_port_number}>'
+                            '{model_name}_ports::out_{model_port_number}>'
 
         self.ic_template = 'cadmium::modeling::IC<' \
                            '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
@@ -46,6 +46,8 @@ class ModelCodeGenerator:
 
         self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
+
+        self.write_includes()
 
     def write_atomic_model(self,
                            model_class,
@@ -73,6 +75,8 @@ class ModelCodeGenerator:
 
         model_name = 'coupled_' + model_id
 
+        port_prefix = model_name + '_ports::'
+
         oiports_cpp = {'out': [], 'in': []}
         ports_cpp = []
         eic_cpp = []
@@ -80,11 +84,10 @@ class ModelCodeGenerator:
         ic_cpp = []
 
         for (port_number, message_type, out_in) in ports:
-            ports_cpp.append(self.coupled_port_template.format(model_name=model_name,
-                                                               port_number=str(port_number),
-                                                               message_type=message_type,
-                                                               out_in=out_in))
-            oiports_cpp[out_in].append('_'.join([model_name, out_in, str(port_number)]))
+            ports_cpp.append(self.port_template.format(port_number=str(port_number),
+                                                       message_type=message_type,
+                                                       out_in=out_in))
+            oiports_cpp[out_in].append(port_prefix + '_'.join([out_in, str(port_number)]))
 
         for (model_port_number, sub_model_name, sub_model_port_number) in eic:
             eic_cpp.append(self.eic_template.format(model_name=model_name,
@@ -105,7 +108,7 @@ class ModelCodeGenerator:
                                                   port_number_2=str(port_number_2)))
 
         self.write(self.coupled_template.format(model_name=model_name,
-                                                ports='\n'.join(ports_cpp),
+                                                ports='\n\t'.join(ports_cpp),
                                                 oports=', '.join(oiports_cpp['out']),
                                                 iports=', '.join(oiports_cpp['in']),
                                                 sub_models=', '.join(sub_models),
@@ -156,3 +159,21 @@ class ModelCodeGenerator:
 
     def endl(self):
         self.model_file.write('\n')
+
+    def write_includes(self):
+        # model def includes
+
+        structures = ["reaction", "router", "space"]
+        models = ["reaction", "space", "router"]
+
+        self.write_ports('/* structure includes */\n')
+        for structure in structures:
+            self.write_ports('#include \"structures/' + structure + '.hpp\"')
+
+        self.write('/* atomic model includes */\n')
+        for model in models:
+            self.write('#include \"atomics/' + model + '.hpp\"')
+
+        self.write('#include \"' + self.model_name + '_ports.hpp\"')
+
+        self.write('\n#include <cadmium/modeling/coupled_model.hpp>\n\n')

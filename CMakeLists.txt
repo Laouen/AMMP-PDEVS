@@ -18,6 +18,8 @@ set(SOURCES
         libs/unit_definition.cpp
         vendor/tinyxml2/tinyxml2.cpp
         main.cpp
+        top.hpp
+        top_ports.hpp
         atomics
         vendor/DEVSDiagramer/model_json_exporter)
 
