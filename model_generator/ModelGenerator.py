@@ -304,17 +304,44 @@ class ModelGenerator:
             organelle_models[cid] = self.generate_organelle_compartment(model_structure)
             sub_models.append(organelle_models[cid][0])  # append model name
 
-        ic = []
+        ic = self.generate_top_bulk_ic(cytoplasm_model,
+                                       self.cytoplasm.id,
+                                       self.cytoplasm.routing_table,
+                                       periplasm_model)
+
+        ic += self.generate_top_bulk_ic(extra_cellular_model,
+                                        self.extra_cellular.id,
+                                        self.extra_cellular.routing_table,
+                                        periplasm_model)
+
         for cid, (model_name, _, output_port_amount) in organelle_models.iteritems():
             for rsn, rs_port_number in self.organelles[cid].membrane_eic.iteritems():
                 c_port_number = self.cytoplasm.routing_table[(cid, rsn)]
                 ic.append((cytoplasm_model, c_port_number, model_name, rs_port_number))
-                ic.append((model_name, 0, cytoplasm_model, 0))
+                # *1) organelle output port 1 always goes to cytoplasm
+                ic.append((model_name, 1, cytoplasm_model, 0))
 
                 if output_port_amount > 1:
                     e_port_number = self.cytoplasm.routing_table[(cid, rsn)]
                     ic.append((extra_cellular_model, e_port_number, model_name, rs_port_number))
-                    ic.append((model_name, 1, extra_cellular_model, 0))
+                    # *1) organelle output port 2 always goes to extracellular
+                    ic.append((model_name, 2, extra_cellular_model, 0))
 
         self.parameter_writer.save_xml()
         return self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)
+
+    def generate_top_bulk_ic(self, bulk_model, bulk_cid, bulk_routing_table, periplasm_model):
+        ic = []
+
+        # this is the same logic as *1)
+        periplasm_oport_number = 1 if bulk_cid == self.cytoplasm.id else 2
+
+        for (cid, rsn), c_port_number in bulk_routing_table.iteritems():
+            if cid == bulk_cid:
+                continue
+
+            if cid == self.periplasm.id:
+                periplasm_port_number = self.periplasm.membrane_eic[rsn]
+                ic.append((bulk_model, c_port_number, periplasm_model, periplasm_port_number))
+                ic.append((periplasm_model, periplasm_oport_number, bulk_model, 0))
+        return ic
