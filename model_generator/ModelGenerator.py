@@ -112,8 +112,8 @@ class ModelGenerator:
                                  extra_cellular_id,
                                  periplasm_id,
                                  cytoplasm_id,
-                                 reactions,
-                                 enzymes)
+                                 reactions=reactions,
+                                 enzymes=enzymes)
 
         special_compartment_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
 
@@ -335,6 +335,7 @@ class ModelGenerator:
 
         # this is the same logic as *1)
         periplasm_oport_number = 1 if bulk_cid == self.cytoplasm.id else 2
+        ic.append((periplasm_model, periplasm_oport_number, bulk_model, 0))
 
         for (cid, rsn), c_port_number in bulk_routing_table.iteritems():
             if cid == bulk_cid:
@@ -343,5 +344,4 @@ class ModelGenerator:
             if cid == self.periplasm.id:
                 periplasm_port_number = self.periplasm.membrane_eic[rsn]
                 ic.append((bulk_model, c_port_number, periplasm_model, periplasm_port_number))
-                ic.append((periplasm_model, periplasm_oport_number, bulk_model, 0))
         return ic
