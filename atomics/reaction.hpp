@@ -100,17 +100,15 @@ public:
 
     state_type state;
 
-    reaction() noexcept = default;
-
     /**
      * @brief Default constructor
      * @details Construct a new instance of a reaction model using the state passed
      * as parameter to initialize the new instance.
      *
-     * @param initialized_state A reaction::state_type already initialized.
+     * @param state_other A reaction::state_type already initialized.
      */
-    explicit reaction(const state_type& initialized_state) noexcept {
-        this->state = initialized_state;
+    explicit reaction(const state_type& state_other) noexcept {
+        this->state = state_other;
         this->logger.setModuleName("Reaction_" + this->state.id);
 
         // Initialize random generators
@@ -162,7 +160,10 @@ public:
             cid = compartment->FirstChildElement("id")->GetText();
 
             substrate_sctry.clear();
-            stoichiometry_specie = compartment->FirstChildElement("substrate")->FirstChildElement();
+            stoichiometry_specie = compartment->FirstChildElement("substrate");
+            if (stoichiometry_specie != nullptr) {
+                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+            }
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
                 specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
@@ -176,7 +177,10 @@ public:
             }
 
             products_sctry.clear();
-            stoichiometry_specie = compartment->FirstChildElement("product")->FirstChildElement();
+            stoichiometry_specie = compartment->FirstChildElement("product");
+            if (stoichiometry_specie != nullptr) {
+                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+            }
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
                 specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
@@ -309,7 +313,7 @@ private:
     void bindMetabolites(typename make_message_bags<input_ports>::type mbs,
                          map<pair<string, Way>, int> &rejected) {
 
-        for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
+        for (const auto &x : get_messages<typename PORTS::in_0>(mbs)) {
 
             if (x.reaction_direction == Way::STP) {
 
@@ -385,7 +389,7 @@ private:
                 for (const auto &metabolite : compartment_sctry.second) {
                     message.clear();
                     message.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
-                    this->push_to_correct_port(compartment_sctry.first, bags, message);
+                    this->push_to_correct_port(metabolite.first, bags, message);
                 }
             }
         }
@@ -398,7 +402,7 @@ private:
                 for (const auto &metabolite : compartment_sctry.second) {
                     message.clear();
                     message.metabolites.insert({metabolite.first, pts_ready * metabolite.second});
-                    this->push_to_correct_port(compartment_sctry.first, bags, message);
+                    this->push_to_correct_port(metabolite.first, bags, message);
                 }
             }
         }

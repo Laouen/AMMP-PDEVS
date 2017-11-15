@@ -92,11 +92,6 @@ public:
     /********* Space constructors *************/
 
     /**
-     * @brief Default constructor
-     */
-    space() noexcept = default;
-
-    /**
      * @brief Constructs a new space atomic model instance using the internal state passed
      * as parameter as the initial model state.
      *
@@ -175,7 +170,7 @@ public:
                 substrate_sctry.clear();
                 products_sctry.clear();
 
-                reaction_id = handled_reaction->FirstChildElement("id")->GetText();
+                reaction_id = handled_reaction->FirstChildElement("rid")->GetText();
                 address = handled_reaction->FirstChildElement("address");
                 cid = address->Attribute("cid");
                 rsn = address->Attribute("rsn");
@@ -187,9 +182,10 @@ public:
                 reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
 
                 stoichiometry = handled_reaction->FirstChildElement("stoichiometry");
-                stoichiometry_specie = stoichiometry
-                        ->FirstChildElement("substrate")
-                        ->FirstChildElement();
+                stoichiometry_specie = stoichiometry->FirstChildElement("substrate");
+                if (stoichiometry_specie != nullptr) {
+                    stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+                }
                 while (stoichiometry_specie != nullptr) {
                     specie_id = stoichiometry_specie->Attribute("id");
                     specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
@@ -198,7 +194,10 @@ public:
                     stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
                 }
 
-                stoichiometry_specie = stoichiometry->FirstChildElement("product")->FirstChildElement();
+                stoichiometry_specie = stoichiometry->FirstChildElement("product");
+                if (stoichiometry_specie != nullptr) {
+                    stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+                }
                 while (stoichiometry_specie != nullptr) {
                     specie_id = stoichiometry_specie->Attribute("id");
                     specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
@@ -255,7 +254,8 @@ public:
 
         if (this->state.tasks.is_in_next(Task<output_ports>(Status::SELECTING_FOR_REACTION))) {
 
-            // advance() must be called after the is_in_next() and before to add the
+            // advance() must be called after the is_in_next() and before
+            // selecting new metabolites to react
             // Status::SENDING_REACTION task
             this->state.tasks.advance();
 
@@ -284,7 +284,7 @@ public:
 
         this->state.tasks.update(e);
 
-        for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
+        for (const auto &x : get_messages<typename PORTS::in_0>(mbs)) {
             this->addMultipleMetabolites(this->state.metabolites, x.metabolites);
         }
 
@@ -320,6 +320,10 @@ public:
 
         TIME result = this->state.tasks.time_advance();
 
+        if (result == TIME::infinity()) {
+            result = this->state.interval_time;
+        }
+
 //        if (result < TIME::zero()) {
 //            this->logger.error("Bad time: negative time: " + result);
 //        }
@@ -329,17 +333,28 @@ public:
     }
 
     friend std::ostringstream& operator<<(std::ostringstream& os, const typename space<PORTS,TIME>::state_type& s) {
-        os << "ID: Space_" << s.id << " ";
+        bool separate = false;
 
-        os << "enzyme [kind amount " << s.enzymes.size() << "]: ";
+        os << "{\"enzymes\": {";
         for(const auto& enzyme : s.enzymes) {
-            os << "(" << enzyme.second.id << ", " << enzyme.second.amount << ") ";
+            if (separate) {
+                os << ", ";
+            }
+            separate = true;
+            os << "\"" << enzyme.second.id << "\": " << enzyme.second.amount;
         }
 
-        os << "metabolites [specie amount " << s.metabolites.size() << "]: ";
+        separate = false;
+        os << "}, \"metabolites\": {";
         for(const auto& metabolite : s.metabolites) {
-            os << "(" << metabolite.first << ", " << metabolite.second << ") ";
+            if (separate) {
+                os << ", ";
+            }
+            separate = true;
+            os << "\"" << metabolite.first << "\": " << metabolite.second;
         }
+
+        os << "} }";
 
         return os;
     }
@@ -535,7 +550,8 @@ private:
     }
 
     bool thereAreEnoughFor(const MetaboliteAmounts &stcry) const {
-        bool is_local, not_enough;
+        bool is_local, not_enough, there_is_enough;
+        there_is_enough = false;
 
         for (const auto &metabolite : stcry) {
             is_local = this->state.metabolites.find(metabolite.first) != this->state.metabolites.end();
@@ -543,8 +559,11 @@ private:
             if (is_local && not_enough) {
                 return false;
             }
+            if (is_local) {
+                there_is_enough = true;
+            }
         }
-        return true;
+        return there_is_enough;
     }
 
     /**

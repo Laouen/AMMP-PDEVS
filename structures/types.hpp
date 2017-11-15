@@ -113,8 +113,8 @@ struct ReactionInfo {
   MetaboliteAmounts  products_sctry;
   double konSTP = 1;
   double konPTS = 1;
-  double koffPTS;
-  double koffSTP;
+  double koffPTS = 1;
+  double koffSTP = 1;
   bool reversible = false;
 
   ReactionInfo() = default;
@@ -129,10 +129,26 @@ struct ReactionInfo {
     double other_koffSTP,
     double other_koffPTS,
     bool other_reversible
-    ) : location(other_location), substrate_sctry(other_substrate_sctry), products_sctry(other_products_sctry), konSTP(other_konSTP), konPTS(other_konPTS), koffPTS(other_koffPTS), koffSTP(other_koffSTP), reversible(other_reversible) {}
+    ) : id(other_id),
+        location(other_location),
+        substrate_sctry(other_substrate_sctry),
+        products_sctry(other_products_sctry),
+        konSTP(other_konSTP),
+        konPTS(other_konPTS),
+        koffPTS(other_koffPTS),
+        koffSTP(other_koffSTP),
+        reversible(other_reversible) {}
 
   ReactionInfo(const ReactionInfo& other)
-  : id(other.id), location(other.location), substrate_sctry(other.substrate_sctry), products_sctry(other.products_sctry), konSTP(other.konSTP), konPTS(other.konPTS), koffPTS(other.koffPTS), koffSTP(other.koffSTP), reversible(other.reversible) {}
+  : id(other.id),
+    location(other.location),
+    substrate_sctry(other.substrate_sctry),
+    products_sctry(other.products_sctry),
+    konSTP(other.konSTP),
+    konPTS(other.konPTS),
+    koffPTS(other.koffPTS),
+    koffSTP(other.koffSTP),
+    reversible(other.reversible) {}
 
   void clear() {
     id = "";

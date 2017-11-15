@@ -86,12 +86,12 @@ class SBMLParser:
 
         # Not in the SBML model parameters
         # TODO: refactor default dict values to be set in the class init method parameters
-        self.enzyme_amounts = defaultdict(lambda: 0)
-        self.konSTPs = defaultdict(lambda: 0)
-        self.konPTSs = defaultdict(lambda: 0)
-        self.koffSTPs = defaultdict(lambda: 0)
-        self.koffPTSs = defaultdict(lambda: 0)
-        self.metabolite_amounts = defaultdict(lambda: 0)
+        self.enzyme_amounts = defaultdict(lambda: 100)
+        self.konSTPs = defaultdict(lambda: 0.8)
+        self.konPTSs = defaultdict(lambda: 0.8)
+        self.koffSTPs = defaultdict(lambda: 0.8)
+        self.koffPTSs = defaultdict(lambda: 0.8)
+        self.metabolite_amounts = defaultdict(lambda: 100)
         self.rates = defaultdict(lambda: '0:0:0:1')
         self.reject_times = defaultdict(lambda: '0:0:0:1')
         self.interval_times = defaultdict(lambda: '0:0:0:1')

@@ -5,3 +5,4 @@ documentation/latex/*
 **.pyc
 /top.hpp
 /top_ports.hpp
+**.o

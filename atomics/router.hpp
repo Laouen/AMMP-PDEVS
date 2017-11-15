@@ -36,8 +36,6 @@ public:
 
     state_type state;
 
-    router() noexcept = default;
-
     /**
      * @brief Parser constructor
      * @details Construct a new router atomic model instance by opening and parsing the xml
@@ -82,7 +80,7 @@ public:
 
     void external_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin external_transition");
-        for (const auto &x : get_messages<typename PORTS::in>(mbs)) {
+        for (const auto &x : get_messages<typename PORTS::in_0>(mbs)) {
             this->push_to_correct_port(x);
         }
         this->logger.info("End external_transition");
