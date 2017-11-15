@@ -5,23 +5,22 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(
         ../cadmium/include
-        ../DESTimes
+        ../DESTimes/include
         atomics
         libs
         structures
         vendor/tinyxml2
-        vendor/DEVSDiagramer/model_json_exporter)
+        vendor/DEVSDiagrammer/model_json_exporter)
 
 set(SOURCES
         structures/types.cpp
         structures/space.cpp
-        libs/unit_definition.cpp
-        vendor/tinyxml2/tinyxml2.cpp
         main.cpp
         top.hpp
         top_ports.hpp
         atomics
-        vendor/DEVSDiagramer/model_json_exporter)
+        vendor/tinyxml2/tinyxml2.cpp
+        vendor/DEVSDiagrammer/model_json_exporter)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
