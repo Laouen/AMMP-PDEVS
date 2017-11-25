@@ -30,9 +30,9 @@
 #include <cadmium/engine/pdevs_runner.hpp>
 
 #include <NDTime.hpp>
+#include <include/model_json_exporter.hpp>
 
 #include "top.hpp"
-#include "model_json_exporter.hpp"
 
 
 using namespace std;
@@ -61,14 +61,18 @@ using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
 int main() {
 
-    export_model_to_json<NDTime, coupled_cell>("coupled_cell.json");
+    std::ofstream file;
+    file.open("coupled_msb201165-sup-0003.json");
+    export_model_to_json<NDTime, coupled_cell>(file, 1);
+    file.close();
 
 //    auto start = hclock::now(); //to measure simulation execution time
 //
-//    cadmium::engine::runner<NDTime, top_model, logger_top> r{{0}};
+//    cadmium::engine::runner<NDTime, coupled_cell, logger_top> r{{0}};
 //    r.runUntil({3000});
 //
 //    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
 //    cout << "Simulation took:" << elapsed << "sec" << endl;
+
     return 0;
 }
