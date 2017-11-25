@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++14
+CFLAGS=-std=c++14 -ftemplate-depth=900000
 INCLUDECADMIUM=-I ../cadmium/include
 INCLUDEDESTIME=-I ../DESTimes/include
 INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
