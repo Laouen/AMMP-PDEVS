@@ -3,6 +3,7 @@ cmake-build-debug/
 documentation/html/*
 documentation/latex/*
 **.pyc
-/top.hpp
-/top_ports.hpp
+top.hpp
+top_ports.hpp
+parameters.xml
 **.o
