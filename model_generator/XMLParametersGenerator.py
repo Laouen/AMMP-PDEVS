@@ -120,6 +120,13 @@ class XMLParametersGenerator:
                 xml_enzyme.append(xml_parameter)
 
             xml_handled_reactions = etree.Element('handledReactions')
+
+            # remove reactions from other compartments handled by the same enzyme
+            enzyme_parameters['handled_reactions'][:] = [rid for rid
+                                                         in enzyme_parameters['handled_reactions']
+                                                         if rid
+                                                         in parameters['reaction_parameters'].keys()]
+
             for rid in enzyme_parameters['handled_reactions']:
                 reaction_parameters = parameters['reaction_parameters'][rid]
                 xml_reaction = etree.Element('reaction')
