@@ -89,8 +89,7 @@ class ModelGenerator:
                  extra_cellular_id,
                  periplasm_id,
                  cytoplasm_id,
-                 reactions=None,
-                 enzymes=None):
+                 json_model=None):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -102,8 +101,7 @@ class ModelGenerator:
         the sbml file
         :param cytoplasm_id: The cytoplasm ID, this ID must be one of the compartments IDs from
         the sbml file
-        :param reactions: The parser.reactions loaded objects. Optional, used to avoid re parsing
-        :param enzymes: T parser.enzymes luaded objects. Optional, used to avoid re parsing
+        :param json_model: The parser exported as json. Optional, used to avoid re parsing
         """
 
         self.parameter_writer = XMLParametersGenerator()
@@ -112,8 +110,7 @@ class ModelGenerator:
                                  extra_cellular_id,
                                  periplasm_id,
                                  cytoplasm_id,
-                                 reactions=reactions,
-                                 enzymes=enzymes)
+                                 json_model=json_model)
 
         special_compartment_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
 

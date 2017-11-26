@@ -12,6 +12,35 @@ import re
 from bs4 import BeautifulSoup  # sudo pip install beautifulsoup, lxml
 from collections import defaultdict
 from constants import *
+from json import JSONEncoder
+import copy
+
+
+class ReactionParametersDecoder(JSONEncoder):
+    def default(self, o):
+        print "Reaction Parameter Encoder: ", o
+        res = {k: v for k, v in o.iteritems()}
+        for key in res.keys():
+            res[key]['location'] = dict(res[key]['location'].__dict__)
+        return res
+
+
+class SBMLParserEncoder(JSONEncoder):
+    def default(self, o):
+
+        res = {
+            'extra_cellular_id': o.extra_cellular_id,
+            'periplasm_id': o.periplasm_id,
+            'cytoplasm_id': o.cytoplasm_id,
+            'unnamed_enzymes_amount': o.unnamed_enzymes_amount,
+            'reactions': copy.deepcopy(o.reactions),
+            'enzymes': dict(o.enzymes),
+        }
+
+        for key in res['reactions'].keys():
+            res['reactions'][key]['location'] = dict(res['reactions'][key]['location'].__dict__)
+
+        return res
 
 
 def not_empty_intersection(a, b):
@@ -54,18 +83,19 @@ class SBMLParser:
     """
 
     def __init__(self,
-                 sbml_file,
-                 extra_cellular_id,
-                 periplasm_id,
-                 cytoplasm_id,
-                 reactions=None,
-                 enzymes=None):
+                 sbml_file=None,
+                 extra_cellular_id='e',
+                 periplasm_id='p',
+                 cytoplasm_id='c',
+                 json_model=None):
         """
         class SBMLParser:
         SBMLParser constructor
 
         :param sbml_file: The SBML xml file path.
         :type sbml_file: string
+        :param json_model: The parser exported as json. Optional, used to avoid re parsing
+        :type json_mode: dict
         :return: None
         :rtype: None
         """
@@ -81,8 +111,8 @@ class SBMLParser:
 
         self.compartment_species = None
         self.compartments = None
-        self.reactions = reactions
-        self.enzymes = enzymes
+        self.reactions = None
+        self.enzymes = None
 
         # Not in the SBML model parameters
         # TODO: refactor default dict values to be set in the class init method parameters
@@ -98,8 +128,23 @@ class SBMLParser:
 
         self.load_sbml_file(sbml_file)
 
-        if self.reactions is None and self.enzymes is None:
+        if json_model is None:
             self.parse_reactions()
+        else:
+            self.load_json_model(json_model)
+
+    def load_json_model(self, json_model):
+        self.extra_cellular_id = json_model['extra_cellular_id']
+        self.periplasm_id = json_model['periplasm_id']
+        self.cytoplasm_id = json_model['cytoplasm_id']
+        self.unnamed_enzymes_amount = json_model['unnamed_enzymes_amount']
+        self.reactions = dict(json_model['reactions'])
+        self.enzymes = dict(json_model['enzymes'])
+
+        for key in self.reactions.keys():
+            cid = self.reactions[key]['location']['cid']
+            rsn = self.reactions[key]['location']['rsn']
+            self.reactions[key]['location'] = Location(cid, rsn)
 
     def load_sbml_file(self, sbml_file):
         """
@@ -107,8 +152,8 @@ class SBMLParser:
         :param sbml_file: The path to the xml file to parse as sbml
         :type sbml_file: str
         """
-
-        self.model = BeautifulSoup(open(sbml_file, 'r'), 'xml')
+        if sbml_file is not None:
+            self.model = BeautifulSoup(open(sbml_file, 'r'), 'xml')
 
     def get_compartments(self):
         """
@@ -253,7 +298,7 @@ class SBMLParser:
 
     def parse_enzymes(self, reaction):
         """
-        Parses all the reaction enzymes and saves their information to be used 
+        Parses all the reaction enzymes and saves their information to be used
         by spaces retrieved information: eid (Enzyme ID), handled reactions.
         """
 
@@ -297,7 +342,7 @@ class SBMLParser:
         self.enzymes = {}
         self.reactions = {}
         xml_reactions = self.model.findAll('reaction')
-        
+
         bar = progressbar.ProgressBar(maxval=len(xml_reactions))
         bar.start()
         done = 0
@@ -305,7 +350,7 @@ class SBMLParser:
             self.parse_reaction(reaction)
             bar.update(done)
             done += 1
-        
+
         print '[Parser] End parsing reactions.'
 
     def get_compartment(self, specie_id):

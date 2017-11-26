@@ -4,8 +4,39 @@
 import gflags
 import sys
 import pickle
+import json
 
 from ModelGenerator import ModelGenerator
+from SBMLParser import SBMLParserEncoder
+
+
+def load_pickle(file):
+    object = None
+    if file is not None:
+        with open(file, "r") as opened_file:
+            object = pickle.load(opened_file)
+    return object
+
+
+def main(FLAGS):
+
+    if FLAGS.json_model_input is not None:
+        json_model = json.load(open(FLAGS.json_model_input, 'r'))
+    else:
+        json_model = None
+
+    model_generator = ModelGenerator(FLAGS.sbml_file,
+                                     FLAGS.extra_cellular,
+                                     FLAGS.periplasm,
+                                     FLAGS.cytoplasm,
+                                     json_model=json_model)
+
+    # SBMLParserEncoder().encode()
+    if FLAGS.json_model_output:
+        json.dump(model_generator.parser, open(FLAGS.json_model_output, 'w+'), cls=SBMLParserEncoder, indent=4)
+
+    model_generator.generate_top()
+
 
 if __name__ == '__main__':
 
@@ -13,6 +44,10 @@ if __name__ == '__main__':
     gflags.DEFINE_string('extra_cellular', 'e', 'The extra cellular space ID in the SBML file', short_name='e')
     gflags.DEFINE_string('cytoplasm', 'c', 'The cytoplasm space ID in the SBML file', short_name='c')
     gflags.DEFINE_string('periplasm', 'p', 'The periplasm space ID in the SBML file', short_name='p')
+    gflags.DEFINE_string('json_model_input', None, 'The exported json model', short_name='i')
+    gflags.DEFINE_string('json_model_output', None, 'If not None, it export the parsed sbml model as json to avoid'
+                         'reparsing the sbml model in the future. Note: parsing a SBML is a slow process.',
+                         short_name='o')
 
     gflags.MarkFlagAsRequired('sbml_file')
     FLAGS = gflags.FLAGS
@@ -23,29 +58,4 @@ if __name__ == '__main__':
         print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
         sys.exit(1)
 
-    reactions = None
-    enzymes = None
-
-    '''
-    with open("pickles/reactions.pickle", "r") as reaction_file:
-        reactions = pickle.load(reaction_file)
-
-    with open("pickles/enzymes.pickle", "r") as enzymes_file:
-        enzymes = pickle.load(enzymes_file)
-    
-    '''
-
-    generator = ModelGenerator(FLAGS.sbml_file,
-                               FLAGS.extra_cellular,
-                               FLAGS.periplasm,
-                               FLAGS.cytoplasm,
-                               reactions=reactions,
-                               enzymes=enzymes)
-    """
-    with open("pickles/reactions.pickle", "wb") as reaction_file:
-        pickle.dump(generator.parser.reactions, reaction_file)
-
-    with open("pickles/enzymes.pickle", "wb") as enzymes_file:
-        pickle.dump(generator.parser.enzymes, enzymes_file)
-    """
-    generator.generate_top()
+    main(FLAGS)
