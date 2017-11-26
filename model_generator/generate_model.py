@@ -3,19 +3,10 @@
 
 import gflags
 import sys
-import pickle
 import json
 
 from ModelGenerator import ModelGenerator
 from SBMLParser import SBMLParserEncoder
-
-
-def load_pickle(file):
-    object = None
-    if file is not None:
-        with open(file, "r") as opened_file:
-            object = pickle.load(opened_file)
-    return object
 
 
 def main(FLAGS):

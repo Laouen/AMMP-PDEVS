@@ -7,13 +7,13 @@ python SBML parser: https://github.com/linsalrob/PyFBA/blob/master/PyFBA/parse/S
 """
 
 import json
-import progressbar  # sudo pip install progressbar
 import re
 from bs4 import BeautifulSoup  # sudo pip install beautifulsoup, lxml
 from collections import defaultdict
 from constants import *
 from json import JSONEncoder
 import copy
+from tqdm import tqdm
 
 
 class ReactionParametersDecoder(JSONEncoder):
@@ -34,7 +34,7 @@ class SBMLParserEncoder(JSONEncoder):
             'cytoplasm_id': o.cytoplasm_id,
             'unnamed_enzymes_amount': o.unnamed_enzymes_amount,
             'reactions': copy.deepcopy(o.reactions),
-            'enzymes': dict(o.enzymes),
+            'enzymes': copy.deepcopy(o.enzymes),
         }
 
         for key in res['reactions'].keys():
@@ -128,9 +128,9 @@ class SBMLParser:
 
         self.load_sbml_file(sbml_file)
 
-        if json_model is None:
+        if json_model is None and self.model is not None:
             self.parse_reactions()
-        else:
+        elif json_model is not None:
             self.load_json_model(json_model)
 
     def load_json_model(self, json_model):
@@ -138,8 +138,8 @@ class SBMLParser:
         self.periplasm_id = json_model['periplasm_id']
         self.cytoplasm_id = json_model['cytoplasm_id']
         self.unnamed_enzymes_amount = json_model['unnamed_enzymes_amount']
-        self.reactions = dict(json_model['reactions'])
-        self.enzymes = dict(json_model['enzymes'])
+        self.reactions = copy.deepcopy(json_model['reactions'])
+        self.enzymes = copy.deepcopy(json_model['enzymes'])
 
         for key in self.reactions.keys():
             cid = self.reactions[key]['location']['cid']
@@ -343,13 +343,8 @@ class SBMLParser:
         self.reactions = {}
         xml_reactions = self.model.findAll('reaction')
 
-        bar = progressbar.ProgressBar(maxval=len(xml_reactions))
-        bar.start()
-        done = 0
-        for reaction in xml_reactions:
+        for reaction in tqdm(xml_reactions, total=len(xml_reactions)):
             self.parse_reaction(reaction)
-            bar.update(done)
-            done += 1
 
         print '[Parser] End parsing reactions.'
 
@@ -360,7 +355,7 @@ class SBMLParser:
         :return: The cid (Compartment ID) from where the specie id passed as parameter belongs
         """
 
-        return self.model.find('species', {'id': specie_id}).get('compartment');
+        return self.model.find('species', {'id': specie_id}).get('compartment')
 
     def get_reaction_routing_table(self, reaction, comp_id):
         """
@@ -415,7 +410,7 @@ class SBMLParser:
         if location is None:
             raise IllegalCompartmentCombination('Illegal compartment combination ' +
                                                 str(compartment_ids))
-        
+
         return location
 
     def parse_reaction(self, reaction):
