@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from lxml import etree
@@ -44,7 +43,7 @@ class SBMLTestGenerator():
         for (cid, rsn), amount in self.reaction_amounts.iteritems():
             for i in range(amount):
                 rid = '_'.join([str(i), cid, rsn])
-                self.listOfReactions.append(self.create_reaction(rid, choice(['true', 'false'])))
+                self.listOfReactions.append(self.create_reaction(rid, choice(['true', 'false']), cid, rsn))
 
     def create_compartment(self, cid, name):
         compartment = etree.Element('compartment')
@@ -77,6 +76,11 @@ class SBMLTestGenerator():
             listOfProducts.append(reactant)
         reaction.append(listOfProducts)
         return reaction
+
+    # TODO finish to implement
+    def create_note(self):
+        note = etree.Element('note')
+        return note
 
     def random_stoichiometry(self, cid, rsn):
 
