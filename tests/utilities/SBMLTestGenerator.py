@@ -12,6 +12,7 @@ class SBMLTestGenerator():
         self.reaction_amounts = reaction_amounts
         self.species_amounts = species_amounts
         self.max_stoichimetry_elements = max_stoichimetry_elements
+        self.current_enzyme_id = 0
 
         self.sbml = etree.Element('sbml')
         self.sbml.set('xmlns', 'http://www.sbml.org/sbml/level2')
@@ -43,7 +44,7 @@ class SBMLTestGenerator():
 
         for (cid, rsn), amount in self.reaction_amounts.iteritems():
             for i in range(amount):
-                rid = '_'.join([str(i), cid, rsn])
+                rid = '_'.join(['R', str(i), cid, rsn])
                 self.listOfReactions.append(self.create_reaction(rid, choice(['true', 'false']), cid, rsn))
 
     def create_compartment(self, cid, name):
@@ -81,11 +82,17 @@ class SBMLTestGenerator():
     def create_note(self, rid):
         note = etree.Element('notes')
         body = etree.Element('body')
+        body.set('xmlns', 'http://www.w3.org/1999/xhtml')
         gene_asosiation = etree.Element('p')
-        gene_asosiation.text = 'GENE_ASSOCIATION: enzyme_' + rid
+        gene_asosiation.text = 'GENE_ASSOCIATION: ' + self.get_enzyme_id()
         body.append(gene_asosiation)
         note.append(body)
         return note
+
+    def get_enzyme_id(self):
+        eid = 'e' + str(self.current_enzyme_id)
+        self.current_enzyme_id += 1
+        return eid
 
     def random_stoichiometry(self, cid, rsn):
 

@@ -238,7 +238,14 @@ class SBMLParser:
 
     def parse_gene_association(self, gene_association):
         """
-        :param gene_association: The gene association logical expresion
+        Parses the gene_assosiation string as a logical expresion and sets or as a separator operator
+        and and as a join operator: exmaples
+        1) b23 or b45 = ['b23', 'b45'] two separated enzymes
+        2) b23 and b45 = ['b23-b45'] is a single enzyme composed by both b23 and b45
+        Note: enzyme names must follow the regez rule [a-z]+[0-9]+ starting with a word and ending
+        with a number.
+
+        :param gene_association: The gene association logical expresion.
         :type: string
         :return: A list of enzyme ids from a gene_association logic expresion as the one specified
         in the SBML files
