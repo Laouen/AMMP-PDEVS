@@ -6,5 +6,6 @@ documentation/latex/*
 top.hpp
 top_ports.hpp
 parameters.xml
+tests/**.xml
 model_generator/*.json
 **.o

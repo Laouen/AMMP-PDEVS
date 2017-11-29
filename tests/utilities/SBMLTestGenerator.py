@@ -6,11 +6,12 @@ from random import randint, choice
 
 class SBMLTestGenerator():
 
-    def __init__(self, output, model_id, compartments, reaction_amounts, species_amounts):
+    def __init__(self, output, model_id, compartments, reaction_amounts, species_amounts, max_stoichimetry_elements):
         self.output_file = open(output, 'w+')
         self.compartments = compartments
         self.reaction_amounts = reaction_amounts
         self.species_amounts = species_amounts
+        self.max_stoichimetry_elements = max_stoichimetry_elements
 
         self.sbml = etree.Element('sbml')
         self.sbml.set('xmlns', 'http://www.sbml.org/sbml/level2')
@@ -64,7 +65,7 @@ class SBMLTestGenerator():
         reaction.set('name', rid + '_name')
         reaction.set('reversible', reversible)
 
-        reaction.append(self.create_note())
+        reaction.append(self.create_note(rid))
 
         listOfReactants = etree.Element('listOfReactants')
         for reactant in self.random_stoichiometry(cid, rsn):
@@ -77,9 +78,13 @@ class SBMLTestGenerator():
         reaction.append(listOfProducts)
         return reaction
 
-    # TODO finish to implement
-    def create_note(self):
-        note = etree.Element('note')
+    def create_note(self, rid):
+        note = etree.Element('notes')
+        body = etree.Element('body')
+        gene_asosiation = etree.Element('p')
+        gene_asosiation.text = 'GENE_ASSOCIATION: enzyme_' + rid
+        body.append(gene_asosiation)
+        note.append(body)
         return note
 
     def random_stoichiometry(self, cid, rsn):
@@ -98,7 +103,7 @@ class SBMLTestGenerator():
         for compartment in related_compartments:
             specie_ids = [str(i) + '_' + compartment for i in range(self.species_amounts[compartment])]
 
-            for i in range(randint(0, 10)):
+            for i in range(randint(0, self.max_stoichimetry_elements)):
                 if len(specie_ids) == 0:
                     break
                 s = choice(specie_ids)
@@ -109,5 +114,5 @@ class SBMLTestGenerator():
                 yield specie
 
     def save_xml(self):
-        self.output_file.write(etree.tostring(self.sbml, encoding='UTF-8', pretty_print=True))
+        self.output_file.write(etree.tostring(self.sbml, xml_declaration=True, encoding='UTF-8', pretty_print=True))
         self.output_file.flush()

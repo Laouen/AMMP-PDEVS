@@ -1,0 +1,1887 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="test">
+    <listOfCompartments>
+      <compartment id="c" name="c_name"/>
+      <compartment id="e" name="e_name"/>
+      <compartment id="p" name="p_name"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="0_p" name="0_name_p" compartment="p"/>
+      <species id="1_p" name="1_name_p" compartment="p"/>
+      <species id="2_p" name="2_name_p" compartment="p"/>
+      <species id="3_p" name="3_name_p" compartment="p"/>
+      <species id="4_p" name="4_name_p" compartment="p"/>
+      <species id="5_p" name="5_name_p" compartment="p"/>
+      <species id="6_p" name="6_name_p" compartment="p"/>
+      <species id="7_p" name="7_name_p" compartment="p"/>
+      <species id="8_p" name="8_name_p" compartment="p"/>
+      <species id="9_p" name="9_name_p" compartment="p"/>
+      <species id="10_p" name="10_name_p" compartment="p"/>
+      <species id="11_p" name="11_name_p" compartment="p"/>
+      <species id="12_p" name="12_name_p" compartment="p"/>
+      <species id="13_p" name="13_name_p" compartment="p"/>
+      <species id="14_p" name="14_name_p" compartment="p"/>
+      <species id="15_p" name="15_name_p" compartment="p"/>
+      <species id="16_p" name="16_name_p" compartment="p"/>
+      <species id="17_p" name="17_name_p" compartment="p"/>
+      <species id="18_p" name="18_name_p" compartment="p"/>
+      <species id="19_p" name="19_name_p" compartment="p"/>
+      <species id="20_p" name="20_name_p" compartment="p"/>
+      <species id="21_p" name="21_name_p" compartment="p"/>
+      <species id="22_p" name="22_name_p" compartment="p"/>
+      <species id="23_p" name="23_name_p" compartment="p"/>
+      <species id="24_p" name="24_name_p" compartment="p"/>
+      <species id="25_p" name="25_name_p" compartment="p"/>
+      <species id="26_p" name="26_name_p" compartment="p"/>
+      <species id="27_p" name="27_name_p" compartment="p"/>
+      <species id="28_p" name="28_name_p" compartment="p"/>
+      <species id="29_p" name="29_name_p" compartment="p"/>
+      <species id="30_p" name="30_name_p" compartment="p"/>
+      <species id="31_p" name="31_name_p" compartment="p"/>
+      <species id="32_p" name="32_name_p" compartment="p"/>
+      <species id="33_p" name="33_name_p" compartment="p"/>
+      <species id="34_p" name="34_name_p" compartment="p"/>
+      <species id="35_p" name="35_name_p" compartment="p"/>
+      <species id="36_p" name="36_name_p" compartment="p"/>
+      <species id="37_p" name="37_name_p" compartment="p"/>
+      <species id="38_p" name="38_name_p" compartment="p"/>
+      <species id="39_p" name="39_name_p" compartment="p"/>
+      <species id="40_p" name="40_name_p" compartment="p"/>
+      <species id="41_p" name="41_name_p" compartment="p"/>
+      <species id="42_p" name="42_name_p" compartment="p"/>
+      <species id="43_p" name="43_name_p" compartment="p"/>
+      <species id="44_p" name="44_name_p" compartment="p"/>
+      <species id="45_p" name="45_name_p" compartment="p"/>
+      <species id="46_p" name="46_name_p" compartment="p"/>
+      <species id="47_p" name="47_name_p" compartment="p"/>
+      <species id="48_p" name="48_name_p" compartment="p"/>
+      <species id="49_p" name="49_name_p" compartment="p"/>
+      <species id="50_p" name="50_name_p" compartment="p"/>
+      <species id="51_p" name="51_name_p" compartment="p"/>
+      <species id="52_p" name="52_name_p" compartment="p"/>
+      <species id="53_p" name="53_name_p" compartment="p"/>
+      <species id="54_p" name="54_name_p" compartment="p"/>
+      <species id="55_p" name="55_name_p" compartment="p"/>
+      <species id="56_p" name="56_name_p" compartment="p"/>
+      <species id="57_p" name="57_name_p" compartment="p"/>
+      <species id="58_p" name="58_name_p" compartment="p"/>
+      <species id="59_p" name="59_name_p" compartment="p"/>
+      <species id="60_p" name="60_name_p" compartment="p"/>
+      <species id="61_p" name="61_name_p" compartment="p"/>
+      <species id="62_p" name="62_name_p" compartment="p"/>
+      <species id="63_p" name="63_name_p" compartment="p"/>
+      <species id="64_p" name="64_name_p" compartment="p"/>
+      <species id="65_p" name="65_name_p" compartment="p"/>
+      <species id="66_p" name="66_name_p" compartment="p"/>
+      <species id="67_p" name="67_name_p" compartment="p"/>
+      <species id="68_p" name="68_name_p" compartment="p"/>
+      <species id="69_p" name="69_name_p" compartment="p"/>
+      <species id="70_p" name="70_name_p" compartment="p"/>
+      <species id="71_p" name="71_name_p" compartment="p"/>
+      <species id="72_p" name="72_name_p" compartment="p"/>
+      <species id="73_p" name="73_name_p" compartment="p"/>
+      <species id="74_p" name="74_name_p" compartment="p"/>
+      <species id="75_p" name="75_name_p" compartment="p"/>
+      <species id="76_p" name="76_name_p" compartment="p"/>
+      <species id="77_p" name="77_name_p" compartment="p"/>
+      <species id="78_p" name="78_name_p" compartment="p"/>
+      <species id="79_p" name="79_name_p" compartment="p"/>
+      <species id="80_p" name="80_name_p" compartment="p"/>
+      <species id="81_p" name="81_name_p" compartment="p"/>
+      <species id="82_p" name="82_name_p" compartment="p"/>
+      <species id="83_p" name="83_name_p" compartment="p"/>
+      <species id="84_p" name="84_name_p" compartment="p"/>
+      <species id="85_p" name="85_name_p" compartment="p"/>
+      <species id="86_p" name="86_name_p" compartment="p"/>
+      <species id="87_p" name="87_name_p" compartment="p"/>
+      <species id="88_p" name="88_name_p" compartment="p"/>
+      <species id="89_p" name="89_name_p" compartment="p"/>
+      <species id="90_p" name="90_name_p" compartment="p"/>
+      <species id="91_p" name="91_name_p" compartment="p"/>
+      <species id="92_p" name="92_name_p" compartment="p"/>
+      <species id="93_p" name="93_name_p" compartment="p"/>
+      <species id="94_p" name="94_name_p" compartment="p"/>
+      <species id="95_p" name="95_name_p" compartment="p"/>
+      <species id="96_p" name="96_name_p" compartment="p"/>
+      <species id="97_p" name="97_name_p" compartment="p"/>
+      <species id="98_p" name="98_name_p" compartment="p"/>
+      <species id="99_p" name="99_name_p" compartment="p"/>
+      <species id="0_c" name="0_name_c" compartment="c"/>
+      <species id="1_c" name="1_name_c" compartment="c"/>
+      <species id="2_c" name="2_name_c" compartment="c"/>
+      <species id="3_c" name="3_name_c" compartment="c"/>
+      <species id="4_c" name="4_name_c" compartment="c"/>
+      <species id="5_c" name="5_name_c" compartment="c"/>
+      <species id="6_c" name="6_name_c" compartment="c"/>
+      <species id="7_c" name="7_name_c" compartment="c"/>
+      <species id="8_c" name="8_name_c" compartment="c"/>
+      <species id="9_c" name="9_name_c" compartment="c"/>
+      <species id="10_c" name="10_name_c" compartment="c"/>
+      <species id="11_c" name="11_name_c" compartment="c"/>
+      <species id="12_c" name="12_name_c" compartment="c"/>
+      <species id="13_c" name="13_name_c" compartment="c"/>
+      <species id="14_c" name="14_name_c" compartment="c"/>
+      <species id="15_c" name="15_name_c" compartment="c"/>
+      <species id="16_c" name="16_name_c" compartment="c"/>
+      <species id="17_c" name="17_name_c" compartment="c"/>
+      <species id="18_c" name="18_name_c" compartment="c"/>
+      <species id="19_c" name="19_name_c" compartment="c"/>
+      <species id="20_c" name="20_name_c" compartment="c"/>
+      <species id="21_c" name="21_name_c" compartment="c"/>
+      <species id="22_c" name="22_name_c" compartment="c"/>
+      <species id="23_c" name="23_name_c" compartment="c"/>
+      <species id="24_c" name="24_name_c" compartment="c"/>
+      <species id="25_c" name="25_name_c" compartment="c"/>
+      <species id="26_c" name="26_name_c" compartment="c"/>
+      <species id="27_c" name="27_name_c" compartment="c"/>
+      <species id="28_c" name="28_name_c" compartment="c"/>
+      <species id="29_c" name="29_name_c" compartment="c"/>
+      <species id="30_c" name="30_name_c" compartment="c"/>
+      <species id="31_c" name="31_name_c" compartment="c"/>
+      <species id="32_c" name="32_name_c" compartment="c"/>
+      <species id="33_c" name="33_name_c" compartment="c"/>
+      <species id="34_c" name="34_name_c" compartment="c"/>
+      <species id="35_c" name="35_name_c" compartment="c"/>
+      <species id="36_c" name="36_name_c" compartment="c"/>
+      <species id="37_c" name="37_name_c" compartment="c"/>
+      <species id="38_c" name="38_name_c" compartment="c"/>
+      <species id="39_c" name="39_name_c" compartment="c"/>
+      <species id="40_c" name="40_name_c" compartment="c"/>
+      <species id="41_c" name="41_name_c" compartment="c"/>
+      <species id="42_c" name="42_name_c" compartment="c"/>
+      <species id="43_c" name="43_name_c" compartment="c"/>
+      <species id="44_c" name="44_name_c" compartment="c"/>
+      <species id="45_c" name="45_name_c" compartment="c"/>
+      <species id="46_c" name="46_name_c" compartment="c"/>
+      <species id="47_c" name="47_name_c" compartment="c"/>
+      <species id="48_c" name="48_name_c" compartment="c"/>
+      <species id="49_c" name="49_name_c" compartment="c"/>
+      <species id="50_c" name="50_name_c" compartment="c"/>
+      <species id="51_c" name="51_name_c" compartment="c"/>
+      <species id="52_c" name="52_name_c" compartment="c"/>
+      <species id="53_c" name="53_name_c" compartment="c"/>
+      <species id="54_c" name="54_name_c" compartment="c"/>
+      <species id="55_c" name="55_name_c" compartment="c"/>
+      <species id="56_c" name="56_name_c" compartment="c"/>
+      <species id="57_c" name="57_name_c" compartment="c"/>
+      <species id="58_c" name="58_name_c" compartment="c"/>
+      <species id="59_c" name="59_name_c" compartment="c"/>
+      <species id="60_c" name="60_name_c" compartment="c"/>
+      <species id="61_c" name="61_name_c" compartment="c"/>
+      <species id="62_c" name="62_name_c" compartment="c"/>
+      <species id="63_c" name="63_name_c" compartment="c"/>
+      <species id="64_c" name="64_name_c" compartment="c"/>
+      <species id="65_c" name="65_name_c" compartment="c"/>
+      <species id="66_c" name="66_name_c" compartment="c"/>
+      <species id="67_c" name="67_name_c" compartment="c"/>
+      <species id="68_c" name="68_name_c" compartment="c"/>
+      <species id="69_c" name="69_name_c" compartment="c"/>
+      <species id="70_c" name="70_name_c" compartment="c"/>
+      <species id="71_c" name="71_name_c" compartment="c"/>
+      <species id="72_c" name="72_name_c" compartment="c"/>
+      <species id="73_c" name="73_name_c" compartment="c"/>
+      <species id="74_c" name="74_name_c" compartment="c"/>
+      <species id="75_c" name="75_name_c" compartment="c"/>
+      <species id="76_c" name="76_name_c" compartment="c"/>
+      <species id="77_c" name="77_name_c" compartment="c"/>
+      <species id="78_c" name="78_name_c" compartment="c"/>
+      <species id="79_c" name="79_name_c" compartment="c"/>
+      <species id="80_c" name="80_name_c" compartment="c"/>
+      <species id="81_c" name="81_name_c" compartment="c"/>
+      <species id="82_c" name="82_name_c" compartment="c"/>
+      <species id="83_c" name="83_name_c" compartment="c"/>
+      <species id="84_c" name="84_name_c" compartment="c"/>
+      <species id="85_c" name="85_name_c" compartment="c"/>
+      <species id="86_c" name="86_name_c" compartment="c"/>
+      <species id="87_c" name="87_name_c" compartment="c"/>
+      <species id="88_c" name="88_name_c" compartment="c"/>
+      <species id="89_c" name="89_name_c" compartment="c"/>
+      <species id="90_c" name="90_name_c" compartment="c"/>
+      <species id="91_c" name="91_name_c" compartment="c"/>
+      <species id="92_c" name="92_name_c" compartment="c"/>
+      <species id="93_c" name="93_name_c" compartment="c"/>
+      <species id="94_c" name="94_name_c" compartment="c"/>
+      <species id="95_c" name="95_name_c" compartment="c"/>
+      <species id="96_c" name="96_name_c" compartment="c"/>
+      <species id="97_c" name="97_name_c" compartment="c"/>
+      <species id="98_c" name="98_name_c" compartment="c"/>
+      <species id="99_c" name="99_name_c" compartment="c"/>
+      <species id="0_e" name="0_name_e" compartment="e"/>
+      <species id="1_e" name="1_name_e" compartment="e"/>
+      <species id="2_e" name="2_name_e" compartment="e"/>
+      <species id="3_e" name="3_name_e" compartment="e"/>
+      <species id="4_e" name="4_name_e" compartment="e"/>
+      <species id="5_e" name="5_name_e" compartment="e"/>
+      <species id="6_e" name="6_name_e" compartment="e"/>
+      <species id="7_e" name="7_name_e" compartment="e"/>
+      <species id="8_e" name="8_name_e" compartment="e"/>
+      <species id="9_e" name="9_name_e" compartment="e"/>
+      <species id="10_e" name="10_name_e" compartment="e"/>
+      <species id="11_e" name="11_name_e" compartment="e"/>
+      <species id="12_e" name="12_name_e" compartment="e"/>
+      <species id="13_e" name="13_name_e" compartment="e"/>
+      <species id="14_e" name="14_name_e" compartment="e"/>
+      <species id="15_e" name="15_name_e" compartment="e"/>
+      <species id="16_e" name="16_name_e" compartment="e"/>
+      <species id="17_e" name="17_name_e" compartment="e"/>
+      <species id="18_e" name="18_name_e" compartment="e"/>
+      <species id="19_e" name="19_name_e" compartment="e"/>
+      <species id="20_e" name="20_name_e" compartment="e"/>
+      <species id="21_e" name="21_name_e" compartment="e"/>
+      <species id="22_e" name="22_name_e" compartment="e"/>
+      <species id="23_e" name="23_name_e" compartment="e"/>
+      <species id="24_e" name="24_name_e" compartment="e"/>
+      <species id="25_e" name="25_name_e" compartment="e"/>
+      <species id="26_e" name="26_name_e" compartment="e"/>
+      <species id="27_e" name="27_name_e" compartment="e"/>
+      <species id="28_e" name="28_name_e" compartment="e"/>
+      <species id="29_e" name="29_name_e" compartment="e"/>
+      <species id="30_e" name="30_name_e" compartment="e"/>
+      <species id="31_e" name="31_name_e" compartment="e"/>
+      <species id="32_e" name="32_name_e" compartment="e"/>
+      <species id="33_e" name="33_name_e" compartment="e"/>
+      <species id="34_e" name="34_name_e" compartment="e"/>
+      <species id="35_e" name="35_name_e" compartment="e"/>
+      <species id="36_e" name="36_name_e" compartment="e"/>
+      <species id="37_e" name="37_name_e" compartment="e"/>
+      <species id="38_e" name="38_name_e" compartment="e"/>
+      <species id="39_e" name="39_name_e" compartment="e"/>
+      <species id="40_e" name="40_name_e" compartment="e"/>
+      <species id="41_e" name="41_name_e" compartment="e"/>
+      <species id="42_e" name="42_name_e" compartment="e"/>
+      <species id="43_e" name="43_name_e" compartment="e"/>
+      <species id="44_e" name="44_name_e" compartment="e"/>
+      <species id="45_e" name="45_name_e" compartment="e"/>
+      <species id="46_e" name="46_name_e" compartment="e"/>
+      <species id="47_e" name="47_name_e" compartment="e"/>
+      <species id="48_e" name="48_name_e" compartment="e"/>
+      <species id="49_e" name="49_name_e" compartment="e"/>
+      <species id="50_e" name="50_name_e" compartment="e"/>
+      <species id="51_e" name="51_name_e" compartment="e"/>
+      <species id="52_e" name="52_name_e" compartment="e"/>
+      <species id="53_e" name="53_name_e" compartment="e"/>
+      <species id="54_e" name="54_name_e" compartment="e"/>
+      <species id="55_e" name="55_name_e" compartment="e"/>
+      <species id="56_e" name="56_name_e" compartment="e"/>
+      <species id="57_e" name="57_name_e" compartment="e"/>
+      <species id="58_e" name="58_name_e" compartment="e"/>
+      <species id="59_e" name="59_name_e" compartment="e"/>
+      <species id="60_e" name="60_name_e" compartment="e"/>
+      <species id="61_e" name="61_name_e" compartment="e"/>
+      <species id="62_e" name="62_name_e" compartment="e"/>
+      <species id="63_e" name="63_name_e" compartment="e"/>
+      <species id="64_e" name="64_name_e" compartment="e"/>
+      <species id="65_e" name="65_name_e" compartment="e"/>
+      <species id="66_e" name="66_name_e" compartment="e"/>
+      <species id="67_e" name="67_name_e" compartment="e"/>
+      <species id="68_e" name="68_name_e" compartment="e"/>
+      <species id="69_e" name="69_name_e" compartment="e"/>
+      <species id="70_e" name="70_name_e" compartment="e"/>
+      <species id="71_e" name="71_name_e" compartment="e"/>
+      <species id="72_e" name="72_name_e" compartment="e"/>
+      <species id="73_e" name="73_name_e" compartment="e"/>
+      <species id="74_e" name="74_name_e" compartment="e"/>
+      <species id="75_e" name="75_name_e" compartment="e"/>
+      <species id="76_e" name="76_name_e" compartment="e"/>
+      <species id="77_e" name="77_name_e" compartment="e"/>
+      <species id="78_e" name="78_name_e" compartment="e"/>
+      <species id="79_e" name="79_name_e" compartment="e"/>
+      <species id="80_e" name="80_name_e" compartment="e"/>
+      <species id="81_e" name="81_name_e" compartment="e"/>
+      <species id="82_e" name="82_name_e" compartment="e"/>
+      <species id="83_e" name="83_name_e" compartment="e"/>
+      <species id="84_e" name="84_name_e" compartment="e"/>
+      <species id="85_e" name="85_name_e" compartment="e"/>
+      <species id="86_e" name="86_name_e" compartment="e"/>
+      <species id="87_e" name="87_name_e" compartment="e"/>
+      <species id="88_e" name="88_name_e" compartment="e"/>
+      <species id="89_e" name="89_name_e" compartment="e"/>
+      <species id="90_e" name="90_name_e" compartment="e"/>
+      <species id="91_e" name="91_name_e" compartment="e"/>
+      <species id="92_e" name="92_name_e" compartment="e"/>
+      <species id="93_e" name="93_name_e" compartment="e"/>
+      <species id="94_e" name="94_name_e" compartment="e"/>
+      <species id="95_e" name="95_name_e" compartment="e"/>
+      <species id="96_e" name="96_name_e" compartment="e"/>
+      <species id="97_e" name="97_name_e" compartment="e"/>
+      <species id="98_e" name="98_name_e" compartment="e"/>
+      <species id="99_e" name="99_name_e" compartment="e"/>
+    </listOfSpecies>
+    <listOfReactions>
+      <reaction id="0_c_bulk" name="0_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="42_c" stoichiometry="2"/>
+          <speciesReference species="39_c" stoichiometry="2"/>
+          <speciesReference species="75_c" stoichiometry="0"/>
+          <speciesReference species="24_c" stoichiometry="1"/>
+          <speciesReference species="10_c" stoichiometry="0"/>
+          <speciesReference species="26_c" stoichiometry="0"/>
+          <speciesReference species="13_c" stoichiometry="1"/>
+          <speciesReference species="9_c" stoichiometry="0"/>
+          <speciesReference species="79_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="17_c" stoichiometry="1"/>
+          <speciesReference species="99_c" stoichiometry="0"/>
+          <speciesReference species="35_c" stoichiometry="1"/>
+          <speciesReference species="3_c" stoichiometry="2"/>
+          <speciesReference species="39_c" stoichiometry="2"/>
+          <speciesReference species="88_c" stoichiometry="0"/>
+          <speciesReference species="57_c" stoichiometry="1"/>
+          <speciesReference species="41_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_c_bulk" name="1_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="32_c" stoichiometry="0"/>
+          <speciesReference species="49_c" stoichiometry="1"/>
+          <speciesReference species="87_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts/>
+      </reaction>
+      <reaction id="2_c_bulk" name="2_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="23_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts/>
+      </reaction>
+      <reaction id="3_c_bulk" name="3_c_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="41_c" stoichiometry="1"/>
+          <speciesReference species="27_c" stoichiometry="2"/>
+          <speciesReference species="1_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="54_c" stoichiometry="0"/>
+          <speciesReference species="9_c" stoichiometry="2"/>
+          <speciesReference species="86_c" stoichiometry="2"/>
+          <speciesReference species="19_c" stoichiometry="2"/>
+          <speciesReference species="35_c" stoichiometry="1"/>
+          <speciesReference species="49_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_c_bulk" name="4_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="66_c" stoichiometry="1"/>
+          <speciesReference species="59_c" stoichiometry="0"/>
+          <speciesReference species="74_c" stoichiometry="0"/>
+          <speciesReference species="11_c" stoichiometry="0"/>
+          <speciesReference species="42_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="4_c" stoichiometry="0"/>
+          <speciesReference species="62_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_c_bulk" name="5_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="93_c" stoichiometry="1"/>
+          <speciesReference species="44_c" stoichiometry="1"/>
+          <speciesReference species="97_c" stoichiometry="0"/>
+          <speciesReference species="70_c" stoichiometry="2"/>
+          <speciesReference species="38_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="4_c" stoichiometry="2"/>
+          <speciesReference species="41_c" stoichiometry="2"/>
+          <speciesReference species="99_c" stoichiometry="1"/>
+          <speciesReference species="37_c" stoichiometry="0"/>
+          <speciesReference species="54_c" stoichiometry="1"/>
+          <speciesReference species="68_c" stoichiometry="0"/>
+          <speciesReference species="45_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_c_bulk" name="6_c_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants/>
+        <listOfProducts>
+          <speciesReference species="30_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="7_c_bulk" name="7_c_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="36_c" stoichiometry="1"/>
+          <speciesReference species="3_c" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="49_c" stoichiometry="1"/>
+          <speciesReference species="69_c" stoichiometry="0"/>
+          <speciesReference species="41_c" stoichiometry="1"/>
+          <speciesReference species="42_c" stoichiometry="1"/>
+          <speciesReference species="90_c" stoichiometry="2"/>
+          <speciesReference species="2_c" stoichiometry="1"/>
+          <speciesReference species="3_c" stoichiometry="1"/>
+          <speciesReference species="40_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_c_bulk" name="8_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="9_c" stoichiometry="0"/>
+          <speciesReference species="81_c" stoichiometry="0"/>
+          <speciesReference species="76_c" stoichiometry="1"/>
+          <speciesReference species="70_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="30_c" stoichiometry="2"/>
+          <speciesReference species="95_c" stoichiometry="2"/>
+          <speciesReference species="46_c" stoichiometry="2"/>
+          <speciesReference species="35_c" stoichiometry="1"/>
+          <speciesReference species="58_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_c_bulk" name="9_c_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_c_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="54_c" stoichiometry="2"/>
+          <speciesReference species="6_c" stoichiometry="2"/>
+          <speciesReference species="48_c" stoichiometry="0"/>
+          <speciesReference species="40_c" stoichiometry="2"/>
+          <speciesReference species="61_c" stoichiometry="1"/>
+          <speciesReference species="73_c" stoichiometry="0"/>
+          <speciesReference species="16_c" stoichiometry="2"/>
+          <speciesReference species="86_c" stoichiometry="0"/>
+          <speciesReference species="99_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="22_c" stoichiometry="0"/>
+          <speciesReference species="3_c" stoichiometry="1"/>
+          <speciesReference species="75_c" stoichiometry="0"/>
+          <speciesReference species="26_c" stoichiometry="1"/>
+          <speciesReference species="10_c" stoichiometry="1"/>
+          <speciesReference species="42_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="0_e_bulk" name="0_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="18_e" stoichiometry="2"/>
+          <speciesReference species="43_e" stoichiometry="1"/>
+          <speciesReference species="81_e" stoichiometry="0"/>
+          <speciesReference species="31_e" stoichiometry="1"/>
+          <speciesReference species="4_e" stoichiometry="1"/>
+          <speciesReference species="60_e" stoichiometry="2"/>
+          <speciesReference species="95_e" stoichiometry="0"/>
+          <speciesReference species="50_e" stoichiometry="2"/>
+          <speciesReference species="16_e" stoichiometry="0"/>
+          <speciesReference species="33_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="53_e" stoichiometry="0"/>
+          <speciesReference species="4_e" stoichiometry="1"/>
+          <speciesReference species="11_e" stoichiometry="1"/>
+          <speciesReference species="39_e" stoichiometry="0"/>
+          <speciesReference species="40_e" stoichiometry="2"/>
+          <speciesReference species="60_e" stoichiometry="1"/>
+          <speciesReference species="25_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_e_bulk" name="1_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="65_e" stoichiometry="2"/>
+          <speciesReference species="74_e" stoichiometry="1"/>
+          <speciesReference species="36_e" stoichiometry="1"/>
+          <speciesReference species="27_e" stoichiometry="2"/>
+          <speciesReference species="5_e" stoichiometry="1"/>
+          <speciesReference species="0_e" stoichiometry="0"/>
+          <speciesReference species="90_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="82_e" stoichiometry="0"/>
+          <speciesReference species="41_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="2_e_bulk" name="2_e_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="25_e" stoichiometry="2"/>
+          <speciesReference species="88_e" stoichiometry="2"/>
+          <speciesReference species="76_e" stoichiometry="2"/>
+          <speciesReference species="19_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="58_e" stoichiometry="1"/>
+          <speciesReference species="11_e" stoichiometry="1"/>
+          <speciesReference species="83_e" stoichiometry="0"/>
+          <speciesReference species="34_e" stoichiometry="1"/>
+          <speciesReference species="8_e" stoichiometry="2"/>
+          <speciesReference species="60_e" stoichiometry="1"/>
+          <speciesReference species="3_e" stoichiometry="1"/>
+          <speciesReference species="27_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="3_e_bulk" name="3_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="95_e" stoichiometry="0"/>
+          <speciesReference species="15_e" stoichiometry="1"/>
+          <speciesReference species="18_e" stoichiometry="1"/>
+          <speciesReference species="56_e" stoichiometry="1"/>
+          <speciesReference species="57_e" stoichiometry="1"/>
+          <speciesReference species="33_e" stoichiometry="1"/>
+          <speciesReference species="44_e" stoichiometry="2"/>
+          <speciesReference species="11_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="91_e" stoichiometry="1"/>
+          <speciesReference species="39_e" stoichiometry="1"/>
+          <speciesReference species="21_e" stoichiometry="1"/>
+          <speciesReference species="80_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_e_bulk" name="4_e_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="19_e" stoichiometry="0"/>
+          <speciesReference species="29_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="67_e" stoichiometry="1"/>
+          <speciesReference species="42_e" stoichiometry="1"/>
+          <speciesReference species="43_e" stoichiometry="1"/>
+          <speciesReference species="96_e" stoichiometry="0"/>
+          <speciesReference species="41_e" stoichiometry="2"/>
+          <speciesReference species="40_e" stoichiometry="0"/>
+          <speciesReference species="4_e" stoichiometry="1"/>
+          <speciesReference species="46_e" stoichiometry="0"/>
+          <speciesReference species="7_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_e_bulk" name="5_e_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="71_e" stoichiometry="0"/>
+          <speciesReference species="0_e" stoichiometry="2"/>
+          <speciesReference species="42_e" stoichiometry="1"/>
+          <speciesReference species="34_e" stoichiometry="2"/>
+          <speciesReference species="46_e" stoichiometry="1"/>
+          <speciesReference species="21_e" stoichiometry="2"/>
+          <speciesReference species="66_e" stoichiometry="0"/>
+          <speciesReference species="48_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="29_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_e_bulk" name="6_e_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="37_e" stoichiometry="2"/>
+          <speciesReference species="68_e" stoichiometry="2"/>
+          <speciesReference species="58_e" stoichiometry="2"/>
+          <speciesReference species="88_e" stoichiometry="0"/>
+          <speciesReference species="99_e" stoichiometry="2"/>
+          <speciesReference species="73_e" stoichiometry="0"/>
+          <speciesReference species="48_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="84_e" stoichiometry="0"/>
+          <speciesReference species="74_e" stoichiometry="0"/>
+          <speciesReference species="29_e" stoichiometry="1"/>
+          <speciesReference species="91_e" stoichiometry="0"/>
+          <speciesReference species="43_e" stoichiometry="2"/>
+          <speciesReference species="81_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="7_e_bulk" name="7_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="63_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="10_e" stoichiometry="2"/>
+          <speciesReference species="7_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_e_bulk" name="8_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="21_e" stoichiometry="1"/>
+          <speciesReference species="67_e" stoichiometry="1"/>
+          <speciesReference species="99_e" stoichiometry="0"/>
+          <speciesReference species="26_e" stoichiometry="0"/>
+          <speciesReference species="55_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="50_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_e_bulk" name="9_e_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_e_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="28_e" stoichiometry="0"/>
+          <speciesReference species="43_e" stoichiometry="0"/>
+          <speciesReference species="87_e" stoichiometry="0"/>
+          <speciesReference species="17_e" stoichiometry="0"/>
+          <speciesReference species="13_e" stoichiometry="1"/>
+          <speciesReference species="19_e" stoichiometry="1"/>
+          <speciesReference species="5_e" stoichiometry="0"/>
+          <speciesReference species="33_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="65_e" stoichiometry="2"/>
+          <speciesReference species="9_e" stoichiometry="2"/>
+          <speciesReference species="64_e" stoichiometry="1"/>
+          <speciesReference species="31_e" stoichiometry="0"/>
+          <speciesReference species="88_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="0_p_inner" name="0_p_inner_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="90_p" stoichiometry="0"/>
+          <speciesReference species="32_c" stoichiometry="2"/>
+          <speciesReference species="75_c" stoichiometry="2"/>
+          <speciesReference species="89_c" stoichiometry="0"/>
+          <speciesReference species="27_c" stoichiometry="0"/>
+          <speciesReference species="71_c" stoichiometry="1"/>
+          <speciesReference species="15_c" stoichiometry="2"/>
+          <speciesReference species="1_c" stoichiometry="2"/>
+          <speciesReference species="2_c" stoichiometry="2"/>
+          <speciesReference species="3_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="28_p" stoichiometry="2"/>
+          <speciesReference species="36_p" stoichiometry="2"/>
+          <speciesReference species="24_p" stoichiometry="1"/>
+          <speciesReference species="34_p" stoichiometry="0"/>
+          <speciesReference species="88_p" stoichiometry="0"/>
+          <speciesReference species="78_p" stoichiometry="1"/>
+          <speciesReference species="14_p" stoichiometry="0"/>
+          <speciesReference species="16_p" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_p_inner" name="1_p_inner_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="85_p" stoichiometry="2"/>
+          <speciesReference species="14_p" stoichiometry="2"/>
+          <speciesReference species="58_p" stoichiometry="0"/>
+          <speciesReference species="87_p" stoichiometry="0"/>
+          <speciesReference species="52_p" stoichiometry="2"/>
+          <speciesReference species="20_p" stoichiometry="0"/>
+          <speciesReference species="61_p" stoichiometry="2"/>
+          <speciesReference species="76_p" stoichiometry="1"/>
+          <speciesReference species="24_c" stoichiometry="2"/>
+          <speciesReference species="60_c" stoichiometry="0"/>
+          <speciesReference species="20_c" stoichiometry="2"/>
+          <speciesReference species="91_c" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="39_p" stoichiometry="2"/>
+          <speciesReference species="47_p" stoichiometry="2"/>
+          <speciesReference species="37_p" stoichiometry="0"/>
+          <speciesReference species="12_p" stoichiometry="0"/>
+          <speciesReference species="8_p" stoichiometry="0"/>
+          <speciesReference species="7_p" stoichiometry="0"/>
+          <speciesReference species="91_c" stoichiometry="1"/>
+          <speciesReference species="25_c" stoichiometry="0"/>
+          <speciesReference species="35_c" stoichiometry="1"/>
+          <speciesReference species="1_c" stoichiometry="0"/>
+          <speciesReference species="38_c" stoichiometry="2"/>
+          <speciesReference species="29_c" stoichiometry="2"/>
+          <speciesReference species="72_c" stoichiometry="2"/>
+          <speciesReference species="56_c" stoichiometry="0"/>
+          <speciesReference species="26_c" stoichiometry="1"/>
+          <speciesReference species="58_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="2_p_inner" name="2_p_inner_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="49_p" stoichiometry="2"/>
+          <speciesReference species="48_p" stoichiometry="1"/>
+          <speciesReference species="23_p" stoichiometry="0"/>
+          <speciesReference species="82_p" stoichiometry="1"/>
+          <speciesReference species="13_c" stoichiometry="2"/>
+          <speciesReference species="53_c" stoichiometry="1"/>
+          <speciesReference species="61_c" stoichiometry="2"/>
+          <speciesReference species="59_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="85_p" stoichiometry="2"/>
+          <speciesReference species="48_p" stoichiometry="2"/>
+          <speciesReference species="90_p" stoichiometry="0"/>
+          <speciesReference species="34_p" stoichiometry="2"/>
+          <speciesReference species="14_p" stoichiometry="2"/>
+          <speciesReference species="60_p" stoichiometry="2"/>
+          <speciesReference species="71_p" stoichiometry="0"/>
+          <speciesReference species="98_p" stoichiometry="2"/>
+          <speciesReference species="3_p" stoichiometry="1"/>
+          <speciesReference species="20_c" stoichiometry="1"/>
+          <speciesReference species="9_c" stoichiometry="0"/>
+          <speciesReference species="76_c" stoichiometry="0"/>
+          <speciesReference species="23_c" stoichiometry="1"/>
+          <speciesReference species="55_c" stoichiometry="2"/>
+          <speciesReference species="67_c" stoichiometry="1"/>
+          <speciesReference species="5_c" stoichiometry="1"/>
+          <speciesReference species="93_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="3_p_inner" name="3_p_inner_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="67_p" stoichiometry="2"/>
+          <speciesReference species="0_p" stoichiometry="0"/>
+          <speciesReference species="98_p" stoichiometry="1"/>
+          <speciesReference species="39_p" stoichiometry="0"/>
+          <speciesReference species="82_p" stoichiometry="2"/>
+          <speciesReference species="73_p" stoichiometry="0"/>
+          <speciesReference species="20_p" stoichiometry="2"/>
+          <speciesReference species="66_p" stoichiometry="0"/>
+          <speciesReference species="43_p" stoichiometry="0"/>
+          <speciesReference species="58_p" stoichiometry="0"/>
+          <speciesReference species="95_c" stoichiometry="0"/>
+          <speciesReference species="28_c" stoichiometry="1"/>
+          <speciesReference species="0_c" stoichiometry="2"/>
+          <speciesReference species="96_c" stoichiometry="0"/>
+          <speciesReference species="7_c" stoichiometry="0"/>
+          <speciesReference species="37_c" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="64_p" stoichiometry="2"/>
+          <speciesReference species="97_p" stoichiometry="1"/>
+          <speciesReference species="93_p" stoichiometry="1"/>
+          <speciesReference species="70_c" stoichiometry="0"/>
+          <speciesReference species="49_c" stoichiometry="1"/>
+          <speciesReference species="24_c" stoichiometry="1"/>
+          <speciesReference species="37_c" stoichiometry="2"/>
+          <speciesReference species="14_c" stoichiometry="1"/>
+          <speciesReference species="74_c" stoichiometry="0"/>
+          <speciesReference species="66_c" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_p_inner" name="4_p_inner_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="23_p" stoichiometry="2"/>
+          <speciesReference species="92_p" stoichiometry="0"/>
+          <speciesReference species="9_c" stoichiometry="0"/>
+          <speciesReference species="43_c" stoichiometry="2"/>
+          <speciesReference species="11_c" stoichiometry="2"/>
+          <speciesReference species="49_c" stoichiometry="2"/>
+          <speciesReference species="75_c" stoichiometry="2"/>
+          <speciesReference species="22_c" stoichiometry="0"/>
+          <speciesReference species="69_c" stoichiometry="2"/>
+          <speciesReference species="41_c" stoichiometry="0"/>
+          <speciesReference species="73_c" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="2_p" stoichiometry="0"/>
+          <speciesReference species="79_p" stoichiometry="1"/>
+          <speciesReference species="48_p" stoichiometry="1"/>
+          <speciesReference species="67_p" stoichiometry="2"/>
+          <speciesReference species="97_p" stoichiometry="1"/>
+          <speciesReference species="20_c" stoichiometry="1"/>
+          <speciesReference species="73_c" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_p_inner" name="5_p_inner_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="72_p" stoichiometry="0"/>
+          <speciesReference species="51_p" stoichiometry="2"/>
+          <speciesReference species="50_p" stoichiometry="0"/>
+          <speciesReference species="78_c" stoichiometry="2"/>
+          <speciesReference species="32_c" stoichiometry="1"/>
+          <speciesReference species="92_c" stoichiometry="0"/>
+          <speciesReference species="95_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="91_p" stoichiometry="2"/>
+          <speciesReference species="32_c" stoichiometry="1"/>
+          <speciesReference species="76_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_p_inner" name="6_p_inner_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="41_p" stoichiometry="1"/>
+          <speciesReference species="91_p" stoichiometry="1"/>
+          <speciesReference species="24_p" stoichiometry="0"/>
+          <speciesReference species="44_p" stoichiometry="1"/>
+          <speciesReference species="48_p" stoichiometry="0"/>
+          <speciesReference species="10_p" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="47_p" stoichiometry="1"/>
+          <speciesReference species="28_p" stoichiometry="0"/>
+          <speciesReference species="9_p" stoichiometry="2"/>
+          <speciesReference species="75_p" stoichiometry="2"/>
+          <speciesReference species="25_p" stoichiometry="1"/>
+          <speciesReference species="19_p" stoichiometry="2"/>
+          <speciesReference species="39_p" stoichiometry="2"/>
+          <speciesReference species="96_p" stoichiometry="1"/>
+          <speciesReference species="52_p" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="7_p_inner" name="7_p_inner_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="32_c" stoichiometry="1"/>
+          <speciesReference species="31_c" stoichiometry="1"/>
+          <speciesReference species="6_c" stoichiometry="0"/>
+          <speciesReference species="0_c" stoichiometry="1"/>
+          <speciesReference species="24_c" stoichiometry="1"/>
+          <speciesReference species="11_c" stoichiometry="2"/>
+          <speciesReference species="49_c" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="27_p" stoichiometry="2"/>
+          <speciesReference species="48_p" stoichiometry="0"/>
+          <speciesReference species="6_p" stoichiometry="2"/>
+          <speciesReference species="13_c" stoichiometry="1"/>
+          <speciesReference species="91_c" stoichiometry="0"/>
+          <speciesReference species="93_c" stoichiometry="1"/>
+          <speciesReference species="40_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_p_inner" name="8_p_inner_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="80_p" stoichiometry="2"/>
+          <speciesReference species="42_p" stoichiometry="2"/>
+          <speciesReference species="84_p" stoichiometry="0"/>
+          <speciesReference species="16_p" stoichiometry="1"/>
+          <speciesReference species="25_p" stoichiometry="1"/>
+          <speciesReference species="75_c" stoichiometry="2"/>
+          <speciesReference species="33_c" stoichiometry="1"/>
+          <speciesReference species="67_c" stoichiometry="0"/>
+          <speciesReference species="55_c" stoichiometry="0"/>
+          <speciesReference species="64_c" stoichiometry="1"/>
+          <speciesReference species="71_c" stoichiometry="1"/>
+          <speciesReference species="47_c" stoichiometry="0"/>
+          <speciesReference species="12_c" stoichiometry="2"/>
+          <speciesReference species="0_c" stoichiometry="2"/>
+          <speciesReference species="38_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="66_p" stoichiometry="1"/>
+          <speciesReference species="21_p" stoichiometry="2"/>
+          <speciesReference species="1_p" stoichiometry="1"/>
+          <speciesReference species="25_p" stoichiometry="0"/>
+          <speciesReference species="0_p" stoichiometry="1"/>
+          <speciesReference species="19_c" stoichiometry="0"/>
+          <speciesReference species="22_c" stoichiometry="2"/>
+          <speciesReference species="13_c" stoichiometry="1"/>
+          <speciesReference species="34_c" stoichiometry="2"/>
+          <speciesReference species="86_c" stoichiometry="0"/>
+          <speciesReference species="11_c" stoichiometry="0"/>
+          <speciesReference species="3_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_p_inner" name="9_p_inner_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_p_inner</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="83_c" stoichiometry="2"/>
+          <speciesReference species="52_c" stoichiometry="1"/>
+          <speciesReference species="73_c" stoichiometry="0"/>
+          <speciesReference species="69_c" stoichiometry="1"/>
+          <speciesReference species="18_c" stoichiometry="0"/>
+          <speciesReference species="31_c" stoichiometry="2"/>
+          <speciesReference species="27_c" stoichiometry="2"/>
+          <speciesReference species="57_c" stoichiometry="0"/>
+          <speciesReference species="45_c" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="62_p" stoichiometry="1"/>
+          <speciesReference species="35_p" stoichiometry="0"/>
+          <speciesReference species="12_p" stoichiometry="0"/>
+          <speciesReference species="88_p" stoichiometry="1"/>
+          <speciesReference species="82_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="0_p_bulk" name="0_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="54_p" stoichiometry="0"/>
+          <speciesReference species="36_p" stoichiometry="0"/>
+          <speciesReference species="8_p" stoichiometry="1"/>
+          <speciesReference species="7_p" stoichiometry="2"/>
+          <speciesReference species="95_p" stoichiometry="0"/>
+          <speciesReference species="79_p" stoichiometry="1"/>
+          <speciesReference species="42_p" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="51_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_p_bulk" name="1_p_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="76_p" stoichiometry="0"/>
+          <speciesReference species="38_p" stoichiometry="2"/>
+          <speciesReference species="27_p" stoichiometry="2"/>
+          <speciesReference species="62_p" stoichiometry="2"/>
+          <speciesReference species="92_p" stoichiometry="2"/>
+          <speciesReference species="83_p" stoichiometry="2"/>
+          <speciesReference species="74_p" stoichiometry="1"/>
+          <speciesReference species="41_p" stoichiometry="1"/>
+          <speciesReference species="72_p" stoichiometry="1"/>
+          <speciesReference species="25_p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="56_p" stoichiometry="1"/>
+          <speciesReference species="3_p" stoichiometry="1"/>
+          <speciesReference species="28_p" stoichiometry="0"/>
+          <speciesReference species="71_p" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="2_p_bulk" name="2_p_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="47_p" stoichiometry="1"/>
+          <speciesReference species="88_p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="61_p" stoichiometry="0"/>
+          <speciesReference species="77_p" stoichiometry="1"/>
+          <speciesReference species="95_p" stoichiometry="1"/>
+          <speciesReference species="18_p" stoichiometry="1"/>
+          <speciesReference species="4_p" stoichiometry="2"/>
+          <speciesReference species="12_p" stoichiometry="0"/>
+          <speciesReference species="0_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="3_p_bulk" name="3_p_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants/>
+        <listOfProducts>
+          <speciesReference species="59_p" stoichiometry="2"/>
+          <speciesReference species="16_p" stoichiometry="2"/>
+          <speciesReference species="38_p" stoichiometry="2"/>
+          <speciesReference species="72_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_p_bulk" name="4_p_bulk_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="42_p" stoichiometry="0"/>
+          <speciesReference species="59_p" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="59_p" stoichiometry="0"/>
+          <speciesReference species="2_p" stoichiometry="2"/>
+          <speciesReference species="38_p" stoichiometry="2"/>
+          <speciesReference species="91_p" stoichiometry="0"/>
+          <speciesReference species="77_p" stoichiometry="1"/>
+          <speciesReference species="36_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_p_bulk" name="5_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="44_p" stoichiometry="1"/>
+          <speciesReference species="23_p" stoichiometry="2"/>
+          <speciesReference species="34_p" stoichiometry="2"/>
+          <speciesReference species="82_p" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="49_p" stoichiometry="0"/>
+          <speciesReference species="40_p" stoichiometry="1"/>
+          <speciesReference species="67_p" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_p_bulk" name="6_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="66_p" stoichiometry="1"/>
+          <speciesReference species="82_p" stoichiometry="0"/>
+          <speciesReference species="55_p" stoichiometry="1"/>
+          <speciesReference species="18_p" stoichiometry="2"/>
+          <speciesReference species="37_p" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts/>
+      </reaction>
+      <reaction id="7_p_bulk" name="7_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="7_p" stoichiometry="0"/>
+          <speciesReference species="19_p" stoichiometry="1"/>
+          <speciesReference species="93_p" stoichiometry="2"/>
+          <speciesReference species="17_p" stoichiometry="2"/>
+          <speciesReference species="28_p" stoichiometry="0"/>
+          <speciesReference species="99_p" stoichiometry="0"/>
+          <speciesReference species="32_p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="43_p" stoichiometry="1"/>
+          <speciesReference species="98_p" stoichiometry="0"/>
+          <speciesReference species="18_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_p_bulk" name="8_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="14_p" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="21_p" stoichiometry="1"/>
+          <speciesReference species="84_p" stoichiometry="2"/>
+          <speciesReference species="74_p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_p_bulk" name="9_p_bulk_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_p_bulk</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="92_p" stoichiometry="2"/>
+          <speciesReference species="88_p" stoichiometry="1"/>
+          <speciesReference species="52_p" stoichiometry="0"/>
+          <speciesReference species="87_p" stoichiometry="0"/>
+          <speciesReference species="41_p" stoichiometry="0"/>
+          <speciesReference species="24_p" stoichiometry="0"/>
+          <speciesReference species="62_p" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="23_p" stoichiometry="2"/>
+          <speciesReference species="65_p" stoichiometry="2"/>
+          <speciesReference species="1_p" stoichiometry="0"/>
+          <speciesReference species="72_p" stoichiometry="1"/>
+          <speciesReference species="57_p" stoichiometry="2"/>
+          <speciesReference species="3_p" stoichiometry="1"/>
+          <speciesReference species="88_p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="0_p_trans" name="0_p_trans_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="66_c" stoichiometry="0"/>
+          <speciesReference species="94_c" stoichiometry="0"/>
+          <speciesReference species="81_c" stoichiometry="0"/>
+          <speciesReference species="14_c" stoichiometry="0"/>
+          <speciesReference species="25_c" stoichiometry="1"/>
+          <speciesReference species="99_e" stoichiometry="0"/>
+          <speciesReference species="90_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="30_p" stoichiometry="0"/>
+          <speciesReference species="79_p" stoichiometry="2"/>
+          <speciesReference species="96_p" stoichiometry="2"/>
+          <speciesReference species="77_p" stoichiometry="1"/>
+          <speciesReference species="5_p" stoichiometry="2"/>
+          <speciesReference species="56_p" stoichiometry="0"/>
+          <speciesReference species="18_p" stoichiometry="1"/>
+          <speciesReference species="11_p" stoichiometry="1"/>
+          <speciesReference species="14_c" stoichiometry="1"/>
+          <speciesReference species="76_c" stoichiometry="2"/>
+          <speciesReference species="32_c" stoichiometry="1"/>
+          <speciesReference species="94_c" stoichiometry="0"/>
+          <speciesReference species="82_e" stoichiometry="1"/>
+          <speciesReference species="96_e" stoichiometry="1"/>
+          <speciesReference species="65_e" stoichiometry="1"/>
+          <speciesReference species="83_e" stoichiometry="0"/>
+          <speciesReference species="95_e" stoichiometry="1"/>
+          <speciesReference species="46_e" stoichiometry="0"/>
+          <speciesReference species="68_e" stoichiometry="0"/>
+          <speciesReference species="69_e" stoichiometry="0"/>
+          <speciesReference species="6_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_p_trans" name="1_p_trans_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="6_p" stoichiometry="2"/>
+          <speciesReference species="5_p" stoichiometry="2"/>
+          <speciesReference species="59_p" stoichiometry="1"/>
+          <speciesReference species="88_p" stoichiometry="2"/>
+          <speciesReference species="87_p" stoichiometry="1"/>
+          <speciesReference species="72_p" stoichiometry="1"/>
+          <speciesReference species="43_p" stoichiometry="1"/>
+          <speciesReference species="78_p" stoichiometry="0"/>
+          <speciesReference species="25_p" stoichiometry="0"/>
+          <speciesReference species="90_c" stoichiometry="2"/>
+          <speciesReference species="26_c" stoichiometry="1"/>
+          <speciesReference species="25_c" stoichiometry="2"/>
+          <speciesReference species="4_c" stoichiometry="2"/>
+          <speciesReference species="96_c" stoichiometry="0"/>
+          <speciesReference species="41_c" stoichiometry="1"/>
+          <speciesReference species="27_c" stoichiometry="1"/>
+          <speciesReference species="87_c" stoichiometry="2"/>
+          <speciesReference species="47_c" stoichiometry="0"/>
+          <speciesReference species="45_c" stoichiometry="2"/>
+          <speciesReference species="11_e" stoichiometry="1"/>
+          <speciesReference species="78_e" stoichiometry="2"/>
+          <speciesReference species="39_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="77_p" stoichiometry="2"/>
+          <speciesReference species="26_c" stoichiometry="1"/>
+          <speciesReference species="27_c" stoichiometry="0"/>
+          <speciesReference species="59_c" stoichiometry="0"/>
+          <speciesReference species="75_e" stoichiometry="2"/>
+          <speciesReference species="89_e" stoichiometry="0"/>
+          <speciesReference species="61_e" stoichiometry="2"/>
+          <speciesReference species="25_e" stoichiometry="2"/>
+          <speciesReference species="83_e" stoichiometry="1"/>
+          <speciesReference species="70_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="2_p_trans" name="2_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="24_p" stoichiometry="2"/>
+          <speciesReference species="74_p" stoichiometry="1"/>
+          <speciesReference species="90_p" stoichiometry="0"/>
+          <speciesReference species="19_p" stoichiometry="0"/>
+          <speciesReference species="37_p" stoichiometry="2"/>
+          <speciesReference species="29_p" stoichiometry="1"/>
+          <speciesReference species="32_p" stoichiometry="0"/>
+          <speciesReference species="77_p" stoichiometry="2"/>
+          <speciesReference species="52_p" stoichiometry="0"/>
+          <speciesReference species="35_c" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="11_p" stoichiometry="1"/>
+          <speciesReference species="57_c" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="3_p_trans" name="3_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="14_c" stoichiometry="2"/>
+          <speciesReference species="50_c" stoichiometry="2"/>
+          <speciesReference species="93_e" stoichiometry="2"/>
+          <speciesReference species="79_e" stoichiometry="1"/>
+          <speciesReference species="46_e" stoichiometry="2"/>
+          <speciesReference species="55_e" stoichiometry="2"/>
+          <speciesReference species="68_e" stoichiometry="0"/>
+          <speciesReference species="38_e" stoichiometry="0"/>
+          <speciesReference species="9_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="51_c" stoichiometry="0"/>
+          <speciesReference species="77_c" stoichiometry="1"/>
+          <speciesReference species="27_e" stoichiometry="1"/>
+          <speciesReference species="75_e" stoichiometry="0"/>
+          <speciesReference species="51_e" stoichiometry="2"/>
+          <speciesReference species="40_e" stoichiometry="2"/>
+          <speciesReference species="91_e" stoichiometry="1"/>
+          <speciesReference species="53_e" stoichiometry="2"/>
+          <speciesReference species="23_e" stoichiometry="2"/>
+          <speciesReference species="29_e" stoichiometry="1"/>
+          <speciesReference species="71_e" stoichiometry="1"/>
+          <speciesReference species="44_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_p_trans" name="4_p_trans_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="43_p" stoichiometry="2"/>
+          <speciesReference species="15_p" stoichiometry="0"/>
+          <speciesReference species="98_p" stoichiometry="1"/>
+          <speciesReference species="83_p" stoichiometry="2"/>
+          <speciesReference species="30_c" stoichiometry="1"/>
+          <speciesReference species="3_e" stoichiometry="2"/>
+          <speciesReference species="39_e" stoichiometry="2"/>
+          <speciesReference species="61_e" stoichiometry="0"/>
+          <speciesReference species="11_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="56_p" stoichiometry="0"/>
+          <speciesReference species="76_p" stoichiometry="2"/>
+          <speciesReference species="61_p" stoichiometry="1"/>
+          <speciesReference species="26_e" stoichiometry="1"/>
+          <speciesReference species="70_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_p_trans" name="5_p_trans_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="69_p" stoichiometry="0"/>
+          <speciesReference species="93_p" stoichiometry="2"/>
+          <speciesReference species="62_p" stoichiometry="1"/>
+          <speciesReference species="33_p" stoichiometry="0"/>
+          <speciesReference species="75_p" stoichiometry="1"/>
+          <speciesReference species="91_p" stoichiometry="0"/>
+          <speciesReference species="71_p" stoichiometry="2"/>
+          <speciesReference species="8_e" stoichiometry="2"/>
+          <speciesReference species="18_e" stoichiometry="0"/>
+          <speciesReference species="37_e" stoichiometry="2"/>
+          <speciesReference species="52_e" stoichiometry="2"/>
+          <speciesReference species="95_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="37_p" stoichiometry="2"/>
+          <speciesReference species="55_c" stoichiometry="0"/>
+          <speciesReference species="4_c" stoichiometry="1"/>
+          <speciesReference species="9_c" stoichiometry="1"/>
+          <speciesReference species="12_c" stoichiometry="1"/>
+          <speciesReference species="88_c" stoichiometry="1"/>
+          <speciesReference species="96_e" stoichiometry="2"/>
+          <speciesReference species="82_e" stoichiometry="2"/>
+          <speciesReference species="39_e" stoichiometry="1"/>
+          <speciesReference species="79_e" stoichiometry="0"/>
+          <speciesReference species="35_e" stoichiometry="1"/>
+          <speciesReference species="78_e" stoichiometry="1"/>
+          <speciesReference species="56_e" stoichiometry="0"/>
+          <speciesReference species="88_e" stoichiometry="2"/>
+          <speciesReference species="91_e" stoichiometry="0"/>
+          <speciesReference species="25_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_p_trans" name="6_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="10_p" stoichiometry="0"/>
+          <speciesReference species="42_p" stoichiometry="1"/>
+          <speciesReference species="65_p" stoichiometry="2"/>
+          <speciesReference species="13_p" stoichiometry="0"/>
+          <speciesReference species="71_p" stoichiometry="0"/>
+          <speciesReference species="95_p" stoichiometry="1"/>
+          <speciesReference species="70_p" stoichiometry="1"/>
+          <speciesReference species="25_p" stoichiometry="1"/>
+          <speciesReference species="94_p" stoichiometry="1"/>
+          <speciesReference species="97_p" stoichiometry="1"/>
+          <speciesReference species="0_c" stoichiometry="1"/>
+          <speciesReference species="31_e" stoichiometry="0"/>
+          <speciesReference species="21_e" stoichiometry="2"/>
+          <speciesReference species="99_e" stoichiometry="2"/>
+          <speciesReference species="67_e" stoichiometry="0"/>
+          <speciesReference species="16_e" stoichiometry="2"/>
+          <speciesReference species="79_e" stoichiometry="1"/>
+          <speciesReference species="18_e" stoichiometry="0"/>
+          <speciesReference species="84_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="89_p" stoichiometry="1"/>
+          <speciesReference species="52_p" stoichiometry="1"/>
+          <speciesReference species="66_p" stoichiometry="0"/>
+          <speciesReference species="96_p" stoichiometry="1"/>
+          <speciesReference species="77_p" stoichiometry="0"/>
+          <speciesReference species="14_p" stoichiometry="0"/>
+          <speciesReference species="48_p" stoichiometry="2"/>
+          <speciesReference species="62_p" stoichiometry="0"/>
+          <speciesReference species="79_p" stoichiometry="1"/>
+          <speciesReference species="81_c" stoichiometry="0"/>
+          <speciesReference species="76_c" stoichiometry="2"/>
+          <speciesReference species="9_e" stoichiometry="2"/>
+          <speciesReference species="7_e" stoichiometry="1"/>
+          <speciesReference species="49_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="7_p_trans" name="7_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="66_p" stoichiometry="1"/>
+          <speciesReference species="73_p" stoichiometry="1"/>
+          <speciesReference species="70_p" stoichiometry="1"/>
+          <speciesReference species="86_p" stoichiometry="1"/>
+          <speciesReference species="96_p" stoichiometry="0"/>
+          <speciesReference species="32_p" stoichiometry="1"/>
+          <speciesReference species="67_p" stoichiometry="2"/>
+          <speciesReference species="81_c" stoichiometry="1"/>
+          <speciesReference species="39_c" stoichiometry="0"/>
+          <speciesReference species="95_c" stoichiometry="1"/>
+          <speciesReference species="9_c" stoichiometry="1"/>
+          <speciesReference species="30_e" stoichiometry="2"/>
+          <speciesReference species="94_e" stoichiometry="0"/>
+          <speciesReference species="27_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="50_p" stoichiometry="2"/>
+          <speciesReference species="40_p" stoichiometry="2"/>
+          <speciesReference species="53_p" stoichiometry="0"/>
+          <speciesReference species="25_p" stoichiometry="2"/>
+          <speciesReference species="32_p" stoichiometry="0"/>
+          <speciesReference species="54_p" stoichiometry="1"/>
+          <speciesReference species="71_p" stoichiometry="2"/>
+          <speciesReference species="69_p" stoichiometry="1"/>
+          <speciesReference species="8_c" stoichiometry="2"/>
+          <speciesReference species="69_c" stoichiometry="2"/>
+          <speciesReference species="36_c" stoichiometry="2"/>
+          <speciesReference species="11_c" stoichiometry="2"/>
+          <speciesReference species="48_c" stoichiometry="2"/>
+          <speciesReference species="32_c" stoichiometry="2"/>
+          <speciesReference species="60_e" stoichiometry="0"/>
+          <speciesReference species="57_e" stoichiometry="1"/>
+          <speciesReference species="78_e" stoichiometry="2"/>
+          <speciesReference species="19_e" stoichiometry="2"/>
+          <speciesReference species="41_e" stoichiometry="2"/>
+          <speciesReference species="0_e" stoichiometry="0"/>
+          <speciesReference species="70_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_p_trans" name="8_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="41_p" stoichiometry="0"/>
+          <speciesReference species="55_p" stoichiometry="1"/>
+          <speciesReference species="78_c" stoichiometry="0"/>
+          <speciesReference species="89_c" stoichiometry="1"/>
+          <speciesReference species="74_c" stoichiometry="1"/>
+          <speciesReference species="91_c" stoichiometry="1"/>
+          <speciesReference species="99_c" stoichiometry="2"/>
+          <speciesReference species="5_c" stoichiometry="2"/>
+          <speciesReference species="21_c" stoichiometry="0"/>
+          <speciesReference species="57_e" stoichiometry="2"/>
+          <speciesReference species="98_e" stoichiometry="0"/>
+          <speciesReference species="12_e" stoichiometry="1"/>
+          <speciesReference species="38_e" stoichiometry="1"/>
+          <speciesReference species="16_e" stoichiometry="0"/>
+          <speciesReference species="97_e" stoichiometry="2"/>
+          <speciesReference species="56_e" stoichiometry="2"/>
+          <speciesReference species="89_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="2_p" stoichiometry="2"/>
+          <speciesReference species="35_p" stoichiometry="2"/>
+          <speciesReference species="17_p" stoichiometry="0"/>
+          <speciesReference species="69_p" stoichiometry="0"/>
+          <speciesReference species="44_p" stoichiometry="2"/>
+          <speciesReference species="88_p" stoichiometry="0"/>
+          <speciesReference species="18_p" stoichiometry="1"/>
+          <speciesReference species="68_p" stoichiometry="0"/>
+          <speciesReference species="9_p" stoichiometry="2"/>
+          <speciesReference species="54_c" stoichiometry="1"/>
+          <speciesReference species="16_c" stoichiometry="1"/>
+          <speciesReference species="17_c" stoichiometry="2"/>
+          <speciesReference species="15_c" stoichiometry="1"/>
+          <speciesReference species="43_c" stoichiometry="2"/>
+          <speciesReference species="96_c" stoichiometry="2"/>
+          <speciesReference species="32_c" stoichiometry="2"/>
+          <speciesReference species="64_c" stoichiometry="2"/>
+          <speciesReference species="84_c" stoichiometry="0"/>
+          <speciesReference species="45_e" stoichiometry="1"/>
+          <speciesReference species="66_e" stoichiometry="1"/>
+          <speciesReference species="54_e" stoichiometry="2"/>
+          <speciesReference species="72_e" stoichiometry="0"/>
+          <speciesReference species="46_e" stoichiometry="1"/>
+          <speciesReference species="47_e" stoichiometry="0"/>
+          <speciesReference species="44_e" stoichiometry="1"/>
+          <speciesReference species="8_e" stoichiometry="2"/>
+          <speciesReference species="89_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_p_trans" name="9_p_trans_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_p_trans</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="5_p" stoichiometry="0"/>
+          <speciesReference species="82_p" stoichiometry="2"/>
+          <speciesReference species="19_p" stoichiometry="1"/>
+          <speciesReference species="49_p" stoichiometry="1"/>
+          <speciesReference species="78_p" stoichiometry="0"/>
+          <speciesReference species="14_p" stoichiometry="2"/>
+          <speciesReference species="36_c" stoichiometry="1"/>
+          <speciesReference species="34_c" stoichiometry="1"/>
+          <speciesReference species="59_c" stoichiometry="2"/>
+          <speciesReference species="99_c" stoichiometry="2"/>
+          <speciesReference species="85_c" stoichiometry="2"/>
+          <speciesReference species="72_c" stoichiometry="2"/>
+          <speciesReference species="90_c" stoichiometry="2"/>
+          <speciesReference species="62_c" stoichiometry="1"/>
+          <speciesReference species="89_c" stoichiometry="1"/>
+          <speciesReference species="25_e" stoichiometry="2"/>
+          <speciesReference species="44_e" stoichiometry="1"/>
+          <speciesReference species="13_e" stoichiometry="1"/>
+          <speciesReference species="95_e" stoichiometry="1"/>
+          <speciesReference species="56_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="46_p" stoichiometry="1"/>
+          <speciesReference species="57_p" stoichiometry="2"/>
+          <speciesReference species="51_p" stoichiometry="0"/>
+          <speciesReference species="25_c" stoichiometry="1"/>
+          <speciesReference species="71_c" stoichiometry="0"/>
+          <speciesReference species="26_c" stoichiometry="2"/>
+          <speciesReference species="28_e" stoichiometry="0"/>
+          <speciesReference species="32_e" stoichiometry="1"/>
+          <speciesReference species="69_e" stoichiometry="1"/>
+          <speciesReference species="5_e" stoichiometry="1"/>
+          <speciesReference species="55_e" stoichiometry="2"/>
+          <speciesReference species="92_e" stoichiometry="0"/>
+          <speciesReference species="56_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="0_p_outer" name="0_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_0_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="9_p" stoichiometry="2"/>
+          <speciesReference species="70_p" stoichiometry="0"/>
+          <speciesReference species="91_p" stoichiometry="2"/>
+          <speciesReference species="52_e" stoichiometry="0"/>
+          <speciesReference species="72_e" stoichiometry="2"/>
+          <speciesReference species="78_e" stoichiometry="2"/>
+          <speciesReference species="9_e" stoichiometry="2"/>
+          <speciesReference species="19_e" stoichiometry="1"/>
+          <speciesReference species="69_e" stoichiometry="1"/>
+          <speciesReference species="38_e" stoichiometry="2"/>
+          <speciesReference species="77_e" stoichiometry="1"/>
+          <speciesReference species="16_e" stoichiometry="0"/>
+          <speciesReference species="35_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="35_p" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="1_p_outer" name="1_p_outer_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_1_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="21_p" stoichiometry="2"/>
+          <speciesReference species="13_p" stoichiometry="0"/>
+          <speciesReference species="30_p" stoichiometry="0"/>
+          <speciesReference species="57_p" stoichiometry="0"/>
+          <speciesReference species="63_p" stoichiometry="0"/>
+          <speciesReference species="88_e" stoichiometry="0"/>
+          <speciesReference species="85_e" stoichiometry="2"/>
+          <speciesReference species="46_e" stoichiometry="2"/>
+          <speciesReference species="38_e" stoichiometry="1"/>
+          <speciesReference species="20_e" stoichiometry="2"/>
+          <speciesReference species="29_e" stoichiometry="1"/>
+          <speciesReference species="75_e" stoichiometry="2"/>
+          <speciesReference species="35_e" stoichiometry="0"/>
+          <speciesReference species="27_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts/>
+      </reaction>
+      <reaction id="2_p_outer" name="2_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_2_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="61_e" stoichiometry="0"/>
+          <speciesReference species="5_e" stoichiometry="0"/>
+          <speciesReference species="52_e" stoichiometry="0"/>
+          <speciesReference species="33_e" stoichiometry="1"/>
+          <speciesReference species="53_e" stoichiometry="2"/>
+          <speciesReference species="57_e" stoichiometry="1"/>
+          <speciesReference species="26_e" stoichiometry="0"/>
+          <speciesReference species="17_e" stoichiometry="0"/>
+          <speciesReference species="77_e" stoichiometry="0"/>
+          <speciesReference species="84_e" stoichiometry="0"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="86_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="3_p_outer" name="3_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_3_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="68_p" stoichiometry="1"/>
+          <speciesReference species="7_p" stoichiometry="0"/>
+          <speciesReference species="3_p" stoichiometry="1"/>
+          <speciesReference species="1_p" stoichiometry="1"/>
+          <speciesReference species="22_p" stoichiometry="1"/>
+          <speciesReference species="97_p" stoichiometry="2"/>
+          <speciesReference species="81_p" stoichiometry="1"/>
+          <speciesReference species="54_p" stoichiometry="0"/>
+          <speciesReference species="28_e" stoichiometry="0"/>
+          <speciesReference species="39_e" stoichiometry="2"/>
+          <speciesReference species="77_e" stoichiometry="2"/>
+          <speciesReference species="9_e" stoichiometry="1"/>
+          <speciesReference species="48_e" stoichiometry="1"/>
+          <speciesReference species="4_e" stoichiometry="0"/>
+          <speciesReference species="52_e" stoichiometry="1"/>
+          <speciesReference species="57_e" stoichiometry="1"/>
+          <speciesReference species="92_e" stoichiometry="1"/>
+          <speciesReference species="91_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="45_p" stoichiometry="1"/>
+          <speciesReference species="32_p" stoichiometry="2"/>
+          <speciesReference species="1_e" stoichiometry="1"/>
+          <speciesReference species="42_e" stoichiometry="2"/>
+          <speciesReference species="56_e" stoichiometry="2"/>
+          <speciesReference species="34_e" stoichiometry="2"/>
+          <speciesReference species="95_e" stoichiometry="0"/>
+          <speciesReference species="16_e" stoichiometry="2"/>
+          <speciesReference species="15_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="4_p_outer" name="4_p_outer_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_4_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="69_p" stoichiometry="1"/>
+          <speciesReference species="42_p" stoichiometry="0"/>
+          <speciesReference species="28_p" stoichiometry="2"/>
+          <speciesReference species="1_p" stoichiometry="2"/>
+          <speciesReference species="33_e" stoichiometry="0"/>
+          <speciesReference species="36_e" stoichiometry="1"/>
+          <speciesReference species="61_e" stoichiometry="2"/>
+          <speciesReference species="51_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="40_p" stoichiometry="2"/>
+          <speciesReference species="59_p" stoichiometry="2"/>
+          <speciesReference species="79_p" stoichiometry="0"/>
+          <speciesReference species="36_p" stoichiometry="1"/>
+          <speciesReference species="64_p" stoichiometry="0"/>
+          <speciesReference species="6_p" stoichiometry="2"/>
+          <speciesReference species="18_p" stoichiometry="0"/>
+          <speciesReference species="21_p" stoichiometry="0"/>
+          <speciesReference species="86_e" stoichiometry="0"/>
+          <speciesReference species="82_e" stoichiometry="1"/>
+          <speciesReference species="34_e" stoichiometry="0"/>
+          <speciesReference species="80_e" stoichiometry="2"/>
+          <speciesReference species="1_e" stoichiometry="2"/>
+          <speciesReference species="84_e" stoichiometry="0"/>
+          <speciesReference species="37_e" stoichiometry="1"/>
+          <speciesReference species="88_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="5_p_outer" name="5_p_outer_name" reversible="false">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_5_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="41_p" stoichiometry="1"/>
+          <speciesReference species="13_e" stoichiometry="2"/>
+          <speciesReference species="49_e" stoichiometry="0"/>
+          <speciesReference species="32_e" stoichiometry="1"/>
+          <speciesReference species="6_e" stoichiometry="1"/>
+          <speciesReference species="57_e" stoichiometry="2"/>
+          <speciesReference species="10_e" stoichiometry="2"/>
+          <speciesReference species="17_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="65_p" stoichiometry="1"/>
+          <speciesReference species="46_p" stoichiometry="2"/>
+          <speciesReference species="34_e" stoichiometry="0"/>
+          <speciesReference species="47_e" stoichiometry="2"/>
+          <speciesReference species="18_e" stoichiometry="1"/>
+          <speciesReference species="17_e" stoichiometry="0"/>
+          <speciesReference species="6_e" stoichiometry="2"/>
+          <speciesReference species="85_e" stoichiometry="1"/>
+          <speciesReference species="27_e" stoichiometry="1"/>
+          <speciesReference species="25_e" stoichiometry="1"/>
+          <speciesReference species="33_e" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="6_p_outer" name="6_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_6_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="14_p" stoichiometry="2"/>
+          <speciesReference species="70_e" stoichiometry="0"/>
+          <speciesReference species="5_e" stoichiometry="0"/>
+          <speciesReference species="77_e" stoichiometry="1"/>
+          <speciesReference species="79_e" stoichiometry="0"/>
+          <speciesReference species="87_e" stoichiometry="1"/>
+          <speciesReference species="6_e" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="28_p" stoichiometry="1"/>
+          <speciesReference species="98_p" stoichiometry="0"/>
+          <speciesReference species="24_p" stoichiometry="2"/>
+          <speciesReference species="56_p" stoichiometry="1"/>
+          <speciesReference species="89_p" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="7_p_outer" name="7_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_7_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="81_p" stoichiometry="1"/>
+          <speciesReference species="21_p" stoichiometry="1"/>
+          <speciesReference species="26_p" stoichiometry="2"/>
+          <speciesReference species="18_p" stoichiometry="2"/>
+          <speciesReference species="94_p" stoichiometry="2"/>
+          <speciesReference species="61_p" stoichiometry="0"/>
+          <speciesReference species="5_p" stoichiometry="0"/>
+          <speciesReference species="74_p" stoichiometry="0"/>
+          <speciesReference species="72_e" stoichiometry="0"/>
+          <speciesReference species="16_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="4_p" stoichiometry="0"/>
+          <speciesReference species="46_p" stoichiometry="0"/>
+          <speciesReference species="98_p" stoichiometry="1"/>
+          <speciesReference species="11_p" stoichiometry="1"/>
+          <speciesReference species="43_p" stoichiometry="2"/>
+          <speciesReference species="6_e" stoichiometry="2"/>
+          <speciesReference species="92_e" stoichiometry="2"/>
+          <speciesReference species="41_e" stoichiometry="0"/>
+          <speciesReference species="56_e" stoichiometry="1"/>
+          <speciesReference species="85_e" stoichiometry="0"/>
+          <speciesReference species="88_e" stoichiometry="1"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="8_p_outer" name="8_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_8_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="23_p" stoichiometry="0"/>
+          <speciesReference species="43_p" stoichiometry="2"/>
+          <speciesReference species="82_p" stoichiometry="0"/>
+          <speciesReference species="83_e" stoichiometry="1"/>
+          <speciesReference species="23_e" stoichiometry="0"/>
+          <speciesReference species="85_e" stoichiometry="1"/>
+          <speciesReference species="10_e" stoichiometry="0"/>
+          <speciesReference species="43_e" stoichiometry="1"/>
+          <speciesReference species="25_e" stoichiometry="0"/>
+          <speciesReference species="97_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="68_p" stoichiometry="0"/>
+          <speciesReference species="13_p" stoichiometry="0"/>
+          <speciesReference species="60_p" stoichiometry="0"/>
+          <speciesReference species="88_p" stoichiometry="0"/>
+          <speciesReference species="21_e" stoichiometry="2"/>
+          <speciesReference species="33_e" stoichiometry="1"/>
+          <speciesReference species="42_e" stoichiometry="0"/>
+          <speciesReference species="70_e" stoichiometry="0"/>
+          <speciesReference species="14_e" stoichiometry="0"/>
+          <speciesReference species="72_e" stoichiometry="2"/>
+          <speciesReference species="1_e" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+      <reaction id="9_p_outer" name="9_p_outer_name" reversible="true">
+        <notes>
+          <body>
+            <p>GENE_ASSOCIATION: enzyme_9_p_outer</p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="82_p" stoichiometry="0"/>
+          <speciesReference species="62_p" stoichiometry="0"/>
+          <speciesReference species="26_e" stoichiometry="2"/>
+          <speciesReference species="90_e" stoichiometry="2"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="61_p" stoichiometry="1"/>
+          <speciesReference species="54_p" stoichiometry="0"/>
+          <speciesReference species="57_p" stoichiometry="0"/>
+          <speciesReference species="74_p" stoichiometry="2"/>
+          <speciesReference species="20_p" stoichiometry="0"/>
+        </listOfProducts>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>
