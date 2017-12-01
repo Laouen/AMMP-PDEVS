@@ -74,7 +74,7 @@ class SBMLTestGenerator():
         reaction.append(listOfReactants)
 
         listOfProducts = etree.Element('listOfProducts')
-        for reactant in self.random_stoichiometry(cid, rsn):
+        for reactant in self.random_stoichiometry(cid, rsn, len(listOfReactants.getchildren()) > 0):
             listOfProducts.append(reactant)
         reaction.append(listOfProducts)
         return reaction
@@ -94,7 +94,7 @@ class SBMLTestGenerator():
         self.current_enzyme_id += 1
         return eid
 
-    def random_stoichiometry(self, cid, rsn):
+    def random_stoichiometry(self, cid, rsn, can_be_zero=True):
 
         related_compartments = [cid]
         if rsn == 'outer':
@@ -110,7 +110,8 @@ class SBMLTestGenerator():
         for compartment in related_compartments:
             specie_ids = [str(i) + '_' + compartment for i in range(self.species_amounts[compartment])]
 
-            for i in range(randint(0, self.max_stoichimetry_elements)):
+            minimum_species = 0 if can_be_zero else 1
+            for i in range(randint(minimum_species, self.max_stoichimetry_elements)):
                 if len(specie_ids) == 0:
                     break
                 s = choice(specie_ids)

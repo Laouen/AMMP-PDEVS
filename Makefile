@@ -1,4 +1,4 @@
-CC=g++
+CC=time g++
 CFLAGS=-std=c++14 -ftemplate-depth=900000
 INCLUDECADMIUM=-I ../cadmium/include
 INCLUDEDESTIME=-I ../DESTimes/include

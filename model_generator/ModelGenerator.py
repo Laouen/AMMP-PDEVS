@@ -5,6 +5,13 @@ from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
 from XMLParametersGenerator import XMLParametersGenerator
 from constants import *
+from itertools import islice
+
+
+def chunks(data, SIZE=150):
+    it = iter(data)
+    for i in xrange(0, len(data), SIZE):
+        yield {k: data[k] for k in islice(it, SIZE)}
 
 
 class ModelStructure:
@@ -144,17 +151,65 @@ class ModelGenerator:
                 for rsn, reaction_set in compartment.reaction_sets.iteritems()}
 
     def generate_reaction_set(self, cid, rsn, reaction_set):
-        rs_id = '_'.join([cid, rsn])
+        reaction_set_id = '_'.join([cid, rsn])
 
-        port_numbers = range(len(reaction_set))
-        router_routing_table = {rid: port_number
-                                for rid, port_number
-                                in zip(reaction_set.keys(), port_numbers)}
-        self.parameter_writer.add_router(rs_id, router_routing_table)
+        # Reaction sets are separated in groups, this is because the C++ problem compiling large tuples
+        groups = chunks(reaction_set)
+        routing_table = {}
+        reaction_groups = {}
+        total_out_ports = 0
+
+        sub_models = []
+        eic = []
+        eoc = []
+        ic = []
+        ports = []
+
+        port = 0
+        for group in groups:
+            group_id = cid + "_" + str(port)
+            reaction_groups[group_id] = (self.generate_reaction_group(group_id, rsn, group), port)
+            routing_table.update({rid: port for rid in group})
+            port += 1  # last update indicates the port amount and it's therefor used as the router port amount
+
+        self.parameter_writer.add_router(reaction_set_id, routing_table)
         router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
-                                               rs_id,
-                                               [self.parameter_writer.xml_file_path, rs_id],
-                                               len(router_routing_table),
+                                               reaction_set_id,
+                                               [self.parameter_writer.xml_file_path, reaction_set_id],
+                                               port,
+                                               1,
+                                               REACTANT_MESSAGE_TYPE,
+                                               REACTANT_MESSAGE_TYPE)
+
+        sub_models.append(router)
+        eic.append((0, router, 0))
+
+        for group_id, ((model, _, output_port_amount), port) in reaction_groups.iteritems():
+            sub_models.append(model)
+            ic.append((router, port, model, 0))
+            eoc += [(model, port_number, port_number) for port_number in range(output_port_amount)]
+            total_out_ports = max(total_out_ports, output_port_amount)
+
+        ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
+        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out') for port_number in range(total_out_ports)]
+
+        return self.coder.write_coupled_model(reaction_set_id,
+                                              sub_models,
+                                              ports,
+                                              eic,
+                                              eoc,
+                                              ic)
+
+    def generate_reaction_group(self, cid, rsn, reaction_group):
+        reaction_group_id = '_'.join([cid, rsn])
+
+        port_numbers = range(len(reaction_group))
+        routing_table = {rid: port_number for rid, port_number in zip(reaction_group.keys(), port_numbers)}
+        self.parameter_writer.add_router(reaction_group_id, routing_table)
+        router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
+                                               reaction_group_id,
+                                               [self.parameter_writer.xml_file_path, reaction_group_id],
+                                               len(routing_table),
                                                1,
                                                REACTANT_MESSAGE_TYPE,
                                                REACTANT_MESSAGE_TYPE)
@@ -163,7 +218,7 @@ class ModelGenerator:
         eoc = []
         ic = []
         total_out_ports = 0
-        for rid, parameters in reaction_set.iteritems():
+        for rid, parameters in reaction_group.iteritems():
             output_port_amount = max(parameters['routing_table'].values()) + 1
             total_out_ports = max(output_port_amount, total_out_ports)
             self.parameter_writer.add_reaction(rid, parameters)
@@ -174,16 +229,14 @@ class ModelGenerator:
                                                      1,
                                                      PRODUCT_MESSAGE_TYPE,
                                                      REACTANT_MESSAGE_TYPE)
-            ic.append((router, router_routing_table[rid], reaction, 0))
-            eoc += [(reaction, port_number, port_number)
-                    for port_number in range(output_port_amount)]
+            ic.append((router, routing_table[rid], reaction, 0))
+            eoc += [(reaction, port_number, port_number) for port_number in range(output_port_amount)]
             sub_models.append(reaction)
 
         ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
-        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out')
-                  for port_number in range(total_out_ports)]
+        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out') for port_number in range(total_out_ports)]
 
-        return self.coder.write_coupled_model(rs_id,
+        return self.coder.write_coupled_model(reaction_group_id,
                                               sub_models,
                                               ports,
                                               eic,
