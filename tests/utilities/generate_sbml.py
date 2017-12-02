@@ -27,9 +27,9 @@ def main(FLAGS):
 
         model_id = '_'.join([
             FLAGS.model_name,
-            str(FLAGS.reaction_amount[i]),
-            str(FLAGS.species_amount),
-            str(FLAGS.max_stoichimetry_elements)
+            "%03d" % reaction_amount,  # format number with three digits, 1 -> 001, 10 -> 010
+            "%03d" % FLAGS.species_amount,
+            "%03d" % FLAGS.max_stoichimetry_elements
         ])
 
         generator = SBMLTestGenerator(model_id + '.xml',
