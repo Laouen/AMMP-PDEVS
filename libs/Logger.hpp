@@ -27,10 +27,12 @@
 #ifndef PMGBP_PDEVS_LOGGER_HPP
 #define PMGBP_PDEVS_LOGGER_HPP
 
-//#define show_log
-//#define show_info
-//#define show_debug
-//#define show_error
+/* These flags are defined in the compile -D flag from the Makefile parameter
+#define show_log
+#define show_info
+#define show_debug
+#define show_error
+*/
 
 #include <string>
 

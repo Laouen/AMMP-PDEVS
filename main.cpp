@@ -59,20 +59,34 @@ using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 /*******************************************/
 
 
-int main() {
+int main(int argc, char ** argv) {
 
-    std::ofstream file;
-    file.open("coupled_msb201165-sup-0003.json");
-    export_model_to_json<NDTime, coupled_cell>(file, 1);
-    file.close();
+    #ifdef DIAGRAM
 
-//    auto start = hclock::now(); //to measure simulation execution time
-//
-//    cadmium::engine::runner<NDTime, coupled_cell, logger_top> r{{0}};
-//    r.runUntil({3000});
-//
-//    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
-//    cout << "Simulation took:" << elapsed << "sec" << endl;
+        if (argc < 2) {
+            cout << "Usage: " + string(argv[0]) + " <diagram_output_file>" << endl;
+            exit(0);
+        }
+
+        std::ofstream file;
+        file.open(argv[1]);
+
+        if (argc == 2) {
+            export_model_to_json<NDTime, coupled_cell>(file);
+        } else {
+            export_model_to_json<NDTime, coupled_cell>(file, atoi(argv[2]));
+        }
+        file.close();
+    
+    #else
+    
+        auto start = hclock::now();
+        cadmium::engine::runner<NDTime, coupled_cell, logger_top> r{{0}};
+        r.runUntil({3000});
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
+        cout << "Simulation took:" << elapsed << "sec" << endl;
+    
+    #endif
 
     return 0;
 }

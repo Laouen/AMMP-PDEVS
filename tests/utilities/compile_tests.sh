@@ -4,7 +4,6 @@ for f in *.xml; do
 	python generate_model.py -f ../tests/utilities/${f}
 	cd ../
 	make all
-	make clean
-	rm top.hpp top_ports.hpp paramters.xml
+	make clean_all
 	cd tests/utilities
 done
