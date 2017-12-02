@@ -5,6 +5,11 @@ import sys
 import gflags
 import pandas as pd
 import json
+from tqdm import tqdm
+
+
+def file_total_lines(file_path):
+    return sum(1 for line in open(file_path))
 
 
 def main(FLAGS):
@@ -12,9 +17,11 @@ def main(FLAGS):
     current_time = ""
     data = {'time': [], 'specie': [], 'amount': []}
 
+    total_lines = file_total_lines(FLAGS.input_file)
+
     with open(FLAGS.input_file, 'r') as file:
 
-        for line in file.readlines():
+        for line in tqdm(file.readlines(), total=total_lines):
             if line.startswith('State for model space'):
                 get_data_from_state(data, current_time, line)
             elif not line.startswith('[') and not line.startswith('State for model'):
