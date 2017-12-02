@@ -20,9 +20,9 @@ def main(FLAGS):
                                      FLAGS.extra_cellular,
                                      FLAGS.periplasm,
                                      FLAGS.cytoplasm,
-                                     json_model=json_model)
+                                     json_model=json_model,
+                                     groups_size=FLAGS.reaction_groups_size)
 
-    # SBMLParserEncoder().encode()
     if FLAGS.json_model_output:
         json.dump(model_generator.parser, open(FLAGS.json_model_output, 'w+'), cls=SBMLParserEncoder, indent=4)
 
@@ -35,6 +35,7 @@ if __name__ == '__main__':
     gflags.DEFINE_string('extra_cellular', 'e', 'The extra cellular space ID in the SBML file', short_name='e')
     gflags.DEFINE_string('cytoplasm', 'c', 'The cytoplasm space ID in the SBML file', short_name='c')
     gflags.DEFINE_string('periplasm', 'p', 'The periplasm space ID in the SBML file', short_name='p')
+    gflags.DEFINE_string('reaction_groups_size', 150, 'The size of the reaction set groups', short_name='s')
     gflags.DEFINE_string('json_model_input', None, 'The exported json model', short_name='i')
     gflags.DEFINE_string('json_model_output', None, 'If not None, it export the parsed sbml model as json to avoid'
                          'reparsing the sbml model in the future. Note: parsing a SBML is a slow process.',

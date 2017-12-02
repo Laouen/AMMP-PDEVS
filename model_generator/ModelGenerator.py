@@ -96,7 +96,8 @@ class ModelGenerator:
                  extra_cellular_id,
                  periplasm_id,
                  cytoplasm_id,
-                 json_model=None):
+                 json_model=None,
+                 groups_size=150):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -109,8 +110,10 @@ class ModelGenerator:
         :param cytoplasm_id: The cytoplasm ID, this ID must be one of the compartments IDs from
         the sbml file
         :param json_model: The parser exported as json. Optional, used to avoid re parsing
+        :param groups_size: The size of the reaction set groups
         """
 
+        self.groups_size = groups_size
         self.parameter_writer = XMLParametersGenerator()
         self.coder = ModelCodeGenerator()
         self.parser = SBMLParser(sbml_file,
@@ -154,7 +157,7 @@ class ModelGenerator:
         reaction_set_id = '_'.join([cid, rsn])
 
         # Reaction sets are separated in groups, this is because the C++ problem compiling large tuples
-        groups = chunks(reaction_set)
+        groups = chunks(reaction_set, SIZE=self.groups_size)
         routing_table = {}
         reaction_groups = {}
         total_out_ports = 0
