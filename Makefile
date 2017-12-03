@@ -1,7 +1,7 @@
 CC=time g++
 CFLAGS=-std=c++14 -ftemplate-depth=900000
-INCLUDECADMIUM=-I ../cadmium/include
-INCLUDEDESTIME=-I ../DESTimes/include
+INCLUDECADMIUM=-I vendor/cadmium/include
+INCLUDEDESTIME=-I vendor/DESTimes/include
 INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
 INCLUDETINY=-I vendor/tinyxml2
 INCLUDELIBS=-I libs

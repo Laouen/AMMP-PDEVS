@@ -4,12 +4,12 @@ project(PMGBP_PDEVS)
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(
-        ../cadmium/include
-        ../DESTimes/include
         atomics
         libs
         structures
         vendor/tinyxml2
+        vendor/cadmium/include
+        vendor/DESTimes/include
         vendor/DEVSDiagrammer/model_json_exporter)
 
 set(SOURCES

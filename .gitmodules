@@ -7,3 +7,6 @@
 [submodule "vendor/cadmium"]
 	path = vendor/cadmium
 	url = https://github.com/SimulationEverywhere/cadmium.git
+[submodule "vendor/DESTimes"]
+	path = vendor/DESTimes
+	url = git@github.com:Laouen/DESTimes.git
