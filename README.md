@@ -18,3 +18,8 @@ Some variables and concepts have standarized names that are used across the proj
  * eid: Enzyme ID
  * rid: Reaction ID
  * rsn: Reaction Set Name
+
+## Notes:
+
+*The directory structure format:* The structure used in this project for the directory structure was taken from
+https://hiltmon.com/blog/2013/07/03/a-simple-c-plus-plus-project-structure/ 
