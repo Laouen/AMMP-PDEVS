@@ -105,7 +105,7 @@ class SBMLParser:
         self.reactions = None
         self.enzymes = None
 
-        # Not in the SBML model parameters
+        # Parameters not included in the SBML model parameters
         # TODO: refactor default dict values to be set in the class init method parameters
         self.enzyme_amounts = defaultdict(lambda: 100)
         self.konSTPs = defaultdict(lambda: 0.8)
@@ -164,8 +164,7 @@ class SBMLParser:
 
     def parse_compartments_species(self):
         """
-        :return: A dictionary of compartment ids as keys and dictionaries of
-        (specie_id, specie_name) as values
+        :return: A dictionary of cid as keys and dictionaries of (sid, specie_name) as values
         :rtype: dict[int, dict[int, string]]
         """
 
@@ -175,24 +174,23 @@ class SBMLParser:
         self.compartment_species = {k: {} for k in self.get_compartments().keys()}
 
         for specie in self.model.findAll('species'):
-            specie_id = specie.get('id')
-            compartment = specie.get('compartment')
+            sid = specie.get('id')
+            cid = specie.get('compartment')
             name = specie.get('name')
 
-            self.compartment_species[compartment][specie_id] = name
+            self.compartment_species[cid][sid] = name
 
         return self.compartment_species
 
-    def get_reaction_parameters(self, comp_id):
+    def get_reaction_parameters(self, cid):
         """
-        :return: All the reaction parameters for the reactions that uses species from the
-        compartment
+        :return: All the reaction parameters for the reactions that uses species from the compartment
         :rtype: list[str]
         """
-        compartment_species = self.parse_compartments_species()[comp_id].keys()
-        return {rid: reaction_parameters
-                for rid, reaction_parameters in self.reactions.items()
-                if not_empty_intersection(compartment_species, reaction_parameters['species'])}
+        compartment_species = self.parse_compartments_species()[cid].keys()
+        return {rid: parameters
+                for rid, parameters in self.reactions.iteritems()
+                if not_empty_intersection(compartment_species, parameters['species'])}
 
     def get_enzymes(self, reactions):
         """
@@ -238,7 +236,7 @@ class SBMLParser:
 
         :param gene_association: The gene association logical expresion.
         :type: string
-        :return: A list of enzyme ids from a gene_association logic expresion as the one specified
+        :return: A list of eids (Enzyme IDs) from a gene_association logic expresion as the one specified
         in the SBML files
         :rtype: List[str]
         """
@@ -254,7 +252,7 @@ class SBMLParser:
         # all_enzymes is a list of enzyme lists and the return statement is the one who flattens
         # the all_enzymes in order to correctly return an enzyme list
         all_enzymes = map(lambda x: self.parse_logical_gene_association(x), gene_association)
-        return [enzyme for enzyme_list in all_enzymes for enzyme in enzyme_list]
+        return [eid for enzyme_list in all_enzymes for eid in enzyme_list]
 
     def parse_logical_gene_association(self, enzymes):
         """
@@ -315,19 +313,19 @@ class SBMLParser:
             else:
                 self.enzymes[eid]['handled_reactions'].append(rid)
 
-    def get_reaction_set_ids(self, cid, reaction_set):
+    def get_reaction_set_rids(self, cid, rsn):
         """
         :param cid: The compartment ID where the reaction set belongs
         :type cid: str
-        :type reaction_set: str
-        :param reaction_set:  The reaction set name of the reactions to be retrieved
-        :return: A list with all the reaction ids from the specified reaction set
-        within the compartment with id cid
+        :type rsn: str
+        :param rsn: The reaction set name of the reactions to be retrieved
+        :return: A list with all the rids (Reaction IDs) from the specified reaction set within the
+        compartment with id cid
         :rtype: list[str]
         """
 
-        location = Location(cid, reaction_set)
-        return [r for r, p in self.reactions.items() if p['location'] == location]
+        location = Location(cid, rsn)
+        return [rid for rid, p in self.reactions.iteritems() if p['location'] == location]
 
     def parse_reactions(self):
         """
@@ -346,27 +344,27 @@ class SBMLParser:
 
         print '[Parser] End parsing reactions.'
 
-    def get_compartment(self, specie_id):
+    def get_compartment(self, sid):
         """
-        :param specie_id: the specie id
+        :param sid: the specie id
         :type: str
         :return: The cid (Compartment ID) from where the specie id passed as parameter belongs
         """
 
-        return self.model.find('species', {'id': specie_id}).get('compartment')
+        return self.model.find('species', {'id': sid}).get('compartment')
 
-    def get_reaction_routing_table(self, reaction, comp_id):
+    def get_reaction_routing_table(self, reaction, cid):
         """
         :param reaction: The reaction node from the SBML xml file
         :type reaction: bs4.element.Tag
-        :param comp_id: The compartment id where the reaction belongs
+        :param cid: The compartment id where the reaction belongs
         :return: The routing table to know by which port should each specie be send after the
         reaction takes place and when metabolites are rejected
         :rtype: dict[str, int]
         """
 
         species = [s.get('species') for s in reaction.findAll('speciesReference')]
-        return {s: 0 if comp_id == self.get_compartment(s)
+        return {s: 0 if cid == self.get_compartment(s)
                 else 1 if self.cytoplasm_id == self.get_compartment(s)
                 else 2 for s in species}
 
@@ -382,32 +380,31 @@ class SBMLParser:
         # key and the location as the value. The map can be loaded from a file allowing different
         # compartment combination interpretations.
 
-        compartment_ids = set([self.get_compartment(s) for s in set(species)])
+        cids = set([self.get_compartment(s) for s in set(species)])
         location = None
-        if len(compartment_ids) == 1:
-            location = Location(compartment_ids.pop(), BULK)
+        if len(cids) == 1:
+            location = Location(cids.pop(), BULK)
 
-        elif len(compartment_ids) == 2:
-            if self.periplasm_id in compartment_ids:  # Periplasm inner or outer membrane
+        elif len(cids) == 2:
+            if self.periplasm_id in cids:  # Periplasm inner or outer membrane
 
-                compartment_ids.discard(self.periplasm_id)
+                cids.discard(self.periplasm_id)
                 reaction_sets = {self.extra_cellular_id: OUTER, self.cytoplasm_id: INNER}
-                location = Location(self.periplasm_id, reaction_sets[compartment_ids.pop()])
-            elif self.cytoplasm_id in compartment_ids:
+                location = Location(self.periplasm_id, reaction_sets[cids.pop()])
+            elif self.cytoplasm_id in cids:
 
-                compartment_ids.discard(self.cytoplasm_id)
-                if self.extra_cellular_id in compartment_ids:  # Periplasm trans membrane
+                cids.discard(self.cytoplasm_id)
+                if self.extra_cellular_id in cids:  # Periplasm trans membrane
                     location = Location(self.periplasm_id, TRANS)
                 else:  # Organelle membrane to cytoplasm
-                    location = Location(compartment_ids.pop(), MEMBRANE)
+                    location = Location(cids.pop(), MEMBRANE)
 
-        elif len(compartment_ids) == 3:  # Periplasm trans membrane
-            if {self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id} == compartment_ids:
+        elif len(cids) == 3:  # Periplasm trans membrane
+            if {self.extra_cellular_id, self.periplasm_id, self.cytoplasm_id} == cids:
                 location = Location(self.periplasm_id, TRANS)
 
         if location is None:
-            raise IllegalCompartmentCombination('Illegal compartment combination ' +
-                                                str(compartment_ids))
+            raise IllegalCompartmentCombination('Illegal compartment combination ' + str(cids))
 
         return location
 
@@ -453,12 +450,12 @@ class SBMLParser:
     def separate_by_compartment(self, stoichiometry):
         separated_stoichiometry = {}
 
-        for specie, amount in stoichiometry.iteritems():
-            cid = self.get_compartment(specie)
+        for sid, amount in stoichiometry.iteritems():
+            cid = self.get_compartment(sid)
             if cid not in separated_stoichiometry.keys():
-                separated_stoichiometry[cid] = {specie: amount}
+                separated_stoichiometry[cid] = {sid: amount}
             else:
-                separated_stoichiometry[cid][specie] = amount
+                separated_stoichiometry[cid][sid] = amount
 
         return separated_stoichiometry
 

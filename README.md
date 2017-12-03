@@ -16,4 +16,5 @@ Some variables and concepts have standarized names that are used across the proj
  * cid: Compartment ID
  * sid: Specie ID
  * eid: Enzyme ID
+ * rid: Reaction ID
  * rsn: Reaction Set Name

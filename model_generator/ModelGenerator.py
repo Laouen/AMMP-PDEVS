@@ -70,7 +70,7 @@ class ModelStructure:
         # Building reaction sets
         self.reaction_sets = {}
         for reaction_set in internal_reaction_sets:
-            reaction_ids = parser.get_reaction_set_ids(cid, reaction_set)
+            reaction_ids = parser.get_reaction_set_rids(cid, reaction_set)
             self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
 
         # Building space
