@@ -1,11 +1,11 @@
-CC=time g++
+CC=g++
 CFLAGS=-std=c++14 -ftemplate-depth=900000
 INCLUDECADMIUM=-I vendor/cadmium/include
 INCLUDEDESTIME=-I vendor/DESTimes/include
 INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
 INCLUDETINY=-I vendor/tinyxml2
-INCLUDELIBS=-I libs
-INCLUDESTRUCTURES=-I structures
+INCLUDELIB=-I include/lib
+INCLUDESTRUCTURES=-I include/structures
 
 # =============== Parameters ==================== #
 # D: all the -D flags, they are:
@@ -19,21 +19,25 @@ INCLUDESTRUCTURES=-I structures
 # ================================================ #
 
 all: main.o
-	$(CC) -g main.o structures/types.o structures/space.o vendor/tinyxml2/tinyxml2.o -o model
+	$(CC) -g main.o build/types.o build/space.o vendor/tinyxml2/tinyxml2.o -o model
 
-main.o: main.cpp structures/types.o structures/space.o vendor/tinyxml2/tinyxml2.o
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY) $(INCLUDELIBS) $(INCLUDESTRUCTURES) main.cpp -o main.o
+main.o: main.cpp build/types.o build/space.o vendor/tinyxml2/tinyxml2.o
+	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY) $(INCLUDELIB) $(INCLUDESTRUCTURES) main.cpp -o main.o
 
-structures/space.o: structures/space.cpp structures/space.hpp
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDELIBS) structures/space.cpp -o structures/space.o
+build/space.o: check_dirs src/structures/space.cpp include/structures/space.hpp
+	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDESTRUCTURES) $(INCLUDELIB) src/structures/space.cpp -o build/space.o
 
-structures/types.o: structures/types.cpp structures/types.hpp
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDELIBS) structures/types.cpp -o structures/types.o
+build/types.o: check_dirs src/structures/types.cpp include/structures/types.hpp
+	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDESTRUCTURES) $(INCLUDELIB) src/structures/types.cpp -o build/types.o
 
 vendor/tinyxml2/tinyxml2.o: vendor/tinyxml2/tinyxml2.h vendor/tinyxml2/tinyxml2.cpp
 	$(CC) -g -c $(CFLAGS) vendor/tinyxml2/tinyxml2.cpp -o vendor/tinyxml2/tinyxml2.o
 
-.PHONY: clean clean_model clean_all
+.PHONY: clean clean_model clean_all check_dirs
+
+check_dirs:
+	mkdir -p bin
+	mkdir -p build
 
 clean_all: clean_model clean
 
@@ -41,6 +45,4 @@ clean_model:
 	rm top.hpp top_ports.hpp parameters.xml
 
 clean:
-	rm -f model *.o *~
-	-for d in structures; do (cd $$d; rm -f *.o *~ ); done
-	-for d in vendor/tinyxml2; do (cd $$d; rm -f *.o *~ ); done
+	rm -rf bin/ build/ *.o *~

@@ -50,7 +50,7 @@
 #include <TupleOperators.hpp>
 #include <tinyxml2.h>
 
-#include "../structures/reaction.hpp"
+#include <reaction.hpp>
 
 namespace pmgbp {
 namespace models {

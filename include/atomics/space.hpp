@@ -40,8 +40,8 @@
 #include <TupleOperators.hpp>
 #include <tinyxml2.h>
 
-#include "../structures/space.hpp" // Status, Task
-#include "../structures/types.hpp" // ReactionInfo, Integer, RoutingTable
+#include <space.hpp> // Status, Task
+#include <types.hpp> // ReactionInfo, Integer, RoutingTable
 
 #define TIME_TO_SEND_FOR_REACTION TIME({0,0,0,1}) // 1 millisecond
 namespace pmgbp {

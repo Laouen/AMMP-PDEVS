@@ -1,4 +1,4 @@
-#include "space.hpp"
+#include <space.hpp>
 
 std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::Status& s) {
 

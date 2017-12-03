@@ -1,13 +1,22 @@
+# Local and dinamic folders
 cmake-build-debug/
+build
 .idea/
-documentation/html/*
-documentation/latex/*
-**.pyc
-model
+
+# Dinamically created by doxygen documentation files
+doc/html/*
+doc/latex/*
+
+# Dinamically generated model files
+bind/*
 top.hpp
 top_ports.hpp
 parameters.xml
+
+# Output files
 **_diagram.json
-tests/utilities/*.xml
+test/utilities/*.xml
 model_generator/*.json
-**.o
+
+# Others
+**.pyc
