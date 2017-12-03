@@ -4,3 +4,6 @@
 [submodule "vendor/DEVSDiagramer"]
 	path = vendor/DEVSDiagrammer
 	url = git@github.com:Laouen/DEVSDiagramer.git
+[submodule "vendor/cadmium"]
+	path = vendor/cadmium
+	url = https://github.com/SimulationEverywhere/cadmium.git
