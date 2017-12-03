@@ -4,8 +4,8 @@ INCLUDECADMIUM=-I vendor/cadmium/include
 INCLUDEDESTIME=-I vendor/DESTimes/include
 INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
 INCLUDETINY=-I vendor/tinyxml2
-INCLUDELIB=-I include/lib
-INCLUDESTRUCTURES=-I include/structures
+VENDOR=$(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY)
+INCLUDE=-I include
 
 # =============== Parameters ==================== #
 # D: all the -D flags, they are:
@@ -18,17 +18,17 @@ INCLUDESTRUCTURES=-I include/structures
 #  example: D='-D DIAGRAM' will compile the model in the DEVSDiagrammer mode and the model diagram .json will be print
 # ================================================ #
 
-all: main.o
-	$(CC) -g main.o build/types.o build/space.o vendor/tinyxml2/tinyxml2.o -o model
+all:build/main.o
+	$(CC) -g build/main.o build/types.o build/space.o vendor/tinyxml2/tinyxml2.o -o bin/model
 
-main.o: main.cpp build/types.o build/space.o vendor/tinyxml2/tinyxml2.o
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY) $(INCLUDELIB) $(INCLUDESTRUCTURES) main.cpp -o main.o
+build/main.o: main.cpp build/types.o build/space.o vendor/tinyxml2/tinyxml2.o
+	$(CC) -g -c $(D) $(CFLAGS) $(VENDOR) $(INCLUDE) main.cpp -o build/main.o
 
-build/space.o: check_dirs src/structures/space.cpp include/structures/space.hpp
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDESTRUCTURES) $(INCLUDELIB) src/structures/space.cpp -o build/space.o
+build/space.o: check_dirs src/structures/space.cpp include/pmgbp/structures/space.hpp
+	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDE) src/structures/space.cpp -o build/space.o
 
-build/types.o: check_dirs src/structures/types.cpp include/structures/types.hpp
-	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDESTRUCTURES) $(INCLUDELIB) src/structures/types.cpp -o build/types.o
+build/types.o: check_dirs src/structures/types.cpp include/pmgbp/structures/types.hpp
+	$(CC) -g -c $(D) $(CFLAGS) $(INCLUDECADMIUM) $(INCLUDE) src/structures/types.cpp -o build/types.o
 
 vendor/tinyxml2/tinyxml2.o: vendor/tinyxml2/tinyxml2.h vendor/tinyxml2/tinyxml2.cpp
 	$(CC) -g -c $(CFLAGS) vendor/tinyxml2/tinyxml2.cpp -o vendor/tinyxml2/tinyxml2.o

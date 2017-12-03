@@ -34,14 +34,15 @@
 
 #include <cadmium/modeling/message_bag.hpp>
 
-#include <Random.hpp> // RealRandom
-#include <Logger.hpp>
-#include <TaskScheduler.hpp>
-#include <TupleOperators.hpp>
 #include <tinyxml2.h>
 
-#include <space.hpp> // Status, Task
-#include <types.hpp> // ReactionInfo, Integer, RoutingTable
+#include <pmgbp/lib/Random.hpp> // RealRandom
+#include <pmgbp/lib/Logger.hpp>
+#include <pmgbp/lib/TaskScheduler.hpp>
+#include <pmgbp/lib/TupleOperators.hpp>
+
+#include <pmgbp/structures/types.hpp> // ReactionInfo, Integer, RoutingTable
+#include <pmgbp/structures/space.hpp> // Status, Task
 
 #define TIME_TO_SEND_FOR_REACTION TIME({0,0,0,1}) // 1 millisecond
 namespace pmgbp {

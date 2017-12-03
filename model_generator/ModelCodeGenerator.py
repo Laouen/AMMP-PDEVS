@@ -163,16 +163,16 @@ class ModelCodeGenerator:
     def write_includes(self):
         # model def includes
 
-        structures = ["reaction", "router", "space"]
-        models = ["reaction", "space", "router"]
+        structures = ['reaction', 'router', 'space']
+        models = ['reaction', 'router', 'space']
 
         self.write_ports('/* structure includes */\n')
         for structure in structures:
-            self.write_ports('#include \"structures/' + structure + '.hpp\"')
+            self.write_ports('#include <pmgbp/structures/' + structure + '.hpp>')
 
         self.write('/* atomic model includes */\n')
         for model in models:
-            self.write('#include \"atomics/' + model + '.hpp\"')
+            self.write('#include <pmgbp/atomics/atomics/' + model + '.hpp>')
 
         self.write('#include \"' + self.model_name + '_ports.hpp\"')
 

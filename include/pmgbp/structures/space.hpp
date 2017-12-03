@@ -11,7 +11,7 @@
 #include <cadmium/modeling/message_bag.hpp>
 #include <cadmium/modeling/ports.hpp>
 
-#include <TupleOperators.hpp>
+#include <pmgbp/lib/TupleOperators.hpp>
 
 namespace pmgbp {
 namespace structs {

@@ -43,14 +43,16 @@
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
 
-#include <types.hpp> // MetaboliteAmounts, RTask_t, Way, RTaskQueue_t
-#include <Random.hpp> // RealRandom
-#include <TaskScheduler.hpp>
-#include <Logger.hpp>
-#include <TupleOperators.hpp>
+#include <pmgbp/lib/Logger.hpp>
+#include <pmgbp/lib/Random.hpp> // RealRandom
+#include <pmgbp/lib/TaskScheduler.hpp>
+#include <pmgbp/lib/TupleOperators.hpp>
+
+#include <pmgbp/structures/types.hpp> // MetaboliteAmounts, RTask_t, Way, RTaskQueue_t
+#include <pmgbp/structures/reaction.hpp>
+
 #include <tinyxml2.h>
 
-#include <reaction.hpp>
 
 namespace pmgbp {
 namespace models {

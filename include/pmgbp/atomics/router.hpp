@@ -8,8 +8,9 @@
 #include <map>
 
 #include <cadmium/modeling/message_bag.hpp>
-#include <TupleOperators.hpp>
-#include <Logger.hpp>
+
+#include <pmgbp/lib/TupleOperators.hpp>
+#include <pmgbp/lib/Logger.hpp>
 
 #include <tinyxml2.h>
 
