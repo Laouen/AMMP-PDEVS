@@ -94,7 +94,7 @@ public:
         map<string, Integer> product_comps;
         double koff_STP;
         double koff_PTS;
-        TIME reject_time;
+        TIME reject_rate;
 
         RoutingTable<string> routing_table;
         TaskScheduler<TIME, output_bags> tasks;
@@ -143,7 +143,7 @@ public:
 
         // Read simple state parameters
         this->state.rate = TIME(root->FirstChildElement("rate")->GetText());
-        this->state.reject_time = TIME(root->FirstChildElement("rejectTime")->GetText());
+        this->state.reject_rate = TIME(root->FirstChildElement("rejectRate")->GetText());
         this->state.koff_STP = std::stod(root->FirstChildElement("koffSTP")->GetText());
         this->state.koff_PTS = std::stod(root->FirstChildElement("koffPTS")->GetText());
 
@@ -233,7 +233,7 @@ public:
         // New task for the rejected metabolites to be send it.
         output_bags rejected_metabolites;
         sendBackRejected(rejected, rejected_metabolites);
-        this->state.tasks.add(this->state.reject_time, rejected_metabolites);
+        this->state.tasks.add(this->state.reject_rate, rejected_metabolites);
 
         // looking for new reactions
         output_bags products;

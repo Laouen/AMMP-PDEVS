@@ -10,3 +10,10 @@ Automatic Modeling of Metabolic Pathways in Parallel DEVS
  6. DEVSDiagrammer
 
 *Note:* Dependencies from 3 to 6 comes in this project as submodules: git submodule update -i --recursive
+
+## Standard names
+Some variables and concepts have standarized names that are used across the project code, the list of this names is:
+ * cid: Compartment ID
+ * sid: Specie ID
+ * eid: Enzyme ID
+ * rsn: Reaction Set Name

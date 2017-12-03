@@ -172,7 +172,7 @@ class ModelCodeGenerator:
 
         self.write('/* atomic model includes */\n')
         for model in models:
-            self.write('#include <pmgbp/atomics/atomics/' + model + '.hpp>')
+            self.write('#include <pmgbp/atomics/' + model + '.hpp>')
 
         self.write('#include \"' + self.model_name + '_ports.hpp\"')
 

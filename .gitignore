@@ -8,7 +8,7 @@ doc/html/*
 doc/latex/*
 
 # Dinamically generated model files
-bind/*
+bin
 top.hpp
 top_ports.hpp
 parameters.xml

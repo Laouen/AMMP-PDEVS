@@ -16,15 +16,6 @@ import copy
 from tqdm import tqdm
 
 
-class ReactionParametersDecoder(JSONEncoder):
-    def default(self, o):
-        print "Reaction Parameter Encoder: ", o
-        res = {k: v for k, v in o.iteritems()}
-        for key in res.keys():
-            res[key]['location'] = dict(res[key]['location'].__dict__)
-        return res
-
-
 class SBMLParserEncoder(JSONEncoder):
     def default(self, o):
 
@@ -123,7 +114,7 @@ class SBMLParser:
         self.koffPTSs = defaultdict(lambda: 0.8)
         self.metabolite_amounts = defaultdict(lambda: 100)
         self.rates = defaultdict(lambda: '0:0:0:1')
-        self.reject_times = defaultdict(lambda: '0:0:0:1')
+        self.reject_rates = defaultdict(lambda: '0:0:0:1')
         self.interval_times = defaultdict(lambda: '0:0:0:1')
 
         self.load_sbml_file(sbml_file)
@@ -216,14 +207,14 @@ class SBMLParser:
                 for eid, enzyme_parameters in self.enzymes.items()
                 if not_empty_intersection(enzyme_parameters['handled_reactions'], reactions)}
 
-    def get_enzyme_ids(self, reaction):
+    def get_eids(self, reaction):
         """
-        Returns all the reaction associated enzymes, all the associated enzymes are the enzymes
-        responsables to handle the reaction.
+        Returns all the reaction associated eids (Enzyme IDs), all the associated enzymes are the
+        enzymes responsables to handle the reaction.
 
         :param: reaction:
         :ptype: bs4.element.Tag
-        :return: the enzyme handler ids
+        :return: the enzyme handler ids as (eid)
         :rtype: list[str]
         """
 
@@ -313,7 +304,7 @@ class SBMLParser:
         if self.is_biomass(rid) is True:
             return
 
-        for eid in self.get_enzyme_ids(reaction):
+        for eid in self.get_eids(reaction):
             if eid not in self.enzymes.keys():
                 self.enzymes[eid] = {
                     'id': eid,
@@ -453,7 +444,7 @@ class SBMLParser:
             'koffSTP': self.koffSTPs[rid],
             'koffPTS': self.koffPTSs[rid],
             'rate': self.rates[rid],
-            'rejectTime': self.reject_times[rid]
+            'rejectRate': self.reject_rates[rid]
         }
 
         self.parse_enzymes(reaction)

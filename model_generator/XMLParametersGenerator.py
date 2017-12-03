@@ -37,7 +37,7 @@ class XMLParametersGenerator:
 
         xml_reaction = etree.Element(model_id)
 
-        parameter_keys = ['rate', 'rejectTime', 'koffSTP', 'koffPTS']
+        parameter_keys = ['rate', 'rejectRate', 'koffSTP', 'koffPTS']
         for key in parameter_keys:
             xml_parameter = etree.Element(key)
             xml_parameter.text = str(parameters[key])
