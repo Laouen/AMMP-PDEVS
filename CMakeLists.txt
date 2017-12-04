@@ -4,28 +4,23 @@ project(PMGBP_PDEVS)
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(
-        atomics
-        libs
-        structures
+        include
         vendor/tinyxml2
         vendor/cadmium/include
         vendor/DESTimes/include
         vendor/DEVSDiagrammer/model_json_exporter)
 
 set(SOURCES
-        structures/types.cpp
-        structures/space.cpp
+        src/structures/types.cpp
+        src/structures/space.cpp
         main.cpp
-        top.hpp
-        top_ports.hpp
-        atomics
         vendor/tinyxml2/tinyxml2.cpp
         vendor/DEVSDiagrammer/model_json_exporter)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 include_directories(include ${Boost_INCLUDE_DIRS})
 
-set(TEST_SOURCES libs structures test/cpp/libs)
+set(TEST_SOURCES include test/cpp/libs)
 
 enable_testing()
 FILE(GLOB TestSources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/cpp/libs/*_test.cpp)

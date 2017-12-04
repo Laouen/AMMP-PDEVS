@@ -5,7 +5,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <NDTime.hpp>
 #include <boost/test/unit_test.hpp>
-#include "../../../libs/TaskScheduler.hpp"
+#include <pmgbp/lib/TaskScheduler.hpp>
 
 BOOST_AUTO_TEST_SUITE( libs_task_cheduler )
 

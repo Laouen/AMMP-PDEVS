@@ -6,7 +6,7 @@
 #include <boost/test/unit_test.hpp>
 #include <cadmium/modeling/ports.hpp>
 #include <cadmium/modeling/message_bag.hpp>
-#include "../../../libs/TupleOperators.hpp"
+#include <pmgbp/lib/TupleOperators.hpp>
 
 using namespace std;
 using namespace cadmium;
