@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++14 -ftemplate-depth=900000
+CFLAGS=-std=c++17 -ftemplate-depth=900000
 INCLUDECADMIUM=-I vendor/cadmium/include
 INCLUDEDESTIME=-I vendor/DESTimes/include
 INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
@@ -18,7 +18,7 @@ INCLUDE=-I include
 #  example: D='-D DIAGRAM' will compile the model in the DEVSDiagrammer mode and the model diagram .json will be print
 # ================================================ #
 
-all:build/main.o
+all: build/main.o
 	$(CC) -g build/main.o build/types.o build/space.o vendor/tinyxml2/tinyxml2.o -o bin/model
 
 build/main.o: main.cpp build/types.o build/space.o vendor/tinyxml2/tinyxml2.o
