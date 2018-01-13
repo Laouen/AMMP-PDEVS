@@ -284,7 +284,7 @@ public:
             os << "Tasks [ time_left: " << task.time_left;
             os << " jobs amount " << task.task_elements.size() << " ]";
         }
-
+        return os;
     }
 
 private:
