@@ -27,7 +27,7 @@
 #include <iostream>
 #include <chrono>
 
-#include <cadmium/engine/pdevs_runner.hpp>
+#include <cadmium/engine/pdevs_dynamic_runner.hpp>
 
 #include <NDTime.hpp>
 #include <include/model_json_exporter.hpp>
@@ -81,8 +81,8 @@ int main(int argc, char ** argv) {
     #else
     
         auto start = hclock::now();
-        cadmium::engine::runner<NDTime, coupled_cell, logger_top> r{{0}};
-        r.runUntil({3000});
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(dynamic_coupled_cell, NDTime({0}));
+        r.run_until({3000});
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;
     

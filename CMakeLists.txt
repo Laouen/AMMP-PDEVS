@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 project(PMGBP_PDEVS)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(
         include
         vendor/tinyxml2
-        vendor/cadmium/include
+        ../cadmium-fork/include
         vendor/DESTimes/include
         vendor/DEVSDiagrammer/model_json_exporter)
 
