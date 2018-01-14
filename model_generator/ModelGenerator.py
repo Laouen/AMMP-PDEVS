@@ -381,7 +381,11 @@ class ModelGenerator:
                     ic.append((model_name, 2, extra_cellular_model, 0))
 
         self.parameter_writer.save_xml()
-        return self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)
+        cell_coupled = self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)
+
+        self.coder.write_dynamic_translator_model('cell', 'NDTime');
+
+        return cell_coupled
 
     def generate_top_bulk_ic(self, bulk_model, bulk_cid, bulk_routing_table, periplasm_model):
         ic = []

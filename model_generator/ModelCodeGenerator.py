@@ -44,6 +44,11 @@ class ModelCodeGenerator:
                            '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
                            '{sub_model_2},{sub_model_2}_ports::in_{port_number_2}>'
 
+        self.dynamic_translator_template = 'std::shared_ptr<cadmium::dynamic::modeling::coupled<{time_type}>> ' \
+                                          'sp_coupled_{model_id} = ' \
+                                          'cadmium::dynamic::translate::make_dynamic_coupled_model' \
+                                          '<{time_type}, coupled_{model_id}>();'
+
         self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
 
@@ -176,4 +181,9 @@ class ModelCodeGenerator:
 
         self.write('#include \"' + self.model_name + '_ports.hpp\"')
 
-        self.write('\n#include <cadmium/modeling/coupled_model.hpp>\n\n')
+        self.write('\n#include <cadmium/modeling/coupled_model.hpp>\n')
+        self.write('\n#include <cadmium/modeling/dynamic_model_translator.hpp>\n\n')
+
+    def write_dynamic_translator_model(self, model_id, time_type):
+        self.write(self.dynamic_translator_template.format(model_id = model_id,
+                                                           time_type = time_type))
