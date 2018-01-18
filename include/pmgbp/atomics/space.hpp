@@ -31,6 +31,7 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
+#include <cmath>
 
 #include <cadmium/modeling/message_bag.hpp>
 
@@ -83,7 +84,9 @@ public:
         MetaboliteAmounts metabolites;
         map<string, Enzyme> enzymes;
         RoutingTable<ReactionAddress> routing_table;
-        double volume;
+        
+        //TODO: Take the volume from the .xml parameter
+        //long double volume = 0.0000000000000000001;
 
         TaskScheduler<TIME, Task<output_ports>> tasks;
     };
@@ -509,7 +512,7 @@ private:
                     map<string, double>& son,
                     map<string, double>& pon) {
 
-        double threshold;
+        long double threshold;
 
         for (const auto &reaction : reactions) {
 
@@ -533,7 +536,7 @@ private:
     }
 
     // TODO test this function specially
-    double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
+    long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
         // calculation of the concentrations [A][B][C]
 
         double concentration = 1.0;
