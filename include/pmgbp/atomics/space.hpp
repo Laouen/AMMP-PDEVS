@@ -84,6 +84,7 @@ public:
         MetaboliteAmounts metabolites;
         map<string, Enzyme> enzymes;
         RoutingTable<ReactionAddress> routing_table;
+        long double volume;
         
         //TODO: Take the volume from the .xml parameter
         //long double volume = 0.0000000000000000001;
@@ -94,6 +95,8 @@ public:
     state_type state;
 
     /********* Space constructors *************/
+
+    space() = default;
 
     /**
      * @brief Constructs a new space atomic model instance using the internal state passed
@@ -549,8 +552,8 @@ private:
 
         if (concentration == 0.0)
             return 0.0;
-
-        return exp(-(1.0 / (concentration * kon)));
+        return 0.2;
+        // exp(-(1.0 / (concentration * kon)));
     }
 
     bool thereAreEnoughFor(const MetaboliteAmounts &stcry) const {

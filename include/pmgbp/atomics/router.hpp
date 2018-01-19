@@ -37,6 +37,8 @@ public:
 
     state_type state;
 
+    router() = default;
+
     /**
      * @brief Parser constructor
      * @details Construct a new router atomic model instance by opening and parsing the xml

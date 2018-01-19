@@ -3,51 +3,47 @@ import os
 import json
 
 
-class ModelCodeGenerator:
+class DynamicModelCodeGenerator:
     """
     Writes c++ cadmium model code to the <model_name>.hpp file.
     """
 
-    def __init__(self, model_dir='..', model_name='top', template_folder='templates'):
+    def __init__(self, model_dir='..', model_name='top', template_folder='templates', TIME='NDTime'):
         self.model_name = model_name
 
         # atomic template
-        atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'atomic.tpl.hpp'
-        self.atomic_template = open(atomic_tpl_path, 'r').read()
+        atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_atomic.tpl.hpp'
+        self.atomic_template = open(atomic_tpl_path, 'r').read().format(TIME=TIME)
 
-        # atomic ports template
+        # atomic ports definition template
         ports_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'ports.tpl.hpp'
         self.ports_def_template = open(ports_tpl_path, 'r').read()
 
         # coupled template
-        coupled_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'coupled.tpl.hpp'
-        self.coupled_template = open(coupled_tpl_path, 'r').read()
+        coupled_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_coupled.tpl.hpp'
+        self.coupled_template = open(coupled_tpl_path, 'r').read().format(TIME=TIME)
 
-        # port template
+        # single port template
         self.atomic_port_template = 'struct {out_in}_{port_number}: public ' \
                                     'cadmium::{out_in}_port<{message_type}>{{}};'
 
         self.port_template = 'struct {out_in}_{port_number}: public ' \
                              'cadmium::{out_in}_port<pmgbp::types::{message_type}>{{}};'
 
-        self.eic_template = 'cadmium::modeling::EIC<' \
+        self.eic_template = 'cadmium::dynamic::translate::make_EIC<' \
                             '{model_name}_ports::in_{model_port_number},' \
-                            '{sub_model_name},' \
-                            '{sub_model_name}_ports::in_{sub_model_port_number}>'
+                            '{sub_model_name}_ports::in_{sub_model_port_number}>' \
+                            '("{sub_model_name}")'
 
-        self.eoc_template = 'cadmium::modeling::EOC<' \
-                            '{sub_model_name},' \
+        self.eoc_template = 'cadmium::dynamic::translate::make_EOC<' \
                             '{sub_model_name}_ports::out_{sub_model_port_number},' \
-                            '{model_name}_ports::out_{model_port_number}>'
+                            '{model_name}_ports::out_{model_port_number}>' \
+                            '("{sub_model_name}")'
 
-        self.ic_template = 'cadmium::modeling::IC<' \
-                           '{sub_model_1},{sub_model_1}_ports::out_{port_number_1},' \
-                           '{sub_model_2},{sub_model_2}_ports::in_{port_number_2}>'
-
-        self.dynamic_translator_template = 'std::shared_ptr<cadmium::dynamic::modeling::coupled<{time_type}>> ' \
-                                          'sp_coupled_{model_id} = ' \
-                                          'cadmium::dynamic::translate::make_dynamic_coupled_model' \
-                                          '<{time_type}, coupled_{model_id}>();'
+        self.ic_template = 'cadmium::dynamic::translate::make_IC<' \
+                           '{sub_model_1}_ports::out_{port_number_1},' \
+                           '{sub_model_2}_ports::in_{port_number_2}>' \
+                           '("{sub_model_1}", "{sub_model_2}")'
 
         self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
@@ -63,16 +59,19 @@ class ModelCodeGenerator:
                            output_type,
                            input_type):
 
+        # ARGS mut be generated before the parameter input is modified. 
+        ARGS = ', '.join(['const char*' for i in range(len(parameters))])
         model_name = model_class + '_' + model_id
-        parameters = map(json.dumps, parameters)
+        parameters = ',\n\t\t'.join(map(json.dumps, parameters))
 
         self.write_atomic_model_ports(model_name, out_ports, in_ports)
 
         self.write(self.atomic_template.format(model_name=model_name,
                                                model_class=model_class,
-                                               parameters=',\n\t\t'.join(parameters),
                                                output_type=output_type,
-                                               input_type=input_type))
+                                               input_type=input_type,
+                                               ARGS=ARGS,
+                                               parameters=parameters))
 
         return model_name
 
@@ -92,7 +91,8 @@ class ModelCodeGenerator:
             ports_cpp.append(self.port_template.format(port_number=str(port_number),
                                                        message_type=message_type,
                                                        out_in=out_in))
-            oiports_cpp[out_in].append(port_prefix + '_'.join([out_in, str(port_number)]))
+            port_name = port_prefix + '_'.join([out_in, str(port_number)])
+            oiports_cpp[out_in].append('typeid(' + port_name + ')')
 
         for (model_port_number, sub_model_name, sub_model_port_number) in eic:
             eic_cpp.append(self.eic_template.format(model_name=model_name,
@@ -167,6 +167,8 @@ class ModelCodeGenerator:
 
     def write_includes(self):
         # model def includes
+        
+        self.write('#include <typeinfo>')
 
         structures = ['reaction', 'router', 'space']
         models = ['reaction', 'router', 'space']
@@ -174,11 +176,14 @@ class ModelCodeGenerator:
         self.write_ports('/* structure includes */\n')
         for structure in structures:
             self.write_ports('#include <pmgbp/structures/' + structure + '.hpp>')
+        self.write_ports("")
 
-        self.write('/* atomic model includes */\n')
+        self.write('\n/* atomic model includes */')
         for model in models:
             self.write('#include <pmgbp/atomics/' + model + '.hpp>')
 
-        self.write('#include \"' + self.model_name + '_ports.hpp\"')
+        self.write('\n#include \"' + self.model_name + '_ports.hpp\"')
 
-        self.write('\n#include <cadmium/modeling/coupled_model.hpp>\n')
+        self.write('\n#include <cadmium/modeling/ports.hpp>')
+        self.write('#include <cadmium/modeling/dynamic_coupled.hpp>')
+        self.write('#include <cadmium/modeling/dynamic_model_translator.hpp>\n\n')

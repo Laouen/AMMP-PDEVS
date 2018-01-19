@@ -81,7 +81,7 @@ int main(int argc, char ** argv) {
     #else
     
         auto start = hclock::now();
-        cadmium::dynamic::engine::runner<NDTime, logger_top> r(sp_coupled_cell, NDTime({0}));
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(coupled_cell, NDTime({0}));
         r.run_until({3000});
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;

@@ -102,6 +102,8 @@ public:
 
     state_type state;
 
+    reaction() = default;
+
     /**
      * @brief Default constructor
      * @details Construct a new instance of a reaction model using the state passed

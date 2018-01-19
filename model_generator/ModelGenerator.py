@@ -3,6 +3,7 @@
 
 from SBMLParser import SBMLParser
 from ModelCodeGenerator import ModelCodeGenerator
+from DynamicModelCodeGenerator import DynamicModelCodeGenerator
 from XMLParametersGenerator import XMLParametersGenerator
 from constants import *
 from itertools import islice
@@ -97,7 +98,8 @@ class ModelGenerator:
                  periplasm_id,
                  cytoplasm_id,
                  json_model=None,
-                 groups_size=150):
+                 groups_size=150,
+                 dynamic=True):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -115,7 +117,7 @@ class ModelGenerator:
 
         self.groups_size = groups_size
         self.parameter_writer = XMLParametersGenerator()
-        self.coder = ModelCodeGenerator()
+        self.coder = DynamicModelCodeGenerator() if dynamic else ModelCodeGenerator() 
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
                                  periplasm_id,
@@ -382,8 +384,6 @@ class ModelGenerator:
 
         self.parameter_writer.save_xml()
         cell_coupled = self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)
-
-        self.coder.write_dynamic_translator_model('cell', 'NDTime');
 
         return cell_coupled
 
