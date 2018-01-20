@@ -10,3 +10,6 @@
 [submodule "vendor/DESTimes"]
 	path = vendor/DESTimes
 	url = git@github.com:Laouen/DESTimes.git
+[submodule "vendor/MeMoRe"]
+	path = vendor/MeMoRe
+	url = git@github.com:Laouen/MeMoRe.git
