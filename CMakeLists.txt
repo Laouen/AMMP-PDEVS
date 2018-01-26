@@ -8,7 +8,8 @@ include_directories(
         vendor/tinyxml2
         ../cadmium-fork/include
         vendor/DESTimes/include
-        vendor/DEVSDiagrammer/model_json_exporter)
+        vendor/MeMoRe/include
+        vendor/DEVSDiagrammer/model_json_exporter/include)
 
 set(SOURCES
         src/structures/types.cpp
