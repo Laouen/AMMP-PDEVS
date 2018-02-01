@@ -1,10 +1,11 @@
-CC=g++
+CC=time g++
 CFLAGS=-std=c++17 -ftemplate-depth=900000
-INCLUDECADMIUM=-I vendor/cadmium/include
+INCLUDECADMIUM=-I ../cadmium-fork/include
 INCLUDEDESTIME=-I vendor/DESTimes/include
-INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter
+INCLUDEEXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter/include
+INCLUDEMEMORE=-I vendor/MeMoRe/include
 INCLUDETINY=-I vendor/tinyxml2
-VENDOR=$(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY)
+VENDOR=$(INCLUDECADMIUM) $(INCLUDEDESTIME) $(INCLUDEEXPORTER) $(INCLUDETINY) $(INCLUDEMEMORE)
 INCLUDE=-I include
 
 # =============== Parameters ==================== #

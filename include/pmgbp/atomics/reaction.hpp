@@ -63,7 +63,7 @@ using namespace pmgbp::types;
 using namespace pmgbp::structs::reaction;
 
 template<class PORTS, class TIME>
-class reaction {
+class reaction_template {
 public:
 
     using Product=typename PORTS::output_type;
@@ -102,7 +102,7 @@ public:
 
     state_type state;
 
-    reaction() = default;
+    reaction_template() = default;
 
     /**
      * @brief Default constructor
@@ -111,7 +111,7 @@ public:
      *
      * @param state_other A reaction::state_type already initialized.
      */
-    explicit reaction(const state_type& state_other) noexcept {
+    explicit reaction_template(const state_type& state_other) noexcept {
         this->state = state_other;
         this->logger.setModuleName("Reaction_" + this->state.id);
 
@@ -127,7 +127,7 @@ public:
      * @param xml_file path where the xml file containing all the parameters is located.
      * @param id model id.
      */
-    explicit reaction(const char* xml_file, const char* id) {
+    explicit reaction_template(const char* xml_file, const char* id) {
         this->state.id = id;
         this->logger.setModuleName("Reaction_" + this->state.id);
 
@@ -270,15 +270,11 @@ public:
 
         TIME result = this->state.tasks.time_advance();
 
-//        if (result < TIME::zero()) {
-//            this->logger.error("Bad time: negative time: " + result);
-//        }
-
         this->logger.info("End time_advance");
         return result;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction<PORTS,TIME>::state_type& s) {
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction_template<PORTS,TIME>::state_type& s) {
         os << "Reaction_" << s.id << " ";
         os << "Tasks in process: ";
 
@@ -433,6 +429,28 @@ private:
     }
 
 };
+
+struct reaction_ports {
+
+    struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_1: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_2: public cadmium::out_port<pmgbp::types::Product>{};
+    struct in_0: public cadmium::in_port<pmgbp::types::Reactant>{};
+
+    using output_type=pmgbp::types::Product;
+    using input_type=pmgbp::types::Reactant;
+
+    using input_ports=std::tuple<in_0>;
+    using output_ports=std::tuple<out_0>;
+};
+
+template<typename TIME>
+class reaction : public reaction_template<pmgbp::models::reaction_ports, TIME> {
+public:
+    reaction() = default;
+    explicit reaction(const char* xml_file, const char* id) : reaction_template<pmgbp::models::reaction_ports, TIME>(xml_file, id) {}
+};
+
 }
 }
 

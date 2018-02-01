@@ -184,7 +184,8 @@ class ModelGenerator:
                                                port,
                                                1,
                                                REACTANT_MESSAGE_TYPE,
-                                               REACTANT_MESSAGE_TYPE)
+                                               REACTANT_MESSAGE_TYPE,
+                                               True)
 
         sub_models.append(router)
         eic.append((0, router, 0))
@@ -217,7 +218,8 @@ class ModelGenerator:
                                                len(routing_table),
                                                1,
                                                REACTANT_MESSAGE_TYPE,
-                                               REACTANT_MESSAGE_TYPE)
+                                               REACTANT_MESSAGE_TYPE,
+                                               True)
         sub_models = [router]
         eic = [(0, router, 0)]
         eoc = []
@@ -233,7 +235,8 @@ class ModelGenerator:
                                                      output_port_amount,
                                                      1,
                                                      PRODUCT_MESSAGE_TYPE,
-                                                     REACTANT_MESSAGE_TYPE)
+                                                     REACTANT_MESSAGE_TYPE,
+                                                     True)
             ic.append((router, routing_table[rid], reaction, 0))
             eoc += [(reaction, port_number, port_number) for port_number in range(output_port_amount)]
             sub_models.append(reaction)

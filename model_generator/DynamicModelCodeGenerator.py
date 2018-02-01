@@ -11,6 +11,10 @@ class DynamicModelCodeGenerator:
     def __init__(self, model_dir='..', model_name='top', template_folder='templates', TIME='NDTime'):
         self.model_name = model_name
 
+        # reaction atomic template
+        reaction_atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_defined_atomic.tpl.hpp'
+        self.defined_atomic_template = open(reaction_atomic_tpl_path, 'r').read().format(TIME=TIME)
+
         # atomic template
         atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_atomic.tpl.hpp'
         self.atomic_template = open(atomic_tpl_path, 'r').read().format(TIME=TIME)
@@ -33,17 +37,17 @@ class DynamicModelCodeGenerator:
         self.eic_template = 'cadmium::dynamic::translate::make_EIC<' \
                             '{model_name}_ports::in_{model_port_number},' \
                             '{sub_model_name}_ports::in_{sub_model_port_number}>' \
-                            '("{sub_model_name}")'
+                            '("{sub_model_id}")'
 
         self.eoc_template = 'cadmium::dynamic::translate::make_EOC<' \
                             '{sub_model_name}_ports::out_{sub_model_port_number},' \
                             '{model_name}_ports::out_{model_port_number}>' \
-                            '("{sub_model_name}")'
+                            '("{sub_model_id}")'
 
         self.ic_template = 'cadmium::dynamic::translate::make_IC<' \
                            '{sub_model_1}_ports::out_{port_number_1},' \
                            '{sub_model_2}_ports::in_{port_number_2}>' \
-                           '("{sub_model_1}", "{sub_model_2}")'
+                           '("{sub_model_1_id}", "{sub_model_2_id}")'
 
         self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
@@ -57,21 +61,27 @@ class DynamicModelCodeGenerator:
                            out_ports,
                            in_ports,
                            output_type,
-                           input_type):
+                           input_type,
+                           is_defined=False):
 
         # ARGS mut be generated before the parameter input is modified. 
         ARGS = ', '.join(['const char*' for i in range(len(parameters))])
         model_name = model_class + '_' + model_id
         parameters = ',\n\t\t'.join(map(json.dumps, parameters))
 
-        self.write_atomic_model_ports(model_name, out_ports, in_ports)
-
-        self.write(self.atomic_template.format(model_name=model_name,
-                                               model_class=model_class,
-                                               output_type=output_type,
-                                               input_type=input_type,
-                                               ARGS=ARGS,
-                                               parameters=parameters))
+        if not is_defined:
+            self.write_atomic_model_ports(model_name, out_ports, in_ports)
+            self.write(self.atomic_template.format(model_name=model_name,
+                                                   model_class=model_class,
+                                                   output_type=output_type,
+                                                   input_type=input_type,
+                                                   ARGS=ARGS,
+                                                   parameters=parameters))
+        else:
+            self.write(self.defined_atomic_template.format(model_name=model_name,
+                                                           model_class=model_class,
+                                                           ARGS=ARGS,
+                                                           parameters=parameters))
 
         return model_name
 
@@ -95,21 +105,41 @@ class DynamicModelCodeGenerator:
             oiports_cpp[out_in].append('typeid(' + port_name + ')')
 
         for (model_port_number, sub_model_name, sub_model_port_number) in eic:
+            sub_model_id = sub_model_name
+            if 'router' in sub_model_name:
+                sub_model_name = 'pmgbp::models::router'
             eic_cpp.append(self.eic_template.format(model_name=model_name,
                                                     model_port_number=str(model_port_number),
                                                     sub_model_name=sub_model_name,
+                                                    sub_model_id=sub_model_id,
                                                     sub_model_port_number=str(sub_model_port_number)))
 
         for (sub_model_name, sub_model_port_number, model_port_number) in eoc:
+            sub_model_id = sub_model_name
+            if 'reaction' in sub_model_name:
+                sub_model_name = 'pmgbp::models::reaction'
+
             eoc_cpp.append(self.eoc_template.format(model_name=model_name,
                                                     sub_model_name=sub_model_name,
                                                     sub_model_port_number=str(sub_model_port_number),
-                                                    model_port_number=str(model_port_number)))
+                                                    model_port_number=str(model_port_number),
+                                                    sub_model_id=sub_model_id))
 
         for (sub_model_1, port_number_1, sub_model_2, port_number_2) in ic:
+            sub_model_1_id = sub_model_1
+            sub_model_2_id = sub_model_2
+            if 'reaction' in sub_model_2:
+                sub_model_2 = 'pmgbp::models::reaction'
+            
+            if 'router' in sub_model_1:
+                sub_model_1 = 'pmgbp::models::router'
+
+
             ic_cpp.append(self.ic_template.format(sub_model_1=sub_model_1,
+                                                  sub_model_1_id=sub_model_1_id,
                                                   port_number_1=str(port_number_1),
                                                   sub_model_2=sub_model_2,
+                                                  sub_model_2_id=sub_model_2_id,
                                                   port_number_2=str(port_number_2)))
 
         self.write(self.coupled_template.format(model_name=model_name,
