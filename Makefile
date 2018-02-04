@@ -1,4 +1,4 @@
-CC=time g++
+CC=g++
 CFLAGS=-std=c++17 -ftemplate-depth=900000
 INCLUDECADMIUM=-I ../cadmium-fork/include
 INCLUDEDESTIME=-I vendor/DESTimes/include
@@ -46,4 +46,4 @@ clean_model:
 	rm top.hpp top_ports.hpp parameters.xml
 
 clean:
-	rm -rf bin/ build/ *.o *~
+	rm -rf bin/* build/* *.o *~
