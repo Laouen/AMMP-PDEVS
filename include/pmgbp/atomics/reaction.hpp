@@ -435,13 +435,18 @@ struct reaction_ports {
     struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
     struct out_1: public cadmium::out_port<pmgbp::types::Product>{};
     struct out_2: public cadmium::out_port<pmgbp::types::Product>{};
+
     struct in_0: public cadmium::in_port<pmgbp::types::Reactant>{};
 
     using output_type=pmgbp::types::Product;
     using input_type=pmgbp::types::Reactant;
 
+    using output_ports=std::tuple<
+        out_0,
+        out_1,
+        out_2
+    >;
     using input_ports=std::tuple<in_0>;
-    using output_ports=std::tuple<out_0>;
 };
 
 template<typename TIME>
