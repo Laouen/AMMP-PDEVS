@@ -28,6 +28,7 @@
 #include <chrono>
 
 #include <cadmium/engine/pdevs_dynamic_runner.hpp>
+#include <cadmium/logger/dynamic_common_loggers.hpp>
 
 #include <NDTime.hpp>
 #include <model_json_exporter.hpp>
@@ -44,22 +45,11 @@ using hclock=chrono::high_resolution_clock;
 
 /*************** Loggers *******************/
 
-namespace {
+using log_states=cadmium::logger::logger<cadmium::logger::logger_state, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
 
-    struct oss_sink_provider{
-        static std::ostream& sink(){
-            return std::cout;
-        }
-    };
-}
-
-using log_states=cadmium::logger::logger<cadmium::logger::logger_state, cadmium::logger::verbatim_formatter, oss_sink_provider>;
-using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, cadmium::logger::verbatim_formatter, oss_sink_provider>;
-using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, cadmium::logger::verbatim_formatter, oss_sink_provider>;
 using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
-
-using coordinator_formatter = memore::coordinator_formatter<NDTime>;
-using simulator_formatter = memore::simulator_formatter<NDTime>;
 
 /*******************************************/
 
@@ -86,7 +76,7 @@ int main(int argc, char ** argv) {
     #else
     
         auto start = hclock::now();
-        cadmium::dynamic::engine::runner<NDTime, logger_top, coordinator_formatter, simulator_formatter> r(coupled_cell, NDTime({0}));
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(coupled_cell, NDTime({0}));
         r.run_until({3000});
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;
