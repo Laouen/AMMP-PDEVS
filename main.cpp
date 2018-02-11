@@ -67,16 +67,16 @@ int main(int argc, char ** argv) {
         file.open(argv[1]);
 
         if (argc == 2) {
-            export_model_to_json<NDTime, coupled_cell>(file);
+            export_model_to_json<NDTime, generate_model()>(file);
         } else {
-            export_model_to_json<NDTime, coupled_cell>(file, atoi(argv[2]));
+            export_model_to_json<NDTime, generate_model()>(file, atoi(argv[2]));
         }
         file.close();
     
     #else
     
         auto start = hclock::now();
-        cadmium::dynamic::engine::runner<NDTime, logger_top> r(coupled_cell, NDTime({0}));
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(generate_model(), NDTime({0}));
         r.run_until({3000});
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;

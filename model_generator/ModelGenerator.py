@@ -98,8 +98,7 @@ class ModelGenerator:
                  periplasm_id,
                  cytoplasm_id,
                  json_model=None,
-                 groups_size=150,
-                 dynamic=True):
+                 groups_size=150):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -117,7 +116,7 @@ class ModelGenerator:
 
         self.groups_size = groups_size
         self.parameter_writer = XMLParametersGenerator()
-        self.coder = DynamicModelCodeGenerator() if dynamic else ModelCodeGenerator() 
+        self.coder = DynamicModelCodeGenerator()
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
                                  periplasm_id,
@@ -159,97 +158,33 @@ class ModelGenerator:
         reaction_set_id = '_'.join([cid, rsn])
 
         # Reaction sets are separated in groups, this is because the C++ problem compiling large tuples
+        # Currently the maximum group amount is 150 and each group can hold 150 reactions, thus, each compartment
+        # can have a maximum of 150 * 150 = 22500 reactions.
         groups = chunks(reaction_set, SIZE=self.groups_size)
+        groups_reaction_ids = []
         routing_table = {}
-        reaction_groups = {}
-        total_out_ports = 0
-
-        sub_models = []
-        eic = []
-        eoc = []
-        ic = []
-        ports = []
-
+        
+        # Routers xml parameters
         port = 0
         for group in groups:
-            group_id = cid + "_" + str(port)
-            reaction_groups[group_id] = (self.generate_reaction_group(group_id, rsn, group), port)
-            routing_table.update({rid: port for rid in group})
-            port += 1  # last update indicates the port amount and it's therefor used as the router port amount
+            reaction_ids = group.keys()
+            groups_reaction_ids.append(reaction_ids)
+
+            group_id = '_'.join([cid, rsn, str(port)])
+            routing_table.update({rid: port for rid in reaction_ids})
+            port += 1
+
+            port_numbers = range(len(reaction_ids))
+            group_routing_table = {rid: port_number for rid, port_number in zip(reaction_ids, port_numbers)}
+            self.parameter_writer.add_router(group_id, group_routing_table)
 
         self.parameter_writer.add_router(reaction_set_id, routing_table)
-        router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
-                                               reaction_set_id,
-                                               [self.parameter_writer.xml_file_path, reaction_set_id],
-                                               port,
-                                               1,
-                                               REACTANT_MESSAGE_TYPE,
-                                               REACTANT_MESSAGE_TYPE,
-                                               True)
 
-        sub_models.append(router)
-        eic.append((0, router, 0))
-
-        for group_id, ((model, _, output_port_amount), port) in reaction_groups.iteritems():
-            sub_models.append(model)
-            ic.append((router, port, model, 0))
-            eoc += [(model, port_number, port_number) for port_number in range(output_port_amount)]
-            total_out_ports = max(total_out_ports, output_port_amount)
-
-        ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
-        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out') for port_number in range(total_out_ports)]
-
-        return self.coder.write_coupled_model(reaction_set_id,
-                                              sub_models,
-                                              ports,
-                                              eic,
-                                              eoc,
-                                              ic)
-
-    def generate_reaction_group(self, cid, rsn, reaction_group):
-        reaction_group_id = '_'.join([cid, rsn])
-
-        port_numbers = range(len(reaction_group))
-        routing_table = {rid: port_number for rid, port_number in zip(reaction_group.keys(), port_numbers)}
-        self.parameter_writer.add_router(reaction_group_id, routing_table)
-        router = self.coder.write_atomic_model(ROUTER_MODEL_CLASS,
-                                               reaction_group_id,
-                                               [self.parameter_writer.xml_file_path, reaction_group_id],
-                                               len(routing_table),
-                                               1,
-                                               REACTANT_MESSAGE_TYPE,
-                                               REACTANT_MESSAGE_TYPE,
-                                               True)
-        sub_models = [router]
-        eic = [(0, router, 0)]
-        eoc = []
-        ic = []
-        total_out_ports = 0
-
-        #TODO: sort reaction ids to match the router ports 0, ....
-        self.codder.write_reaction_group_template(reaction_group.keys(),
-                                                  reaction_group_id,
-                                                  self.parameter_writer.xml_file_path)
-
-        for rid, parameters in reaction_group.iteritems():
-            output_port_amount = max(parameters['routing_table'].values()) + 1
-            total_out_ports = max(output_port_amount, total_out_ports)
+        # Reaction xml parameters 
+        for rid, parameters in reaction_set.iteritems():
             self.parameter_writer.add_reaction(rid, parameters)
 
-            ic = [(router, routing_table[rid], reaction, 0)]
-            ic.append((router, routing_table[rid], reaction, 0))
-            eoc += [(reaction, port_number, port_number) for port_number in range(output_port_amount)]
-            sub_models.append(reaction)
-
-        ports = [(0, REACTANT_MESSAGE_TYPE, 'in')]
-        ports += [(port_number, PRODUCT_MESSAGE_TYPE, 'out') for port_number in range(total_out_ports)]
-
-        return self.coder.write_coupled_model(reaction_group_id,
-                                              sub_models,
-                                              ports,
-                                              eic,
-                                              eoc,
-                                              ic)
+        return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids, self.parameter_writer.xml_file_path)
 
     def generate_organelle_compartment(self, compartment):
 
@@ -274,7 +209,7 @@ class ModelGenerator:
             # their membranes, that is the assert.
             assert rs_address[0] == compartment.id
             rs_model_name = reaction_sets[rs_address][0]
-            ic += [(space, port_number, rs_model_name, 0), (rs_model_name, 0, space, 0)]
+            ic += [(space, space, port_number, rs_model_name, 'pmgbp::models::reaction', 0), (rs_model_name, 'pmgbp::models::reaction', 0, space, space, 0)]
 
         # If the output port amount is equal to 1, then the model only sends messages to the space
         # and there is no communication with the extra cellular space, thus, it must not be linked
@@ -286,7 +221,7 @@ class ModelGenerator:
         eoc = []
         for (rs_model_name, _, output_port_amount) in reaction_sets.values():
             for port_number in range(1, output_port_amount):
-                eoc.append((rs_model_name, port_number, port_number))
+                eoc.append((rs_model_name, 'pmgbp::models::reaction', port_number, port_number))
                 if port_number not in out_port_numbers:
                     out_port_numbers.append(port_number)
                     out_ports.append((port_number, PRODUCT_MESSAGE_TYPE, 'out'))
@@ -295,7 +230,7 @@ class ModelGenerator:
         eic = []
         for rs_name, port_number in compartment.membrane_eic.iteritems():
             rs_model_name = reaction_sets[(compartment.id, rs_name)][0]
-            eic.append((port_number, rs_model_name, 0))
+            eic.append((rs_model_name, 'pmgbp::models::reaction', 0, port_number))
             in_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'in'))
 
         return self.coder.write_coupled_model(compartment.id,
@@ -330,17 +265,17 @@ class ModelGenerator:
         sub_models = [space, bulk]
 
         bulk_port_number = compartment.routing_table[(cid, BULK)]
-        ic = [(space, bulk_port_number, bulk, 0), (bulk, 0, space, 0)]
+        ic = [(space, space, bulk_port_number, bulk, 'pmgbp::models::reaction', 0), (bulk, 'pmgbp::models::reaction', 0, space, space, 0)]
 
         out_ports = []
         eoc = []
         for (rs_cid, _), port_number in compartment.routing_table.iteritems():
             if rs_cid != cid:
-                eoc.append((space, port_number, port_number))
+                eoc.append((space, space, port_number, port_number))
                 out_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'out'))
 
         in_ports = [(0, PRODUCT_MESSAGE_TYPE, 'in')]
-        eic = [(0, space, 0)]
+        eic = [(space, space, 0, 0)]
 
         return self.coder.write_coupled_model(cid,
                                               sub_models,
@@ -349,7 +284,7 @@ class ModelGenerator:
                                               eoc,
                                               ic)
 
-    def generate_top(self):
+    def generate_top(self, top='cell'):
 
         cytoplasm_model = self.generate_bulk_compartment(self.cytoplasm)[0]
         extra_cellular_model = self.generate_bulk_compartment(self.extra_cellular)[0]
@@ -377,16 +312,16 @@ class ModelGenerator:
                 c_port_number = self.cytoplasm.routing_table[(cid, rsn)]
                 ic.append((cytoplasm_model, c_port_number, model_name, rs_port_number))
                 # *1) organelle output port 1 always goes to cytoplasm
-                ic.append((model_name, 1, cytoplasm_model, 0))
+                ic.append((model_name, model_name, 1, cytoplasm_model, cytoplasm_model, 0))
 
                 if output_port_amount > 1:
                     e_port_number = self.cytoplasm.routing_table[(cid, rsn)]
-                    ic.append((extra_cellular_model, e_port_number, model_name, rs_port_number))
+                    ic.append((extra_cellular_model, extra_cellular_model, e_port_number, model_name, model_name, rs_port_number))
                     # *1) organelle output port 2 always goes to extracellular
-                    ic.append((model_name, 2, extra_cellular_model, 0))
+                    ic.append((model_name, model_name, 2, extra_cellular_model, extra_cellular_model, 0))
 
         self.parameter_writer.save_xml()
-        cell_coupled = self.coder.write_coupled_model('cell', sub_models, [], [], [], ic)
+        cell_coupled = self.coder.write_coupled_model(top, sub_models, [], [], [], ic)
 
         return cell_coupled
 
@@ -395,7 +330,7 @@ class ModelGenerator:
 
         # this is the same logic as *1)
         periplasm_oport_number = 1 if bulk_cid == self.cytoplasm.id else 2
-        ic.append((periplasm_model, periplasm_oport_number, bulk_model, 0))
+        ic.append((periplasm_model, periplasm_model, periplasm_oport_number, bulk_model, bulk_model, 0))
 
         for (cid, rsn), c_port_number in bulk_routing_table.iteritems():
             if cid == bulk_cid:
@@ -403,5 +338,23 @@ class ModelGenerator:
 
             if cid == self.periplasm.id:
                 periplasm_port_number = self.periplasm.membrane_eic[rsn]
-                ic.append((bulk_model, c_port_number, periplasm_model, periplasm_port_number))
+                ic.append((bulk_model, bulk_model, c_port_number, periplasm_model, periplasm_model, periplasm_port_number))
         return ic
+
+    def end_model(self):
+        self.coder.end_model()
+
+    # WARNING: deprecated
+    def generate_reaction_group(self, group_id, reaction_group):  
+        # write parameters to the xml file
+        reaction_ids = reaction_group.keys()
+        port_numbers = range(len(reaction_ids))
+        routing_table = {rid: port_number for rid, port_number in zip(reaction_ids, port_numbers)}
+        self.parameter_writer.add_router('router_' + group_id, routing_table)
+
+        for rid, parameters in reaction_group.iteritems():
+            self.parameter_writer.add_reaction('reaction_' + rid, parameters)
+
+        # NOTE: the reaction_id order is important because it matches the port number, thus, the reaction_ids order
+        # must not be modified once the routing_table is declared.
+        return self.coder.write_reaction_group_template(group_id, reaction_ids, self.parameter_writer.xml_file_path) 

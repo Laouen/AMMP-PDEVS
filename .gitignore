@@ -10,7 +10,7 @@ doc/latex/*
 # Dinamically generated model files
 bin
 top.hpp
-top_ports.hpp
+top_model_definitions.hpp
 parameters.xml
 
 # Output files

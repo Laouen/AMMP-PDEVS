@@ -27,6 +27,7 @@ def main(FLAGS):
         json.dump(model_generator.parser, open(FLAGS.json_model_output, 'w+'), cls=SBMLParserEncoder, indent=4)
 
     model_generator.generate_top()
+    model_generator.end_model()
 
 
 if __name__ == '__main__':
