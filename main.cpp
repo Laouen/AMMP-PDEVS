@@ -74,10 +74,19 @@ int main(int argc, char ** argv) {
         file.close();
     
     #else
-    
+        
+        std::cout << "hclock" << std::endl;
         auto start = hclock::now();
-        cadmium::dynamic::engine::runner<NDTime, logger_top> r(generate_model(), NDTime({0}));
+
+        std::cout << "model" << std::endl;
+        std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model();
+        
+        std::cout << "runner" << std::endl;
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));
+        
+        std::cout << "run_until 3000" << std::endl;
         r.run_until({3000});
+        std::cout << "finished" << std::endl;
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;
     

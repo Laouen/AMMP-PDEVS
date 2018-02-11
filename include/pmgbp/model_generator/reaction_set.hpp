@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <cadmium/modeling/dynamic_model_translator.hpp>
 #include <cadmium/modeling/dynamic_coupled.hpp>
@@ -22,17 +23,24 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_reaction_set(
     std::string parameters_xml) 
 {
 
-    std::string router_id = "router_" + rsn;
+    std::cout << "1" << std::endl;
+    std::string reaction_set_id = cid + '_' + rsn;
+    std::string router_id = "router_" + reaction_set_id;
     std::string group_id;
 
-    cadmium::dynamic::modeling::Models models = {
+    std::cout << "2" << std::endl;
+    cadmium::dynamic::modeling::Models models;
+
+    std::cout << "2.1" << std::endl;
+    models.push_back(
         cadmium::dynamic::translate::make_dynamic_atomic_model<pmgbp::models::router, NDTime, const char*, const char*>(
             router_id,
             parameters_xml.c_str(),
-            router_id.c_str()
+            reaction_set_id.c_str()
         )
-    };
+    );
 
+    std::cout << "3" << std::endl;
     cadmium::dynamic::modeling::EICs eics = {
         cadmium::dynamic::translate::make_EIC<pmgbp::models::reaction_ports::in_0, pmgbp::models::router_ports::in_0>(router_id)
     };
@@ -40,9 +48,11 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_reaction_set(
     cadmium::dynamic::modeling::EOCs eocs;
     cadmium::dynamic::modeling::ICs ics;
 
+    std::cout << "4" << std::endl;
     for (int group_number = 0; group_number < groups_reaction_ids.size(); group_number++) {
         
-        group_id = cid + "_" + rsn + "_" + std::to_string(group_number).c_str();
+        group_id = cid + '_' + rsn + '_' + std::to_string(group_number);
+        std::cout << "make reaction group" << std::endl;
         models.push_back(make_reaction_group(group_id, groups_reaction_ids[group_number], parameters_xml));
 
         ics.push_back(make_router_reaction_ic(group_number, router_id, group_id));
@@ -60,7 +70,7 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_reaction_set(
     };
 
     return std::make_shared<cadmium::dynamic::modeling::coupled<NDTime>>(
-        group_id,
+        reaction_set_id,
         models,
         iports,
         oports,

@@ -183,7 +183,7 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_reaction_group
         cadmium::dynamic::translate::make_dynamic_atomic_model<pmgbp::models::router, NDTime, const char*, const char*>(
             router_id,
             parameters_xml.c_str(),
-            router_id.c_str()
+            group_id.c_str()
         )
     };
 

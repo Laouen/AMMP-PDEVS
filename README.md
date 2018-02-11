@@ -2,7 +2,7 @@
 Automatic Modeling of Metabolic Pathways in Parallel DEVS
 
 ## Dependencies
- 1. C++14 >
+ 1. C++17 >
  2. Boost 1.57 >
  3. TinyXML-2
  4. Cadmium
