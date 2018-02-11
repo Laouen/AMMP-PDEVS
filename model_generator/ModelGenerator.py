@@ -225,18 +225,18 @@ class ModelGenerator:
         eoc = []
         ic = []
         total_out_ports = 0
+
+        #TODO: sort reaction ids to match the router ports 0, ....
+        self.codder.write_reaction_group_template(reaction_group.keys(),
+                                                  reaction_group_id,
+                                                  self.parameter_writer.xml_file_path)
+
         for rid, parameters in reaction_group.iteritems():
             output_port_amount = max(parameters['routing_table'].values()) + 1
             total_out_ports = max(output_port_amount, total_out_ports)
             self.parameter_writer.add_reaction(rid, parameters)
-            reaction = self.coder.write_atomic_model(REACTION_MODEL_CLASS,
-                                                     rid,
-                                                     [self.parameter_writer.xml_file_path, rid],
-                                                     output_port_amount,
-                                                     1,
-                                                     PRODUCT_MESSAGE_TYPE,
-                                                     REACTANT_MESSAGE_TYPE,
-                                                     True)
+
+            ic = [(router, routing_table[rid], reaction, 0)]
             ic.append((router, routing_table[rid], reaction, 0))
             eoc += [(reaction, port_number, port_number) for port_number in range(output_port_amount)]
             sub_models.append(reaction)

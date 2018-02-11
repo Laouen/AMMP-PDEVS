@@ -11,9 +11,9 @@ class DynamicModelCodeGenerator:
     def __init__(self, model_dir='..', model_name='top', template_folder='templates', TIME='NDTime'):
         self.model_name = model_name
 
-        # reaction atomic template
-        reaction_atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_defined_atomic.tpl.hpp'
-        self.defined_atomic_template = open(reaction_atomic_tpl_path, 'r').read().format(TIME=TIME)
+        # defined atomic template
+        defined_atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_defined_atomic.tpl.hpp'
+        self.defined_atomic_template = open(defined_atomic_tpl_path, 'r').read().format(TIME=TIME)
 
         # atomic template
         atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_atomic.tpl.hpp'
@@ -27,23 +27,33 @@ class DynamicModelCodeGenerator:
         coupled_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_coupled.tpl.hpp'
         self.coupled_template = open(coupled_tpl_path, 'r').read().format(TIME=TIME)
 
-        # single port template
+        # reaction group definition template
+        self.reaction_group_template = 'std::shared_ptr<cadmium::dynamic::modeling::coupled<'+ TIME +'>> reaction_group_{{group_id}} =' \
+                                       'make_reaction_group("{group_id}", {reaction_ids}, "{parameter_xml}");'
+
+        # todo: unify atomic port template and coupled port template, the only differ because the atomic one 
+        # defines the message type all in the template while the coupled one hardoces the pmgbp::types:: namespace
+        # atomic model port template
         self.atomic_port_template = 'struct {out_in}_{port_number}: public ' \
                                     'cadmium::{out_in}_port<{message_type}>{{}};'
 
+        # coupled model port template
         self.port_template = 'struct {out_in}_{port_number}: public ' \
                              'cadmium::{out_in}_port<pmgbp::types::{message_type}>{{}};'
 
+        # eic link template
         self.eic_template = 'cadmium::dynamic::translate::make_EIC<' \
                             '{model_name}_ports::in_{model_port_number},' \
                             '{sub_model_name}_ports::in_{sub_model_port_number}>' \
                             '("{sub_model_id}")'
 
+        # eoc link template
         self.eoc_template = 'cadmium::dynamic::translate::make_EOC<' \
                             '{sub_model_name}_ports::out_{sub_model_port_number},' \
                             '{model_name}_ports::out_{model_port_number}>' \
                             '("{sub_model_id}")'
 
+        # ic link template
         self.ic_template = 'cadmium::dynamic::translate::make_IC<' \
                            '{sub_model_1}_ports::out_{port_number_1},' \
                            '{sub_model_2}_ports::in_{port_number_2}>' \
@@ -53,6 +63,18 @@ class DynamicModelCodeGenerator:
         self.port_file = open(model_dir + os.sep + model_name + '_ports.hpp', 'wb')
 
         self.write_includes()
+
+    # thi method does the same as write_atomic_model but instead of declaring a new model variable
+    # it pushs the new model to a std::vector of models pass as parameter
+    # WARNING: this method is only made to construct reaction atomic models
+    def write_reaction_group_template(self,
+                                       model_ids,
+                                       group_id,
+                                       parameters_xml):
+
+        self.write(self.reaction_group_template.format(group_id=group_id, parameters_xml=parameters_xml))
+
+
 
     def write_atomic_model(self,
                            model_class,

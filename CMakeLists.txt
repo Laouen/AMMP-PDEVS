@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(
         include
         vendor/tinyxml2
-        ../cadmium-fork/include
+        vendor/cadmium/include
         vendor/DESTimes/include
         vendor/MeMoRe/include
         vendor/DEVSDiagrammer/model_json_exporter/include)

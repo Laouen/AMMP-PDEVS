@@ -1,7 +1,3 @@
-//
-// Created by lao on 28/09/17.
-//
-
 #ifndef PMGBP_PDEVS_MODEL_ROUTER_HPP
 #define PMGBP_PDEVS_MODEL_ROUTER_HPP
 
