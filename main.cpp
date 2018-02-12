@@ -34,6 +34,7 @@
 #include <model_json_exporter.hpp>
 
 #include <memore/logger.hpp>
+#include <memore/sink.hpp>
 
 #include "top.hpp"
 
@@ -45,9 +46,20 @@ using hclock=chrono::high_resolution_clock;
 
 /*************** Loggers *******************/
 
-using log_states=cadmium::logger::logger<cadmium::logger::logger_state, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
-using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
-using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, cadmium::dynamic::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+namespace {  
+
+    memore::sink memore_sink("pmgbp", "pmgbp", "tests");
+    
+    struct memore_sink_provider {
+        static memore::sink& sink() {
+            return memore_sink;
+        }
+    };
+}
+
+using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
 
 using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
@@ -74,19 +86,13 @@ int main(int argc, char ** argv) {
         file.close();
     
     #else
-        
-        std::cout << "hclock" << std::endl;
+    
         auto start = hclock::now();
 
-        std::cout << "model" << std::endl;
         std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model();
-        
-        std::cout << "runner" << std::endl;
-        cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));
-        
-        std::cout << "run_until 3000" << std::endl;
+        cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));        
         r.run_until({3000});
-        std::cout << "finished" << std::endl;
+
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;
     
