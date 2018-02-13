@@ -275,13 +275,27 @@ public:
     }
 
     friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction_template<PORTS,TIME>::state_type& s) {
-        os << "Reaction_" << s.id << " ";
-        os << "Tasks in process: ";
+        os << "{";
+        os << "\"model_class\":\"reaction\",";
+        os << "\"id\":\"" << s.id << "\",";
+        os << "\"reactions_in_progress\": [";
 
+        bool separate = false;
         for (const auto& task : s.tasks.queue()) {
-            os << "Tasks [ time_left: " << task.time_left;
-            os << " jobs amount " << task.task_elements.size() << " ]";
+            if (separate) {
+                os << ",";
+            }
+            separate = true;
+
+            os << "{";
+            os << "\"time_left\":\"" << task.time_left << "\",";
+            os << "\"reaction_amount\":" << task.task_elements.size();
+            os << "}";
         }
+
+        os << "]";
+        os << "}";
+
         return os;
     }
 

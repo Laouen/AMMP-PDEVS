@@ -210,6 +210,8 @@ std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& m);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::MetaboliteAmounts& m);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::BState_t& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Way& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Product& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Reactant& s);
 
 
 #endif // PMGBP_TYPES_HPP

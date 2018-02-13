@@ -109,14 +109,34 @@ public:
     }
 
     friend std::ostringstream& operator<<(std::ostringstream& os, const typename router_template<PORTS,TIME>::state_type& s) {
-        os << "Router_" << s.id << " ";
+        os << "{";
+        os << "\"model_class\":\"router\",";
+        os << "\"id\":\"" << s.id << "\",";
+        os << "\"messages\": [";
+        
+        int messages_in_port;
+        bool separate = false;
         const auto size = std::tuple_size<decltype(s.output)>::value;
+        for (int port = 0; port < size; port++) {
 
-        os << "Messages per port number: ";
-        for (int port_number = 0; port_number < size; port_number++) {
-            os << "(" << port_number << ", ";
-            os << pmgbp::tuple::cget<typename PORTS::output_type>(s.output, port_number).size() << ")";
+            messages_in_port = pmgbp::tuple::cget<typename PORTS::output_type>(s.output, port).size();
+            if (messages_in_port > 0) {
+                if (separate) {
+                    os << ",";
+                }
+                separate = true;
+                
+                os << "{";
+                os << "\"port\":" << port << ",";
+                os << "\"messages_amount\":" << messages_in_port;
+                os << "}";
+            }
         }
+
+        os << "]";
+        os << "}";
+
+        return os;
     }
 
 private:

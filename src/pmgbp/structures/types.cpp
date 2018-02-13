@@ -79,3 +79,36 @@ ostream& operator<<(ostream& os, const ReactionInfo& r) {
   os << "reversible: " << ((r.reversible) ? "true" : "false");
   return os;
 }
+
+ostream& operator<<(ostream& os, const Product& p) {
+  os << "{";
+  os << "\"message_type\":\"product\",";
+  os << "\"metabolites\":[";
+
+  bool separate = false;
+  for (const auto& metabolite : p.metabolites) {
+    if (separate) {
+      os << ",";
+    }
+
+    os << "{";
+    os << "\"id\":\"" << metabolite.first << "\",";
+    os << "\"amount\":" << metabolite.second;
+    os << "}";
+  }
+
+  os << "]";
+  os << "}";
+  return os;
+}
+
+ostream& operator<<(ostream& os, const Reactant& r) {
+  os << "{";
+  os << "\"message_type\":\"reactant\",";
+  os << "\"for_reaction\":\"" << r.rid << "\",";
+  os << "\"from\":\"" << r.from << "\",";
+  os << "\"Way\":\"" << r.reaction_direction << "\",";
+  os << "\"reaction_amount\":" << r.reaction_amount;
+  os << "}";
+  return os;
+}

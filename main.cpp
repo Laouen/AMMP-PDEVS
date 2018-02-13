@@ -36,6 +36,8 @@
 #include <memore/logger.hpp>
 #include <memore/sink.hpp>
 
+#include <mongocxx/instance.hpp>
+
 #include "top.hpp"
 
 
@@ -45,6 +47,9 @@ using hclock=chrono::high_resolution_clock;
 
 
 /*************** Loggers *******************/
+
+// NOTE: it is necesary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
+mongocxx::instance instance{};
 
 namespace {  
 
@@ -57,9 +62,9 @@ namespace {
     };
 }
 
-using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
-using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
-using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, memore::logger::formatter<NDTime>, cadmium::logger::cout_sink_provider>;
+using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, memore_sink_provider>;
+using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, memore_sink_provider>;
+using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, memore::logger::formatter<NDTime>, memore_sink_provider>;
 
 using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
@@ -89,9 +94,13 @@ int main(int argc, char ** argv) {
     
         auto start = hclock::now();
 
+        std::cout << "generate_model" << std::endl;
         std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model();
+        std::cout << "create runner" << std::endl;
         cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));        
+        std::cout << "run_until 3000" << std::endl;
         r.run_until({3000});
+        std::cout << "simulation finished" << std::endl;
 
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;

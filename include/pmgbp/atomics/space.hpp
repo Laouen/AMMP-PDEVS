@@ -331,10 +331,6 @@ public:
             result = this->state.interval_time;
         }
 
-//        if (result < TIME::zero()) {
-//            this->logger.error("Bad time: negative time: " + result);
-//        }
-
         this->logger.info("End time_advance");
         return result;
     }
@@ -342,26 +338,37 @@ public:
     friend std::ostringstream& operator<<(std::ostringstream& os, const typename space<PORTS,TIME>::state_type& s) {
         bool separate = false;
 
-        os << "{\"enzymes\": {";
+        os << "{";
+        os << "\"model_class\":\"space\",";
+        os << "\"id\":\"" << s.id << "\",";
+        os << "\"enzymes\": [";
         for(const auto& enzyme : s.enzymes) {
             if (separate) {
-                os << ", ";
+                os << ",";
             }
             separate = true;
-            os << "\"" << enzyme.second.id << "\": " << enzyme.second.amount;
+            os << "{";
+            os << "\"id\":\"" << enzyme.second.id << "\",";
+            os << "\"amount\":" << enzyme.second.amount;
+            os << "}";
         }
+        os << "],";
 
         separate = false;
-        os << "}, \"metabolites\": {";
+        os << "\"metabolites\": [";
         for(const auto& metabolite : s.metabolites) {
             if (separate) {
                 os << ", ";
             }
             separate = true;
-            os << "\"" << metabolite.first << "\": " << metabolite.second;
+            os << "{";
+            os << "\"id\":\"" << metabolite.first << "\",";
+            os << "\"amount\":" << metabolite.second;
+            os << "}";
         }
 
-        os << "} }";
+        os << "]";
+        os << "}";
 
         return os;
     }
