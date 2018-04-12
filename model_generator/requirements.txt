@@ -1,0 +1,5 @@
+Django==2.0.4
+lxml==4.2.1
+-e git+git@github.com:Laouen/PMGBP-PDEVS.git@9e174c2b215fe66995c60717f00bec4c862619cb#egg=PMGBP&subdirectory=model_generator
+pytz==2018.3
+tqdm==4.22.0

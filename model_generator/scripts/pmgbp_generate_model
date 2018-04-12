@@ -5,8 +5,8 @@ import gflags
 import sys
 import json
 
-from ModelGenerator import ModelGenerator
-from SBMLParser import SBMLParserEncoder
+from PMGBP.ModelGenerator import ModelGenerator
+from PMGBP.SBMLParser import SBMLParserEncoder
 
 
 def main(FLAGS):

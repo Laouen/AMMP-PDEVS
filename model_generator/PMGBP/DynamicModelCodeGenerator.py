@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import pkg_resources
+
+ATOMIC_MODEL_DEFINITION = pkg_resources.resource_filename(__name__, 'templates/atomic_model_definition.tpl.hpp')
+DYNAMIC_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_atomic.tpl.hpp')
+DYNAMIC_COUPLED = pkg_resources.resource_filename(__name__, 'templates/dynamic_coupled.tpl.hpp')
+DYNAMIC_DEFINED_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_defined_atomic.tpl.hpp')
+DYNAMIC_REACTION_SET = pkg_resources.resource_filename(__name__, 'templates/dynamic_reaction_set.tpl.hpp')
 
 class DynamicModelCodeGenerator:
     """
@@ -10,25 +17,26 @@ class DynamicModelCodeGenerator:
     def __init__(self, model_dir='..', model_name='top', template_folder='templates', TIME='NDTime'):
         self.model_name = model_name
 
+
         # atomic ports definition template
         atomic_model_definition_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'atomic_model_definition.tpl.hpp'
-        self.atomic_model_def_template = open(atomic_model_definition_tpl_path, 'r').read()
+        self.atomic_model_def_template = open(ATOMIC_MODEL_DEFINITION, 'r').read()
 
         # atomic template
         atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_atomic.tpl.hpp'
-        self.atomic_template = open(atomic_tpl_path, 'r').read().format(TIME=TIME)
+        self.atomic_template = open(DYNAMIC_ATOMIC, 'r').read().format(TIME=TIME)
 
         # coupled template
         coupled_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_coupled.tpl.hpp'
-        self.coupled_template = open(coupled_tpl_path, 'r').read().format(TIME=TIME)
+        self.coupled_template = open(DYNAMIC_COUPLED, 'r').read().format(TIME=TIME)
 
         # defined atomic template
         defined_atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_defined_atomic.tpl.hpp'
-        self.defined_atomic_template = open(defined_atomic_tpl_path, 'r').read().format(TIME=TIME)
+        self.defined_atomic_template = open(DYNAMIC_DEFINED_ATOMIC, 'r').read().format(TIME=TIME)
 
         # reaction set definition template
         reaction_set_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_reaction_set.tpl.hpp'
-        self.reaction_set_template = open(reaction_set_tpl_path, 'r').read().format(TIME=TIME)
+        self.reaction_set_template = open(DYNAMIC_REACTION_SET, 'r').read().format(TIME=TIME)
 
         # port template
         self.port_template = 'struct {out_in}_{port_number}: public ' \
