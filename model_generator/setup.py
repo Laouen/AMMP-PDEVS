@@ -10,4 +10,4 @@ setup(name='PMGBP',
       packages=find_packages(),
       scripts=['scripts/pmgbp_generate_model'],
       package_data={'PMGBP': ['templates/atomic_model_definition.tpl.hpp', 'templates/dynamic_atomic.tpl.hpp', 'templates/dynamic_coupled.tpl.hpp', 'templates/dynamic_defined_atomic.tpl.hpp', 'templates/dynamic_reaction_set.tpl.hpp']},
-      install_requires=['python-gflags', 'BeautifulSoup', 'lxml', 'tqdm'])
+      install_requires=['python-gflags', 'beautifulsoup4', 'lxml', 'tqdm'])

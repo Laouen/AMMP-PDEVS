@@ -60,8 +60,8 @@ class DynamicModelCodeGenerator:
                            '{ports_model_2}_ports::in_{port_number_2}>' \
                            '("{id_model_1}", "{id_model_2}")'
 
-        self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'wb')
-        self.model_definitions_file = open(model_dir + os.sep + model_name + '_model_definitions.hpp', 'wb')
+        self.model_file = open(model_dir + os.sep + model_name + '.hpp', 'w')
+        self.model_definitions_file = open(model_dir + os.sep + model_name + '_model_definitions.hpp', 'w')
 
         self.tabs = ''
         self.write_includes()
@@ -182,6 +182,7 @@ class DynamicModelCodeGenerator:
         self.model_file.flush()
 
     def write_to_model_def(self, code):
+        print(code)
         self.model_definitions_file.write(code + '\n')
         self.model_definitions_file.flush()
 

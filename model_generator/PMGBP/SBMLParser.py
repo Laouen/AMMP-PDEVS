@@ -10,7 +10,7 @@ import json
 import re
 from bs4 import BeautifulSoup  # sudo pip install beautifulsoup, lxml
 from collections import defaultdict
-from constants import *
+from .constants import *
 from json import JSONEncoder
 import copy
 from tqdm import tqdm
@@ -28,7 +28,7 @@ class SBMLParserEncoder(JSONEncoder):
             'enzymes': copy.deepcopy(o.enzymes),
         }
 
-        for key in res['reactions'].keys():
+        for key in list(res['reactions'].keys()):
             res['reactions'][key]['location'] = dict(res['reactions'][key]['location'].__dict__)
 
         return res
@@ -132,7 +132,7 @@ class SBMLParser:
         self.reactions = copy.deepcopy(json_model['reactions'])
         self.enzymes = copy.deepcopy(json_model['enzymes'])
 
-        for key in self.reactions.keys():
+        for key in list(self.reactions.keys()):
             cid = self.reactions[key]['location']['cid']
             rsn = self.reactions[key]['location']['rsn']
             self.reactions[key]['location'] = Location(cid, rsn)
@@ -171,7 +171,7 @@ class SBMLParser:
         if self.compartment_species is not None:
             return self.compartment_species
 
-        self.compartment_species = {k: {} for k in self.get_compartments().keys()}
+        self.compartment_species = {k: {} for k in list(self.get_compartments().keys())}
 
         for specie in self.model.findAll('species'):
             sid = specie.get('id')
@@ -187,9 +187,9 @@ class SBMLParser:
         :return: All the reaction parameters for the reactions that uses species from the compartment
         :rtype: list[str]
         """
-        compartment_species = self.parse_compartments_species()[cid].keys()
+        compartment_species = list(self.parse_compartments_species()[cid].keys())
         return {rid: parameters
-                for rid, parameters in self.reactions.iteritems()
+                for rid, parameters in self.reactions.items()
                 if not_empty_intersection(compartment_species, parameters['species'])}
 
     def get_enzymes(self, reactions):
@@ -266,7 +266,7 @@ class SBMLParser:
         """
 
         # base cases
-        if type(enzymes) in [unicode, str]:
+        if type(enzymes) in [str, bytes]:
             if enzymes in ['and', 'or']:
                 return enzymes
             else:
@@ -303,7 +303,7 @@ class SBMLParser:
             return
 
         for eid in self.get_eids(reaction):
-            if eid not in self.enzymes.keys():
+            if eid not in list(self.enzymes.keys()):
                 self.enzymes[eid] = {
                     'id': eid,
                     # TODO: the amount should be in the model generator and be per compartments
@@ -325,7 +325,7 @@ class SBMLParser:
         """
 
         location = Location(cid, rsn)
-        return [rid for rid, p in self.reactions.iteritems() if p['location'] == location]
+        return [rid for rid, p in self.reactions.items() if p['location'] == location]
 
     def parse_reactions(self):
         """
@@ -334,7 +334,7 @@ class SBMLParser:
 
         It also generates the enzyme set obtained from reactions gene association
         """
-        print '[Parser] Start parsing reactions.'
+        print('[Parser] Start parsing reactions.')
         self.enzymes = {}
         self.reactions = {}
         xml_reactions = self.model.findAll('reaction')
@@ -342,7 +342,7 @@ class SBMLParser:
         for reaction in tqdm(xml_reactions, total=len(xml_reactions)):
             self.parse_reaction(reaction)
 
-        print '[Parser] End parsing reactions.'
+        print('[Parser] End parsing reactions.')
 
     def get_compartment(self, sid):
         """
@@ -422,7 +422,7 @@ class SBMLParser:
             return
 
         stoichiometry = self.parse_stoichiometry(reaction)
-        species = stoichiometry['listOfReactants'].keys() + stoichiometry['listOfProducts'].keys()
+        species = list(stoichiometry['listOfReactants'].keys()) + list(stoichiometry['listOfProducts'].keys())
         product_by_compartment = self.separate_by_compartment(stoichiometry['listOfProducts'])
         reactant_by_compartment = self.separate_by_compartment(stoichiometry['listOfReactants'])
         species = list(set(species))  # remove duplicates
@@ -450,9 +450,9 @@ class SBMLParser:
     def separate_by_compartment(self, stoichiometry):
         separated_stoichiometry = {}
 
-        for sid, amount in stoichiometry.iteritems():
+        for sid, amount in stoichiometry.items():
             cid = self.get_compartment(sid)
-            if cid not in separated_stoichiometry.keys():
+            if cid not in list(separated_stoichiometry.keys()):
                 separated_stoichiometry[cid] = {sid: amount}
             else:
                 separated_stoichiometry[cid][sid] = amount

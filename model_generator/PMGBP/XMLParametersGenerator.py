@@ -52,8 +52,8 @@ class XMLParametersGenerator:
 
         xml_stoichiometry_by_compartments = etree.Element('stoichiometryByCompartments')
 
-        product_compartments = parameters['product_by_compartment'].keys()
-        reactant_compartments = parameters['reactant_by_compartment'].keys()
+        product_compartments = list(parameters['product_by_compartment'].keys())
+        reactant_compartments = list(parameters['reactant_by_compartment'].keys())
 
         compartments = set(product_compartments + reactant_compartments)
 
@@ -110,7 +110,7 @@ class XMLParametersGenerator:
 
         cid = parameters['cid']
         xml_enzymes = etree.Element('enzymes')
-        for eid, enzyme_parameters in parameters['enzymes'].iteritems():
+        for eid, enzyme_parameters in parameters['enzymes'].items():
             xml_enzyme = etree.Element('enzyme')
 
             parameter_keys = ['id', 'amount']
@@ -125,7 +125,7 @@ class XMLParametersGenerator:
             enzyme_parameters['handled_reactions'][:] = [rid for rid
                                                          in enzyme_parameters['handled_reactions']
                                                          if rid
-                                                         in parameters['reaction_parameters'].keys()]
+                                                         in list(parameters['reaction_parameters'].keys())]
 
             for rid in enzyme_parameters['handled_reactions']:
                 reaction_parameters = parameters['reaction_parameters'][rid]
@@ -145,7 +145,7 @@ class XMLParametersGenerator:
 
                 xml_stoichiometry = etree.Element('stoichiometry')
 
-                if cid in reaction_parameters['product_by_compartment'].keys():
+                if cid in list(reaction_parameters['product_by_compartment'].keys()):
                     product = reaction_parameters['product_by_compartment'][cid]
                     xml_product = self.generate_table(product,
                                                       'product',
@@ -154,7 +154,7 @@ class XMLParametersGenerator:
                                                       'amount')
                     xml_stoichiometry.append(xml_product)
 
-                if cid in reaction_parameters['reactant_by_compartment'].keys():
+                if cid in list(reaction_parameters['reactant_by_compartment'].keys()):
                     substrate = reaction_parameters['reactant_by_compartment'][cid]
                     xml_substrate = self.generate_table(substrate,
                                                         'substrate',
@@ -172,7 +172,7 @@ class XMLParametersGenerator:
         self.spaces.append(xml_space)
 
     def print_parameters(self):
-        print etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True)
+        print(etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True))
 
     def save_xml(self):
         self.xml_file.write(etree.tostring(self.parameters, encoding='UTF-8', pretty_print=True))
@@ -182,7 +182,7 @@ class XMLParametersGenerator:
     def generate_table(table, table_name, entry_name, attributes, value_attribute):
         xml_table = etree.Element(table_name)
 
-        for key_values, port_number in table.iteritems():
+        for key_values, port_number in table.items():
             entry = etree.Element(entry_name)
 
             if type(key_values) is not tuple:

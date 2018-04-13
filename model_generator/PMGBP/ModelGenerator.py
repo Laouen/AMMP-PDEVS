@@ -1,17 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from SBMLParser import SBMLParser
-from ModelCodeGenerator import ModelCodeGenerator
-from DynamicModelCodeGenerator import DynamicModelCodeGenerator
-from XMLParametersGenerator import XMLParametersGenerator
-from constants import *
+from .SBMLParser import SBMLParser
+from .ModelCodeGenerator import ModelCodeGenerator
+from .DynamicModelCodeGenerator import DynamicModelCodeGenerator
+from .XMLParametersGenerator import XMLParametersGenerator
+from .constants import *
 from itertools import islice
 
 
 def chunks(data, SIZE=150):
     it = iter(data)
-    for i in xrange(0, len(data), SIZE):
+    for i in range(0, len(data), SIZE):
         yield {k: data[k] for k in islice(it, SIZE)}
 
 
@@ -63,7 +63,7 @@ class ModelStructure:
 
         # Final ports are for EOC (external reaction sets from other compartments)
         port_number = len(self.routing_table)
-        for external_cid, reaction_sets in external_reaction_sets.iteritems():
+        for external_cid, reaction_sets in external_reaction_sets.items():
             for reaction_set in reaction_sets:
                 self.routing_table[(external_cid, reaction_set)] = port_number
                 port_number += 1
@@ -77,13 +77,13 @@ class ModelStructure:
         # Building space
         reaction_parameters = parser.get_reaction_parameters(cid)
         metabolites = {specie: parser.metabolite_amounts[specie]
-                       for specie in parser.parse_compartments_species()[cid].keys()}
+                       for specie in list(parser.parse_compartments_species()[cid].keys())}
         self.space_parameters = {
             'cid': cid,
             'interval_time': parser.interval_times[cid],
             'metabolites': metabolites,
             'reaction_parameters': reaction_parameters,
-            'enzymes': parser.get_enzymes(reaction_parameters.keys())
+            'enzymes': parser.get_enzymes(list(reaction_parameters.keys()))
         }
 
 
@@ -152,7 +152,7 @@ class ModelGenerator:
     def generate_reaction_sets(self, compartment):
         cid = compartment.id
         return {(cid, rsn): self.generate_reaction_set(cid, rsn, reaction_set)
-                for rsn, reaction_set in compartment.reaction_sets.iteritems()}
+                for rsn, reaction_set in compartment.reaction_sets.items()}
 
     def generate_reaction_set(self, cid, rsn, reaction_set):
         reaction_set_id = '_'.join([cid, rsn])
@@ -167,7 +167,7 @@ class ModelGenerator:
         # Routers xml parameters
         port = 0
         for group in groups:
-            reaction_ids = group.keys()
+            reaction_ids = list(group.keys())
             groups_reaction_ids.append(reaction_ids)
 
             group_id = '_'.join([cid, rsn, str(port)])
@@ -181,7 +181,7 @@ class ModelGenerator:
         self.parameter_writer.add_router(reaction_set_id, routing_table)
 
         # Reaction xml parameters 
-        for rid, parameters in reaction_set.iteritems():
+        for rid, parameters in reaction_set.items():
             self.parameter_writer.add_reaction(rid, parameters)
 
         return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids, self.parameter_writer.xml_file_path)
@@ -204,7 +204,7 @@ class ModelGenerator:
         sub_models = [space] + [rs_model_name for (rs_model_name, _, _) in reaction_sets.values()]
 
         ic = []
-        for rs_address, port_number in compartment.routing_table.iteritems():
+        for rs_address, port_number in compartment.routing_table.items():
             # Organelle spaces do not send metabolites to other compartments without passing through
             # their membranes, that is the assert.
             assert rs_address[0] == compartment.id
@@ -228,7 +228,7 @@ class ModelGenerator:
 
         in_ports = []
         eic = []
-        for rs_name, port_number in compartment.membrane_eic.iteritems():
+        for rs_name, port_number in compartment.membrane_eic.items():
             rs_model_name = reaction_sets[(compartment.id, rs_name)][0]
             eic.append((rs_model_name, 'pmgbp::models::reaction', 0, port_number))
             in_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'in'))
@@ -269,7 +269,7 @@ class ModelGenerator:
 
         out_ports = []
         eoc = []
-        for (rs_cid, _), port_number in compartment.routing_table.iteritems():
+        for (rs_cid, _), port_number in compartment.routing_table.items():
             if rs_cid != cid:
                 eoc.append((space, space, port_number, port_number))
                 out_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'out'))
@@ -293,7 +293,7 @@ class ModelGenerator:
         sub_models = [cytoplasm_model, extra_cellular_model, periplasm_model]
 
         organelle_models = {}
-        for cid, model_structure in self.organelles.iteritems():
+        for cid, model_structure in self.organelles.items():
             organelle_models[cid] = self.generate_organelle_compartment(model_structure)
             sub_models.append(organelle_models[cid][0])  # append model name
 
@@ -307,8 +307,8 @@ class ModelGenerator:
                                         self.extra_cellular.routing_table,
                                         periplasm_model)
 
-        for cid, (model_name, _, output_port_amount) in organelle_models.iteritems():
-            for rsn, rs_port_number in self.organelles[cid].membrane_eic.iteritems():
+        for cid, (model_name, _, output_port_amount) in organelle_models.items():
+            for rsn, rs_port_number in self.organelles[cid].membrane_eic.items():
                 c_port_number = self.cytoplasm.routing_table[(cid, rsn)]
                 ic.append((cytoplasm_model, c_port_number, model_name, rs_port_number))
                 # *1) organelle output port 1 always goes to cytoplasm
@@ -332,7 +332,7 @@ class ModelGenerator:
         periplasm_oport_number = 1 if bulk_cid == self.cytoplasm.id else 2
         ic.append((periplasm_model, periplasm_model, periplasm_oport_number, bulk_model, bulk_model, 0))
 
-        for (cid, rsn), c_port_number in bulk_routing_table.iteritems():
+        for (cid, rsn), c_port_number in bulk_routing_table.items():
             if cid == bulk_cid:
                 continue
 
@@ -347,12 +347,12 @@ class ModelGenerator:
     # WARNING: deprecated
     def generate_reaction_group(self, group_id, reaction_group):  
         # write parameters to the xml file
-        reaction_ids = reaction_group.keys()
+        reaction_ids = list(reaction_group.keys())
         port_numbers = range(len(reaction_ids))
         routing_table = {rid: port_number for rid, port_number in zip(reaction_ids, port_numbers)}
         self.parameter_writer.add_router('router_' + group_id, routing_table)
 
-        for rid, parameters in reaction_group.iteritems():
+        for rid, parameters in reaction_group.items():
             self.parameter_writer.add_reaction('reaction_' + rid, parameters)
 
         # NOTE: the reaction_id order is important because it matches the port number, thus, the reaction_ids order
