@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
 import json
@@ -182,7 +183,6 @@ class DynamicModelCodeGenerator:
         self.model_file.flush()
 
     def write_to_model_def(self, code):
-        print(code)
         self.model_definitions_file.write(code + '\n')
         self.model_definitions_file.flush()
 
