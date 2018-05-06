@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 """
@@ -269,7 +269,7 @@ class SBMLParser:
         """
 
         # base cases
-        if type(enzymes) in [str, bytes]:
+        if type(enzymes) in [unicode, str, bytes]:
             if enzymes in ['and', 'or']:
                 return enzymes
             else:
