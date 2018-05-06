@@ -97,6 +97,7 @@ class ModelGenerator:
                  extra_cellular_id,
                  periplasm_id,
                  cytoplasm_id,
+                 model_dir='..',
                  json_model=None,
                  groups_size=150):
         """
@@ -115,8 +116,8 @@ class ModelGenerator:
         """
 
         self.groups_size = groups_size
-        self.parameter_writer = XMLParametersGenerator()
-        self.coder = DynamicModelCodeGenerator()
+        self.parameter_writer = XMLParametersGenerator(model_dir=model_dir)
+        self.coder = DynamicModelCodeGenerator(model_dir=model_dir)
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
                                  periplasm_id,

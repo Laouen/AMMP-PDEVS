@@ -187,6 +187,9 @@ class SBMLParser:
         :return: All the reaction parameters for the reactions that uses species from the compartment
         :rtype: list[str]
         """
+
+        # todo: Use the reaction paraemter product_by_compartment and subtract_by_compartment to determine if the reaction
+        # belongs to the compartment id because theses dicts have the reaction related compartments as keys.
         compartment_species = list(self.parse_compartments_species()[cid].keys())
         return {rid: parameters
                 for rid, parameters in self.reactions.items()

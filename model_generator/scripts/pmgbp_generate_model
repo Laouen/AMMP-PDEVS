@@ -20,6 +20,7 @@ def main(FLAGS):
                                      FLAGS.extra_cellular,
                                      FLAGS.periplasm,
                                      FLAGS.cytoplasm,
+                                     model_dir=FLAGS.model_dir,
                                      json_model=json_model,
                                      groups_size=FLAGS.reaction_groups_size)
 
@@ -32,6 +33,7 @@ def main(FLAGS):
 
 if __name__ == '__main__':
 
+    gflags.DEFINE_string('model_dir', '..', 'The model path were to store the generated model', short_name='d')
     gflags.DEFINE_string('sbml_file', None, 'The SBML file path to parse', short_name='f')
     gflags.DEFINE_string('extra_cellular', 'e', 'The extra cellular space ID in the SBML file', short_name='e')
     gflags.DEFINE_string('cytoplasm', 'c', 'The cytoplasm space ID in the SBML file', short_name='c')
