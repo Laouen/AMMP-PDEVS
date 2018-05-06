@@ -18,8 +18,11 @@ parameters.xml
 test/utilities/*.xml
 model_generator/*.json
 
-#python modules
+# Python modules
 model_generator/PMGBP.egg-info
+
+# Virtualenv
+env/
 
 # Others
 **.pyc
