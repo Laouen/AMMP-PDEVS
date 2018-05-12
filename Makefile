@@ -1,4 +1,4 @@
-CC=time g++
+CC=g++
 CFLAGS=-std=c++17
 INCLUDE_CADMIUM=-I vendor/cadmium/include
 INCLUDE_DESTIME=-I vendor/DESTimes/include
