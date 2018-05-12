@@ -53,7 +53,7 @@ mongocxx::instance instance{};
 
 namespace {  
 
-    memore::sink memore_sink("pmgbp", "pmgbp", "tests");
+    memore::sink memore_sink("pmgbp", "pmgbp", "simulation_results");
     
     struct memore_sink_provider {
         static memore::sink& sink() {
