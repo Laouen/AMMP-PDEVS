@@ -73,6 +73,11 @@ using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
 int main(int argc, char ** argv) {
 
+    // New custom collection used so Django or other platform can set the desired collection name to retrieve results
+    if (argc > 1) {
+        memore_sink_provider.sink().newCollection(argv[1]);
+    }
+
     #ifdef DIAGRAM
 
         if (argc < 2) {
