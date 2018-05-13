@@ -474,6 +474,8 @@ private:
                 continue;
             }
 
+            // TODO(Lao): By adding the reaction direction to the Pons and Sons I can merge both lists
+            // and then just iterate over a sngle list instead of this.
             // if re is empty, then no one of the STP reactions have ben triggered
             // and the search continues with the PTS reactions.
             for (auto &pon : pons) {
@@ -547,7 +549,7 @@ private:
 
     // TODO test this function specially
     long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
-        // calculation of the concentrations [A][B][C]
+        // concentrations calculation [A][B][C]
 
         double concentration = 1.0;
         for (const auto &metabolite : sctry) {
