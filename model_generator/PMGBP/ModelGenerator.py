@@ -98,6 +98,7 @@ class ModelGenerator:
                  periplasm_id,
                  cytoplasm_id,
                  model_dir='..',
+                 parameters_path='../parameters.xml',
                  json_model=None,
                  groups_size=150):
         """
@@ -116,6 +117,7 @@ class ModelGenerator:
         """
 
         self.groups_size = groups_size
+        self.parameters_path = parameters_path
         self.parameter_writer = XMLParametersGenerator(model_dir=model_dir)
         self.coder = DynamicModelCodeGenerator(model_dir=model_dir)
         self.parser = SBMLParser(sbml_file,
@@ -185,7 +187,7 @@ class ModelGenerator:
         for rid, parameters in reaction_set.items():
             self.parameter_writer.add_reaction(rid, parameters)
 
-        return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids, self.parameter_writer.xml_file_path)
+        return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids, self.parameters_path)
 
     def generate_organelle_compartment(self, compartment):
 
@@ -196,7 +198,7 @@ class ModelGenerator:
                                         compartment.routing_table)
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               compartment.id,
-                                              [self.parameter_writer.xml_file_path, compartment.id],
+                                              [self.parameters_path, compartment.id],
                                               len(reaction_sets),
                                               1,
                                               REACTANT_MESSAGE_TYPE,
@@ -257,7 +259,7 @@ class ModelGenerator:
         output_port_amount = max(compartment.routing_table.values()) + 1
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               cid,
-                                              [self.parameter_writer.xml_file_path, cid],
+                                              [self.parameters_path, cid],
                                               output_port_amount,
                                               1,
                                               REACTANT_MESSAGE_TYPE,
@@ -358,4 +360,4 @@ class ModelGenerator:
 
         # NOTE: the reaction_id order is important because it matches the port number, thus, the reaction_ids order
         # must not be modified once the routing_table is declared.
-        return self.coder.write_reaction_group_template(group_id, reaction_ids, self.parameter_writer.xml_file_path) 
+        return self.coder.write_reaction_group_template(group_id, reaction_ids, self.parameters_path) 
