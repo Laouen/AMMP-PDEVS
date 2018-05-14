@@ -75,7 +75,7 @@ int main(int argc, char ** argv) {
 
     // New custom collection used so Django or other platform can set the desired collection name to retrieve results
     if (argc > 1) {
-        memore_sink_provider.sink().newCollection(argv[1]);
+        memore_sink_provider::sink().new_collection(argv[1]);
     }
 
     #ifdef DIAGRAM
