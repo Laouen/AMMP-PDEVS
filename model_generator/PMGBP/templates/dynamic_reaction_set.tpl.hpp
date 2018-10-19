@@ -4,7 +4,7 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<{TIME}>> {{cid}}_{{rsn}} = m
 	"{{cid}}",
 	"{{rsn}}",
 	{{reaction_ids}},
-	"{{parameters_xml}}"
+	xml_parameter_path
 );
 
 /**************************************************************************************************/

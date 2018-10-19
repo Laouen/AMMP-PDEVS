@@ -69,7 +69,7 @@ class DynamicModelCodeGenerator:
         self.write_function_declaration(TIME)
 
 
-    def write_reaction_set(self, cid, rsn, reaction_ids, parameters_xml):
+    def write_reaction_set(self, cid, rsn, reaction_ids):
 
         reaction_ids = '{ {"' + '"}, {"'.join(['", "'.join(ids) for ids in reaction_ids]) + '"} }'
 
@@ -77,8 +77,7 @@ class DynamicModelCodeGenerator:
             self.reaction_set_template.format(
                 cid=cid,
                 rsn=rsn,
-                reaction_ids=reaction_ids,
-                parameters_xml=parameters_xml
+                reaction_ids=reaction_ids
             )
         )
 
@@ -87,8 +86,10 @@ class DynamicModelCodeGenerator:
     def write_atomic_model(self, model_class, model_id, parameters, out_ports, in_ports, output_type, input_type):
         # ARGS mut be generated before the parameter input is modified. 
         ARGS = ', '.join(['const char*' for i in range(len(parameters))])
-        model_name = model_class + '_' + model_id
+        ARGS = 'const char*, ' + ARGS
         parameters = ',\n\t\t'.join(map(json.dumps, parameters))
+        parameters = 'xml_parameter_path.c_str(),\n\t\t' + parameters
+        model_name = model_class + '_' + model_id
 
         self.define_atomic_model_with_ports(model_name, model_class, out_ports, in_ports, output_type, input_type)
         self.write(self.atomic_template.format(model_name=model_name, ARGS=ARGS, parameters=parameters))
@@ -217,7 +218,7 @@ class DynamicModelCodeGenerator:
         self.write('#include <cadmium/modeling/dynamic_model_translator.hpp>\n\n')
 
     def write_function_declaration(self, TIME):
-        self.write('std::shared_ptr<cadmium::dynamic::modeling::coupled<' + TIME + '>> generate_model() {')
+        self.write('std::shared_ptr<cadmium::dynamic::modeling::coupled<' + TIME + '>> generate_model(std::string xml_parameter_path) {')
         self.write('')
         self.tabs = '    '
 
