@@ -73,15 +73,10 @@ using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
 int main(int argc, char ** argv) {
 
-    // New custom collection used so Django or other platform can set the desired collection name to retrieve results
-    if (argc > 1) {
-        memore_sink_provider::sink().new_collection(argv[1]);
-    }
-
     #ifdef DIAGRAM
 
-        if (argc < 2) {
-            cout << "Usage: " + string(argv[0]) + " <diagram_output_file>" << endl;
+        if (argc != 2) {
+            std::cout << "Usage: " + std::string(argv[0]) + " <diagram_output_file>" << std::endl;
             exit(0);
         }
 
@@ -96,11 +91,21 @@ int main(int argc, char ** argv) {
         file.close();
     
     #else
-    
+
+        if (argc != 3) {
+            std::cout << "Usage: " + std::string(argv[0]) + " <xml_parameters_path> <simulation_db_identifier>" << std::endl;
+            exit(0);
+        }
+        
+        std::string xml_parameters_path = std::string(argv[1]);
+
+        // New custom collection used so Django or other platform can set the desired collection name to retrieve results
+        memore_sink_provider::sink().new_collection(argv[2]);
+
         auto start = hclock::now();
 
         std::cout << "generate_model" << std::endl;
-        std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model();
+        std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model(xml_parameters_path);
         std::cout << "create runner" << std::endl;
         cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));        
         std::cout << "run_until 3000" << std::endl;
