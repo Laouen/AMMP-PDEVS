@@ -111,9 +111,7 @@ class ModelGenerator:
         the sbml file
         :param cytoplasm_id: The cytoplasm ID, this ID must be one of the compartments IDs from
         the sbml file
-        :param parameters_path: The path that will be hardcoded into the C++ compiled code, the model constructors will 
-        search the parameters in run time using this path. This path is not automatically set to have the path of the 
-        generated parameter file by the XMLParameterGenerator module because we could want them to be different.
+        :param model_dir: Path to the directory where the generated model will be stored
         :param json_model: The parser exported as json. Optional, used to avoid re parsing
         :param groups_size: The size of the reaction set groups
         """

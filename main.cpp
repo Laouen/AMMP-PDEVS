@@ -102,13 +102,22 @@ int main(int argc, char ** argv) {
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
         memore_sink_provider::sink().new_collection(argv[2]);
 
-        auto start = hclock::now();
 
+        // Initialize model
+        auto start = hclock::now();
+        
         std::cout << "generate_model" << std::endl;
         std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model(xml_parameters_path);
         std::cout << "create runner" << std::endl;
         cadmium::dynamic::engine::runner<NDTime, logger_top> r(top_model, NDTime({0}));        
-        std::cout << "run_until 3000" << std::endl;
+        
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
+        cout << "Model initialization took:" << elapsed << "sec" << endl;        
+
+        // Run simulation
+        start = hclock::now();
+
+        std::cout << "run until 3000:00:00" << std::endl;
         r.run_until({3000});
         std::cout << "simulation finished" << std::endl;
 

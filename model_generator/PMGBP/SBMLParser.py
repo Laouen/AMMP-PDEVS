@@ -269,7 +269,7 @@ class SBMLParser:
         """
 
         # base cases
-        if type(enzymes) in [str, bytes]:
+        if type(enzymes) in [str, bytes, unicode]:
             if enzymes in ['and', 'or']:
                 return enzymes
             else:
