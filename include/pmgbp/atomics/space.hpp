@@ -137,10 +137,10 @@ public:
                 ->FirstChildElement(id);
 
 
-        // Read interval_time
+        // Load interval_time
         this->state.interval_time = TIME(root->FirstChildElement("intervalTime")->GetText());
 
-        // Read metabolites
+        // Load metabolites
         tinyxml2::XMLElement* metabolites = root->FirstChildElement("metabolites");
         tinyxml2::XMLElement* metabolite = metabolites->FirstChildElement();
         string specie;
@@ -152,84 +152,86 @@ public:
             metabolite = metabolite->NextSiblingElement();
         }
 
-        // Read enzymes
-        tinyxml2::XMLElement* handled_reaction;
-        tinyxml2::XMLElement* address;
+        // Load enzymes
         tinyxml2::XMLElement* stoichiometry;
-        tinyxml2::XMLElement* enzyme_entry;
         tinyxml2::XMLElement* stoichiometry_specie;
-        string enzyme_id, reaction_id, cid, rsn, specie_id;
-        int enzyme_amount, specie_amount;
-        Enzyme enzyme;
-        double konSTP, koffSTP, konPTS, koffPTS;
-        bool reversible;
-        ReactionAddress location;
-        MetaboliteAmounts  substrate_sctry, products_sctry;
-        map<string, ReactionInfo> handled_reactions;
-        ReactionInfo reaction_information;
+        string specie_id;
+        Integer specie_amount;
 
-        enzyme_entry = root->FirstChildElement("enzymes")->FirstChildElement();
+        tinyxml2::XMLElement* enzyme_entry = root->FirstChildElement("enzymes")->FirstChildElement();
         while (enzyme_entry != nullptr) {
 
-            handled_reactions.clear();
-            handled_reaction = enzyme_entry->FirstChildElement("handledReactions")->FirstChildElement();
+            // Load handled reactions
+            map<string, ReactionInfo> handled_reactions;
+            tinyxml2::XMLElement* handled_reaction = enzyme_entry->FirstChildElement("handledReactions")->FirstChildElement();
             while (handled_reaction != nullptr) {
-                substrate_sctry.clear();
-                products_sctry.clear();
 
-                reaction_id = handled_reaction->FirstChildElement("rid")->GetText();
-                address = handled_reaction->FirstChildElement("address");
-                cid = address->Attribute("cid");
-                rsn = address->Attribute("rsn");
-                location = ReactionAddress(cid, rsn);
-                konSTP = std::stod(handled_reaction->FirstChildElement("konSTP")->GetText());
-                konPTS = std::stod(handled_reaction->FirstChildElement("konPTS")->GetText());
-                koffSTP = std::stod(handled_reaction->FirstChildElement("koffSTP")->GetText());
-                koffPTS = std::stod(handled_reaction->FirstChildElement("koffPTS")->GetText());
-                reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
+                string reaction_id = handled_reaction->FirstChildElement("rid")->GetText();
 
+                double konSTP = std::stod(handled_reaction->FirstChildElement("konSTP")->GetText());
+                double konPTS = std::stod(handled_reaction->FirstChildElement("konPTS")->GetText());
+                double koffSTP = std::stod(handled_reaction->FirstChildElement("koffSTP")->GetText());
+                double koffPTS = std::stod(handled_reaction->FirstChildElement("koffPTS")->GetText());
+                bool reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
+
+                // Load the reaction stoichiometry
                 stoichiometry = handled_reaction->FirstChildElement("stoichiometry");
+
+                // Load the substrate stoichiometry
+                MetaboliteAmounts substrate_sctry;
                 stoichiometry_specie = stoichiometry->FirstChildElement("substrate");
+
                 if (stoichiometry_specie != nullptr) {
                     stoichiometry_specie = stoichiometry_specie->FirstChildElement();
                 }
+
                 while (stoichiometry_specie != nullptr) {
                     specie_id = stoichiometry_specie->Attribute("id");
-                    specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                    specie_amount = Integer((stoichiometry_specie->Attribute("amount")));
                     substrate_sctry.insert({specie_id, specie_amount});
 
                     stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
                 }
 
+                // Load the product stoichiometry
+                MetaboliteAmounts products_sctry;
                 stoichiometry_specie = stoichiometry->FirstChildElement("product");
+
                 if (stoichiometry_specie != nullptr) {
                     stoichiometry_specie = stoichiometry_specie->FirstChildElement();
                 }
+
                 while (stoichiometry_specie != nullptr) {
                     specie_id = stoichiometry_specie->Attribute("id");
-                    specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
+                    specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
                     products_sctry.insert({specie_id, specie_amount});
 
                     stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
                 }
 
-                reaction_information = ReactionInfo(reaction_id,
-                                                    location,
-                                                    substrate_sctry,
-                                                    products_sctry,
-                                                    konSTP,
-                                                    konPTS,
-                                                    koffSTP,
-                                                    koffPTS,
-                                                    reversible);
+                // Save the reaction information
+                ReactionInfo reaction_information = ReactionInfo(reaction_id,
+                                                                 substrate_sctry,
+                                                                 products_sctry,
+                                                                 konSTP,
+                                                                 konPTS,
+                                                                 koffSTP,
+                                                                 koffPTS,
+                                                                 reversible);
+
                 handled_reactions.insert({reaction_id, reaction_information});
+
                 handled_reaction = handled_reaction->NextSiblingElement();
             }
 
-            enzyme_id = enzyme_entry->FirstChildElement("id")->GetText();
-            enzyme_amount = std::stoi(enzyme_entry->FirstChildElement("amount")->GetText());
+            // Load the enzyme address
+            tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
+            EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("rsn"));
 
-            enzyme = Enzyme(enzyme_id, enzyme_amount, handled_reactions);
+            string enzyme_id = enzyme_entry->FirstChildElement("id")->GetText();
+            Integer enzyme_amount = Integer(std::stoi(enzyme_entry->FirstChildElement("amount")->GetText()));
+
+            Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
 
             this->state.enzymes.insert({enzyme_id, enzyme});
             enzyme_entry = enzyme_entry->NextSiblingElement();
@@ -243,10 +245,9 @@ public:
         routing_table = root->FirstChildElement("routingTable");
         entry = routing_table->FirstChildElement();
         while (entry != nullptr) {
-            cid = entry->Attribute("cid");
-            rsn = entry->Attribute("rsn");
+            EnzymeAddress enzyme_address(entry->Attribute("cid"), entry->Attribute("rsn"));
             port_number = std::stoi(entry->Attribute("port"));
-            this->state.routing_table.insert(ReactionAddress(cid, rsn), port_number);
+            this->state.routing_table.insert(enzyme_address, port_number);
 
             entry = entry->NextSiblingElement();
         }
@@ -395,7 +396,7 @@ private:
         this->integer_random.seed(integer_rd());
     }
 
-    void push_to_correct_port(ReactionAddress address, output_bags& bags, const Reactant& p) {
+    void push_to_correct_port(EnzymeAddress address, output_bags& bags, const Reactant& p) {
         int port_number = this->state.routing_table.at(address);
         pmgbp::tuple::get<Reactant>(bags, port_number).emplace_back(p);
     }
@@ -404,12 +405,12 @@ private:
         Reactant reactant;
         double rv, total, partial;
         map<string, double> sons, pons;
-        Enzyme enzyme;
         ReactionInfo re;
         vector<string> enzyme_IDs;
 
         // Enzyme are individually considered
         this->unfoldEnzymes(enzyme_IDs);
+
         // Enzymes are randomly iterated
         this->shuffleEnzymes(enzyme_IDs);
 
@@ -418,8 +419,8 @@ private:
             sons.clear();
             pons.clear();
             re.clear();
-            enzyme.clear();
-            enzyme = this->state.enzymes.at(eid);
+
+            Enzyme enzyme = this->state.enzymes.at(eid);
 
             this->collectOns(enzyme.handled_reactions, sons, pons);
 
@@ -452,10 +453,11 @@ private:
                     re = enzyme.handled_reactions.at(son.first);
                     reactant.clear();
                     reactant.rid = re.id;
+                    reactant.enzyme_id = eid;
                     reactant.from = this->state.id;
                     reactant.reaction_direction = Way::STP;
                     reactant.reaction_amount = 1;
-                    this->push_to_correct_port(re.location, bags, reactant);
+                    this->push_to_correct_port(enzyme.location, bags, reactant);
                     break;
                 }
             }
@@ -486,10 +488,11 @@ private:
                     re = enzyme.handled_reactions.at(pon.first);
                     reactant.clear();
                     reactant.rid = re.id;
+                    reactant.enzyme_id = eid;
                     reactant.from = this->state.id;
                     reactant.reaction_direction = Way::PTS;
                     reactant.reaction_amount = 1;
-                    this->push_to_correct_port(re.location, bags, reactant);
+                    this->push_to_correct_port(enzyme.location, bags, reactant);
                     break;
                 }
             }
@@ -513,16 +516,14 @@ private:
         }
     }
 
-    // TODO test this function specially and put this in the random number class
+    // TODO: test this function specially and put this in the random number class
     void shuffleEnzymes(vector<string> &ce) const {
         random_device rd;
         mt19937 g(rd());
         shuffle(ce.begin(), ce.end(), g);
     }
 
-    void collectOns(const map<string, ReactionInfo>& reactions,
-                    map<string, double>& son,
-                    map<string, double>& pon) {
+    void collectOns(const map<string, ReactionInfo>& reactions, map<string, double>& son, map<string, double>& pon) {
 
         long double threshold;
 
@@ -547,7 +548,7 @@ private:
         }
     }
 
-    // TODO test this function specially
+    // TODO: test this function specially
     long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
         // concentrations calculation [A][B][C]
 
@@ -659,7 +660,6 @@ private:
         return this->state.tasks.exists(Task<output_ports >(Status::SELECTING_FOR_REACTION));
     }
 
-
     double sumAll(const map<string, double> &ons) const {
         double result = 0;
 
@@ -675,6 +675,7 @@ private:
         }
     }
 };
+
 }
 }
 

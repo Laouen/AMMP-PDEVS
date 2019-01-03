@@ -24,30 +24,30 @@ enum class Status {
     SENDING_REACTIONS = 4
 };
 
-struct ReactionAddress {
+struct EnzymeAddress {
     std::string compartment;
     std::string reaction_set;
 
-    ReactionAddress() {
+    EnzymeAddress() {
         this->compartment = "";
         this->reaction_set = "";
     };
 
-    ReactionAddress(const std::string& other_compartment, const std::string& other_reaction_set) {
+    EnzymeAddress(const std::string& other_compartment, const std::string& other_reaction_set) {
         this->compartment = other_compartment;
         this->reaction_set = other_reaction_set;
     }
 
-    ReactionAddress(const ReactionAddress& other) {
+    EnzymeAddress(const EnzymeAddress& other) {
         this->compartment = other.compartment;
         this->reaction_set = other.reaction_set;
     }
 
-    inline bool operator==(const ReactionAddress& o) const {
+    inline bool operator==(const EnzymeAddress& o) const {
         return this->compartment == o.compartment && this->reaction_set == o.reaction_set;
     }
 
-    inline bool operator<(const ReactionAddress& o) const {
+    inline bool operator<(const EnzymeAddress& o) const {
         return (this->compartment < o.compartment) ||
                 ((this->compartment == o.compartment) && (this->reaction_set < o.reaction_set));
     }
@@ -61,7 +61,6 @@ struct ReactionAddress {
         this->reaction_set = "";
     }
 };
-
 
 /**********************************************/
 /***************** PORTS **********************/
@@ -120,6 +119,6 @@ struct Task {
 }
 
 std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::Status& s);
-std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::ReactionAddress& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::EnzymeAddress& s);
 
 #endif //PMGBP_PDEVS_SPACE_STRUCTURES_HPP

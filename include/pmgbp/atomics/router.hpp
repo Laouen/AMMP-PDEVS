@@ -45,7 +45,7 @@ public:
      */
     explicit router_template(const char* xml_file, const char* id) {
         this->state.id = id;
-        logger.setModuleName("Router" + this->state.id);
+        logger.setModuleName("Router_" + this->state.id);
 
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
@@ -55,15 +55,13 @@ public:
                 ->FirstChildElement("routers")
                 ->FirstChildElement(id);
 
-        // Read routing table
+        // Load routing table
         tinyxml2::XMLElement* routing_table = root->FirstChildElement("routingTable");
         tinyxml2::XMLElement* entry = routing_table->FirstChildElement();
-        string key;
-        int port_number;
         while (entry != nullptr) {
-            key = entry->Attribute("metaboliteId");
-            port_number = std::stoi(entry->Attribute("port"));
-            this->state.routing_table.insert({key, port_number});
+            string enzyme_id = entry->Attribute("enzymeID");
+            int port_number = std::stoi(entry->Attribute("port"));
+            this->state.routing_table.insert({enzyme_id, port_number});
 
             entry = entry->NextSiblingElement();
         }
@@ -148,7 +146,7 @@ private:
     }
 
     void push_to_correct_port(const typename PORTS::output_type& message) {
-        int port_num = this->state.routing_table.at(message.rid);
+        int port_num = this->state.routing_table.at(message.enzyme_id);
         pmgbp::tuple::get<typename PORTS::output_type>(this->state.output, port_num).emplace_back(message);
     }
 };

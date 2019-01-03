@@ -64,7 +64,7 @@ const long double MOL = 1e-6;
 using Address_t = list<string>;
 
 struct Product {
-    std::string enzyme_id;
+    string enzyme_id;
     Integer released_enzymes;
     MetaboliteAmounts metabolites;
 
@@ -82,6 +82,7 @@ struct Product {
 
 struct Reactant {
     string rid;
+    string enzyme_id;
     string from;
     Way reaction_direction;
     Integer reaction_amount;
@@ -112,7 +113,6 @@ struct Reactant {
 struct ReactionInfo {
 
   string id;
-  pmgbp::structs::space::ReactionAddress location;
   MetaboliteAmounts  substrate_sctry;
   MetaboliteAmounts  products_sctry;
   double konSTP = 1;
@@ -125,7 +125,6 @@ struct ReactionInfo {
 
   ReactionInfo(
     string other_id,
-    const pmgbp::structs::space::ReactionAddress& other_location,
     const MetaboliteAmounts& other_substrate_sctry,
     const MetaboliteAmounts& other_products_sctry,
     double other_konSTP,
@@ -134,7 +133,6 @@ struct ReactionInfo {
     double other_koffPTS,
     bool other_reversible
     ) : id(other_id),
-        location(other_location),
         substrate_sctry(other_substrate_sctry),
         products_sctry(other_products_sctry),
         konSTP(other_konSTP),
@@ -145,7 +143,6 @@ struct ReactionInfo {
 
   ReactionInfo(const ReactionInfo& other)
   : id(other.id),
-    location(other.location),
     substrate_sctry(other.substrate_sctry),
     products_sctry(other.products_sctry),
     konSTP(other.konSTP),
@@ -156,7 +153,6 @@ struct ReactionInfo {
 
   void clear() {
     id = "";
-    location.clear();
     substrate_sctry.clear();
     products_sctry.clear();
     konSTP = 0;
@@ -165,7 +161,7 @@ struct ReactionInfo {
   }
 
   bool empty() {
-    return (id == "") && location.empty() && substrate_sctry.empty() && products_sctry.empty();
+    return (id == "") && substrate_sctry.empty() && products_sctry.empty();
   }
 };
 
@@ -180,25 +176,33 @@ ostream& operator<<(ostream& os, const ReactionInfo& r);
 /*********** Data enzyme type **************/
 /*******************************************/
 
+// TODO: Change name to EnzymeInformation
 struct Enzyme {
-  string      id;
-  Integer   amount;
-  map<string, ReactionInfo> handled_reactions;
+    string id;
+    pmgbp::structs::space::EnzymeAddress location;
+    Integer amount;
+    map<string, ReactionInfo> handled_reactions;
 
-  Enzyme()
-  : id(""), amount(0), handled_reactions() {};
+    Enzyme()
+            : id(""), location(), amount(0), handled_reactions() {};
 
-  Enzyme(string other_id, const Integer& other_amount, const map<string, ReactionInfo>& other_handled_reactions)
-  : id(other_id), amount(other_amount), handled_reactions(other_handled_reactions) {}
+    Enzyme(
+            const string& other_id,
+            const pmgbp::structs::space::EnzymeAddress& other_location,
+            const Integer& other_amount,
+            const map<string, ReactionInfo>& other_handled_reactions
+    )
+            : id(other_id), location(other_location), amount(other_amount), handled_reactions(other_handled_reactions) {}
 
-  Enzyme(const Enzyme& other)
-  : id(other.id), amount(other.amount), handled_reactions(other.handled_reactions) {}
+    Enzyme(const Enzyme& other)
+            : id(other.id), location(other.location), amount(other.amount), handled_reactions(other.handled_reactions) {}
 
-  void clear() {
-    id = "";
-    amount = 0;
-    handled_reactions.clear();
-  }
+    void clear() {
+        id = "";
+        location.clear();
+        amount = 0;
+        handled_reactions.clear();
+    }
 };
 
 
