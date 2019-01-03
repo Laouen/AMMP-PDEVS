@@ -53,7 +53,6 @@
 
 #include <tinyxml2.h>
 
-
 namespace pmgbp {
 namespace models {
 
@@ -69,6 +68,8 @@ public:
     using rid=std::string;
     using cid=std::string;
     using sid=std::string;
+
+    using rejected_type=map<pair<string, Way>, map<rid, Integer>>;
 
     struct ports {
 
@@ -97,7 +98,8 @@ public:
     using output_bags=typename make_message_bags<output_ports>::type;
     using input_bags=typename make_message_bags<input_ports>::type;
 
-    
+    /****** State and Properties *******/
+
     struct reaction_props_type {
         TIME rate;
         TIME reject_rate;
@@ -105,6 +107,17 @@ public:
         double koff_PTS;
         map<rid, MetaboliteAmounts> substrate_sctry; // the stoichiometry is separated by compartments
         map<rid, MetaboliteAmounts> products_sctry; // the stoichiometry is separated by compartments
+
+        reaction_props_type(const TIME& other_rate, const TIME& other_reject_rate, double other_koff_STP, double other_koff_PTS) {
+
+            this->rate = other_rate;
+            this->reject_rate = other_reject_rate;
+            this->koff_STP = other_koff_STP;
+            this->koff_PTS = other_koff_STP;
+
+            this->substrate_sctry.clear();
+            this->products_sctry.clear();
+        }
     };
 
     /**
@@ -119,14 +132,20 @@ public:
      */
     struct props_type {
         std::string id;
+        TIME reject_rate; // Temporal hotFix to fast test with the same reject_rate for all the reactions
+        TIME rate; // Temporal hotFix to fast test with the same rate for all the reactions
         std::map<rid, reaction_props_type> reactions;
         RoutingTable<string> routing_table;
     };
 
     struct reaction_state_type {
-        std::string id; // only te print then enzyme ID
         map<cid, Integer> substrate_comps;
         map<cid, Integer> product_comps;
+
+        reaction_state_type() {
+            this->substrate_comps.clear();
+            this->product_comps.clear();
+        }
     };
 
     /**
@@ -141,14 +160,15 @@ public:
      *
      */
     struct state_type {
-        // Number of free enzymes
-        Integer free_enzymes;
+        std::string id; // only te print then enzyme ID
         std::map<rid, reaction_state_type> reactions;
         TaskScheduler<TIME, output_bags> tasks;
     };
 
     state_type state;
     props_type props;
+
+    /********** Constructors **************/
 
     enzyme() = default;
 
@@ -162,7 +182,7 @@ public:
     explicit enzyme(const props_type& props_other, const state_type& state_other) noexcept {
         this->props = props_other;
         this->state = state_other;
-        this->logger.setModuleName("Reaction_" + this->state.id);
+        this->logger.setModuleName("Enzyme_" + this->state.id);
 
         // Initialize random generators
         this->initialize_random_engines();
@@ -177,6 +197,7 @@ public:
      * @param id model id.
      */
     explicit enzyme(const char* xml_file, const char* id) {
+        // Set enzyme id
         this->props.id = id;
         this->state.id = id;
         this->logger.setModuleName("Enzyme_" + this->props.id);
@@ -188,42 +209,24 @@ public:
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
         assert(opened == tinyxml2::XML_SUCCESS);
 
-        // Search the enzyme information
-        tinyxml2::XMLElement* enzyme = doc.RootElement()
-                ->FirstChildElement("enzymes")
-                ->FirstChildElement(id);
+        // document root element
+        tinyxml2::XMLElement* root = doc.RootElement();
 
+        // Search the enzyme information
+        tinyxml2::XMLElement* enzyme = root->FirstChildElement("enzymes")->FirstChildElement(id);
 
         // Load reactions information
         tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reaction");
         while (enzyme_reaction != nullptr) {
-            rid reaction_id = enzyme_reaction->Attribute("id");
-            tinyxml2::XMLElement* reaction = doc.RootElement()
-                    ->FirstChildElement("reactions")
-                    ->FirstChildElement(reaction_id);
-            this->add_reaction_from_xml(reaction, reaction_id);
+            const char* reaction_id = enzyme_reaction->Attribute("id");
+            tinyxml2::XMLElement* reaction = root->FirstChildElement("reactions")->FirstChildElement(reaction_id);
+            this->load_reaction_props_and_state(reaction, reaction_id);
+
             enzyme_reaction = enzyme_reaction->NextSiblingElement();
         }
-
-        // Read initial available enzymes
-        this->state.free_enzymes = Integer(enzyme->Attribute("amount"));
-
-        // Read routing_table
-        tinyxml2::XMLElement* routing_table;
-        tinyxml2::XMLElement* entry;
-        int port_number;
-        string metabolite_id;
-
-        routing_table = enzyme->FirstChildElement("routingTable");
-        entry = routing_table->FirstChildElement();
-        while (entry != nullptr) {
-            metabolite_id = entry->Attribute("metaboliteId");
-            port_number = std::stoi(entry->Attribute("port"));
-            this->props.routing_table.insert(metabolite_id, port_number);
-
-            entry = entry->NextSiblingElement();
-        }
     }
+
+    /************** PDEVS methods ********************/
 
     void internal_transition() {
         this->logger.info("Begin internal_transition");
@@ -237,18 +240,20 @@ public:
         this->state.tasks.update(e);
 
         // Inserting new accepted metabolites
-        map<pair<string, Way>, int> rejected = {}; // first = STP, second = PTS
+        rejected_type rejected = {}; // first = STP, second = PTS
         this->bindMetabolites(mbs, rejected);
 
         // New task for the rejected metabolites to be send it.
         output_bags rejected_metabolites;
         sendBackRejected(rejected, rejected_metabolites);
-        this->state.tasks.add(this->state.reject_rate, rejected_metabolites);
+        //TODO: reject_rate should be different for each reaction
+        this->state.tasks.add(this->props.reject_rate, rejected_metabolites);
 
         // looking for new reactions
         output_bags products;
         this->lookForNewReactions(products);
-        this->state.tasks.add(this->state.rate, products);
+        //TODO: rate should be different for each reaction
+        this->state.tasks.add(this->props.rate, products);
         this->logger.info("End external_transition");
     }
 
@@ -282,11 +287,13 @@ public:
         return result;
     }
 
-    // TODO: remove PORTS and set for enzyme instead of reaction_template
+    /*************** print state *********************/
+
     friend std::ostringstream& operator<<(std::ostringstream& os, const typename enzyme<TIME>::state_type& s) {
         os << "{";
         os << "\"model_class\":\"enzyme\",";
         os << "\"id\":\"" << s.id << "\",";
+        os << "\"free enzymes\":" << s.free_enzymes << ",";
         os << "\"reactions_in_progress\": [";
 
         bool separate = false;
@@ -312,7 +319,7 @@ private:
 
     /*********** Private attributes **********/
 
-    RealRandom<double> real_random; // used for uniform random number
+    RealRandom<double> real_random; // used for uniform random number generation
     Logger logger;
 
     /*********** Private attributes **********/
@@ -321,34 +328,40 @@ private:
     ********* helper functions *************
     ***************************************/
 
-    void add_reaction_from_xml(tinyxml2::XMLElement *reaction, rid reaction_id) {
-        reaction_props_type new_reaction_props;
+    void load_reaction_props_and_state(tinyxml2::XMLElement *reaction, rid reaction_id) {
+
+        reaction_props_type new_reaction_props(
+                TIME(reaction->FirstChildElement("rate")->GetText()),
+                TIME(reaction->FirstChildElement("rejectRate")->GetText()),
+                std::stod(reaction->FirstChildElement("koffSTP")->GetText()),
+                std::stod(reaction->FirstChildElement("koffPTS")->GetText())
+        );
+
+        // TODO: Remove this temporal hotFix
+        this->props.reject_rate = new_reaction_props.reject_rate;
+        this->props.rate = new_reaction_props.rate;
+
         reaction_state_type new_reaction_state;
 
-        // Read simple state parameters
-        new_reaction_props.rate = TIME(reaction->FirstChildElement("rate")->GetText());
-        new_reaction_props.reject_rate = TIME(reaction->FirstChildElement("rejectRate")->GetText());
-        new_reaction_props.koff_STP = std::stod(reaction->FirstChildElement("koffSTP")->GetText());
-        new_reaction_props.koff_PTS = std::stod(reaction->FirstChildElement("koffPTS")->GetText());
-
         // Read stoichiometry by compartments
-        tinyxml2::XMLElement* compartment;
-        tinyxml2::XMLElement* stoichiometry_specie;
         MetaboliteAmounts  substrate_sctry, products_sctry;
         cid compartment_id;
         sid specie_id;
         Integer specie_amount;
 
-        compartment = reaction->FirstChildElement("stoichiometryByCompartments")->FirstChildElement("compartment");
+        tinyxml2::XMLElement* compartment = reaction->FirstChildElement("stoichiometryByCompartments")->FirstChildElement("compartment");
         while (compartment != nullptr) {
 
             compartment_id = compartment->FirstChildElement("id")->GetText();
 
+            // Load substrate stoichiometry
             substrate_sctry.clear();
-            stoichiometry_specie = compartment->FirstChildElement("substrate");
+
+            tinyxml2::XMLElement* stoichiometry_specie = compartment->FirstChildElement("substrate");
             if (stoichiometry_specie != nullptr) {
                 stoichiometry_specie = stoichiometry_specie->FirstChildElement();
             }
+
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
                 specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
@@ -356,16 +369,20 @@ private:
 
                 stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
             }
+
             if (!substrate_sctry.empty()) {
                 new_reaction_props.substrate_sctry.insert({compartment_id, substrate_sctry});
                 new_reaction_state.substrate_comps.insert({compartment_id, 0});
             }
 
+            // Load product stoichiometry
             products_sctry.clear();
+
             stoichiometry_specie = compartment->FirstChildElement("product");
             if (stoichiometry_specie != nullptr) {
                 stoichiometry_specie = stoichiometry_specie->FirstChildElement();
             }
+
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
                 specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
@@ -373,6 +390,7 @@ private:
 
                 stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
             }
+
             if (!products_sctry.empty()) {
                 new_reaction_props.products_sctry.insert({compartment_id, products_sctry});
                 new_reaction_state.product_comps.insert({compartment_id, 0});
@@ -383,6 +401,17 @@ private:
 
         this->props.reactions.insert({reaction_id, new_reaction_props});
         this->state.reactions.insert({reaction_id, new_reaction_state});
+
+        // Add reaction metabolite addresses to the routing_table
+        tinyxml2::XMLElement* entry = reaction->FirstChildElement("routingTable")->FirstChildElement();
+        while (entry != nullptr) {
+            this->props.routing_table.insert(
+                    entry->Attribute("metaboliteId"),
+                    std::stoi(entry->Attribute("port"))
+            );
+
+            entry = entry->NextSiblingElement();
+        }
     }
 
     void initialize_random_engines() {
@@ -393,27 +422,30 @@ private:
     }
 
     void push_to_correct_port(string metabolite_id, output_bags& bags, const Product& m) const {
-        int port_number = this->state.routing_table.at(metabolite_id);
+        int port_number = this->props.routing_table.at(metabolite_id);
         pmgbp::tuple::get<Product>(bags, port_number).emplace_back(m);
     }
 
-    void bindMetabolites(typename make_message_bags<input_ports>::type mbs, map<pair<string, Way>, int> &rejected) {
+    void bindMetabolites(typename make_message_bags<input_ports>::type mbs, rejected_type& rejected) {
 
-        for (const auto &x : get_messages<typename PORTS::in_0>(mbs)) {
+        for (const auto &x : get_messages<typename ports::in_0>(mbs)) {
+
+            reaction_state_type& reaction_state = this->state.reactions.at(x.rid);
+            const reaction_props_type& reaction_props = this->props.reactions.at(x.rid);
 
             if (x.reaction_direction == Way::STP) {
 
-                // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
+                // TODO: this step could be replaced by a single step using uniform distribution to calculate the rejected and accepted amount
                 for (int i = 0; i < x.reaction_amount; ++i) {
-                    if (acceptedMetabolites(state.koff_STP)) state.substrate_comps.at(x.from) += 1;
-                    else increaseRejected(rejected, x.from, Way::STP);
+                    if (acceptedMetabolites(reaction_props.koff_STP)) reaction_state.substrate_comps.at(x.from) += 1;
+                    else increaseRejected(rejected, x.from, x.rid, Way::STP);
                 }
             } else {
 
-                // TODO: replace this by a single step using uniform distribution to calculate the rejected and accepted amount
+                // TODO: this step could be replaced by a single step using uniform distribution to calculate the rejected and accepted amount
                 for (int i = 0; i < x.reaction_amount; ++i) {
-                    if (acceptedMetabolites(state.koff_PTS)) state.product_comps.at(x.from) += 1;
-                    else increaseRejected(rejected, x.from, Way::PTS);
+                    if (acceptedMetabolites(reaction_props.koff_PTS)) reaction_state.product_comps.at(x.from) += 1;
+                    else increaseRejected(rejected, x.from, x.rid, Way::PTS);
                 }
             }
         }
@@ -423,72 +455,100 @@ private:
         return (this->real_random.drawNumber(0.0, 1.0) > k);
     }
 
-    void increaseRejected(map<pair<string, Way>, int>& rejected, const string& compartment, Way direction) {
+    void increaseRejected(rejected_type& rejected, const string& compartment, const rid& reaction_id, Way direction) {
 
         // insert rejected information compartment and rejected reaction direction
         pair<string, Way> key = make_pair(compartment, direction);
         if(rejected.find(key) != rejected.end()) {
-            rejected.at(key) += 1;
+            if (rejected.at(key).find(reaction_id) != rejected.at(key).end()) {
+                rejected.at(key).at(reaction_id) += 1;
+            } else {
+                rejected.at(key).insert({reaction_id, 1});
+            }
         } else {
-            rejected.insert({key, 1});
+            map<rid, int> rejected_by_reactions;
+            rejected_by_reactions.insert({reaction_id, 1});
+            rejected.insert({key, rejected_by_reactions});
         }
     }
 
-    void sendBackRejected(const map<pair<string, Way>, int> &rejected, output_bags &bags) const {
+    void sendBackRejected(const rejected_type& rejected, output_bags &bags) const {
 
         Product message;
         for ( const auto &it : rejected) {
 
-            if (it.first.second == Way::STP) {
-                assert(state.substrate_sctry.find(it.first.first) != state.substrate_sctry.end());
+            for (const auto & jt : it.second) {
 
-                for (const auto &metabolite : state.substrate_sctry.at(it.first.first)) {
+                reaction_props_type reaction_props = this->props.reactions[jt.first];
 
-                    message.clear();
-                    message.metabolites.insert({metabolite.first, it.second*metabolite.second});
-                    this->push_to_correct_port(metabolite.first, bags, message);
+                if (it.first.second == Way::STP) {
+                    assert(reaction_props.substrate_sctry.find(it.first.first) != reaction_props.substrate_sctry.end());
+
+                    for (const auto &metabolite : reaction_props.substrate_sctry.at(it.first.first)) {
+
+                        message.clear();
+                        message.enzyme_id = this->state.id;
+                        message.released_enzymes = jt.second;
+                        message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
+                        this->push_to_correct_port(metabolite.first, bags, message);
+                    }
+                } else {
+                    assert(reaction_props.products_sctry.find(it.first.first) != reaction_props.products_sctry.end());
+
+                    for (const auto &metabolite : reaction_props.products_sctry.at(it.first.first)) {
+
+                        message.clear();
+                        message.enzyme_id = this->state.id;
+                        message.released_enzymes = jt.second;
+                        message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
+                        this->push_to_correct_port(metabolite.first, bags, message);
+                    }
                 }
-            } else {
-                assert(state.products_sctry.find(it.first.first) != state.products_sctry.end());
 
-                for (const auto &metabolite : state.products_sctry.at(it.first.first)) {
-
-                    message.clear();
-                    message.metabolites.insert({metabolite.first, it.second*metabolite.second});
-                    this->push_to_correct_port(metabolite.first, bags, message);
-                }
             }
         }
     }
 
     void lookForNewReactions(output_bags& bags) {
 
-        Product message;
-        Integer stp_ready = totalReadyFor(state.substrate_comps);
-        Integer pts_ready = totalReadyFor(state.product_comps);
+        for (const auto& reaction : this->state.reactions) {
 
-        if (stp_ready > 0) {
+            rid reaction_id = reaction.first;
 
-            this->removeMetabolites(state.substrate_comps, stp_ready);
-            for (const auto &compartment_sctry : state.products_sctry) {
+            reaction_state_type reaction_state = this->state.reactions[reaction_id];
+            reaction_props_type reaction_props = this->props.reactions[reaction_id];
 
-                for (const auto &metabolite : compartment_sctry.second) {
-                    message.clear();
-                    message.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
-                    this->push_to_correct_port(metabolite.first, bags, message);
+            Product message;
+            Integer stp_ready = totalReadyFor(reaction_state.substrate_comps);
+            Integer pts_ready = totalReadyFor(reaction_state.product_comps);
+
+            if (stp_ready > 0) {
+
+                this->removeMetabolites(reaction_state.substrate_comps, stp_ready);
+                for (const auto &compartment_sctry : reaction_props.products_sctry) {
+
+                    for (const auto &metabolite : compartment_sctry.second) {
+                        message.clear();
+                        message.enzyme_id = this->state.id;
+                        message.released_enzymes = stp_ready;
+                        message.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
+                        this->push_to_correct_port(metabolite.first, bags, message);
+                    }
                 }
             }
-        }
 
-        if (pts_ready > 0) {
+            if (pts_ready > 0) {
 
-            this->removeMetabolites(state.product_comps, pts_ready);
-            for (const auto &compartment_sctry : state.substrate_sctry) {
+                this->removeMetabolites(reaction_state.product_comps, pts_ready);
+                for (const auto &compartment_sctry : reaction_props.substrate_sctry) {
 
-                for (const auto &metabolite : compartment_sctry.second) {
-                    message.clear();
-                    message.metabolites.insert({metabolite.first, pts_ready * metabolite.second});
-                    this->push_to_correct_port(metabolite.first, bags, message);
+                    for (const auto &metabolite : compartment_sctry.second) {
+                        message.clear();
+                        message.enzyme_id = this->state.id;
+                        message.released_enzymes = pts_ready;
+                        message.metabolites.insert({metabolite.first, pts_ready * metabolite.second});
+                        this->push_to_correct_port(metabolite.first, bags, message);
+                    }
                 }
             }
         }
@@ -501,7 +561,6 @@ private:
         }
     }
 
-    // TODO: test this function specially
     Integer totalReadyFor(const map<string, Integer>& comp) {
 
         Integer result = comp.cbegin()->second;

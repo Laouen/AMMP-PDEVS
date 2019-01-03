@@ -64,11 +64,15 @@ const long double MOL = 1e-6;
 using Address_t = list<string>;
 
 struct Product {
+    std::string enzyme_id;
+    Integer released_enzymes;
     MetaboliteAmounts metabolites;
 
     bool operator==(const Product& other) const {
-        return metabolites.size() == other.metabolites.size() &&
-                std::equal(metabolites.begin(), metabolites.end(), other.metabolites.begin());;
+        return enzyme_id == other.enzyme_id &&
+                released_enzymes == other.released_enzymes &&
+                metabolites.size() == other.metabolites.size() &&
+                std::equal(metabolites.begin(), metabolites.end(), other.metabolites.begin());
     }
 
     void clear() {
