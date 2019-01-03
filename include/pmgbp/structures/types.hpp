@@ -165,8 +165,6 @@ struct ReactionInfo {
   }
 };
 
-ostream& operator<<(ostream& os, const ReactionInfo& r);
-
 
 /*******************************************/
 /*********** End Data info type ************/
@@ -218,8 +216,9 @@ std::ostream& operator<<(std::ostream& os, const std::vector<std::string>& m);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::MetaboliteAmounts& m);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::BState_t& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Way& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::ReactionInfo& r);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Product& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Reactant& s);
-
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Enzyme& e);
 
 #endif // PMGBP_TYPES_HPP

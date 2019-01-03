@@ -74,6 +74,12 @@ class ModelStructure:
             reaction_ids = parser.get_reaction_set_rids(cid, reaction_set)
             self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
 
+        # Building enzyme sets
+        # TODO: Change reaction_set by enzyme set every where
+        self.enzyme_sets = {}
+        for reaction_set in internal_reaction_sets:
+            self.enzyme_sets[reaction_set] = parser.get_enzyme_set(cid, reaction_set)
+
         # Building space
         reaction_parameters = parser.get_reaction_parameters(cid)
         metabolites = {specie: parser.metabolite_amounts[specie]
@@ -151,11 +157,19 @@ class ModelGenerator:
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_compartment_ids}
 
+    # Deprecated
     def generate_reaction_sets(self, compartment):
         cid = compartment.id
         return {(cid, rsn): self.generate_reaction_set(cid, rsn, reaction_set)
                 for rsn, reaction_set in compartment.reaction_sets.items()}
+    
+    # New
+    def generate_enzyme_sets(self, compartment):
+        cid = compartment.id
+        return {(cid, esn): self.generate_enzyme_set(cid, esn, enzyme_set)
+                for esn, enzyme_set in compartment.enzyme_sets.items()}
 
+    # Deprecated
     def generate_reaction_set(self, cid, rsn, reaction_set):
         reaction_set_id = '_'.join([cid, rsn])
 
@@ -188,9 +202,46 @@ class ModelGenerator:
 
         return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids)
 
+    # New
+    def generate_enzyme_set(self, cid, esn, enzyme_set):
+        enzyme_set_id = '_'.join([cid, esn])
+
+        # Enzyme sets are separated in groups, this is because the C++ problem compiling large tuples
+        # Currently the maximum group amount is 150 and each group can hold 150 enzymes, thus, each compartment
+        # can have a maximum of 150 * 150 = 22500 enzymes.
+        groups = chunks(enzyme_set, SIZE=self.groups_size)
+        groups_enzyme_ids = []
+        routing_table = {}
+        
+        # Routers xml parameters
+        port = 0
+        for group in groups:
+            enzyme_ids = list(group.keys())
+            groups_enzyme_ids.append(enzyme_ids)
+
+            group_id = '_'.join([cid, esn, str(port)])
+            routing_table.update({eid: port for eid in enzyme_ids})
+            port += 1
+
+            port_numbers = range(len(enzyme_ids))
+            group_routing_table = {eid: port_number for eid, port_number in zip(enzyme_ids, port_numbers)}
+            self.parameter_writer.add_router(group_id, group_routing_table)
+
+        self.parameter_writer.add_router(enzyme_set_id, routing_table)
+
+        # Enzymes xml parameters 
+        for eid, parameters in enzyme_set.items():
+            for rid in parameters['handled_reactions']:
+                self.parameter_writer.add_reaction(rid, self.parser.reactions[rid])
+
+            self.parameter_writer.add_enzyme(eid, parameters)
+
+        return self.coder.write_enzyme_set(cid, esn, groups_enzyme_ids)
+
+
     def generate_organelle_compartment(self, compartment):
 
-        reaction_sets = self.generate_reaction_sets(compartment)
+        enzyme_sets = self.generate_enzyme_sets(compartment)
 
         self.parameter_writer.add_space(compartment.id,
                                         compartment.space_parameters,
@@ -198,20 +249,20 @@ class ModelGenerator:
         space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
                                               compartment.id,
                                               [compartment.id],
-                                              len(reaction_sets),
+                                              len(enzyme_sets),
                                               1,
                                               REACTANT_MESSAGE_TYPE,
                                               PRODUCT_MESSAGE_TYPE)
 
-        sub_models = [space] + [rs_model_name for (rs_model_name, _, _) in reaction_sets.values()]
+        sub_models = [space] + [es_model_name for (es_model_name, _, _) in enzyme_sets.values()]
 
         ic = []
-        for rs_address, port_number in compartment.routing_table.items():
+        for es_address, port_number in compartment.routing_table.items():
             # Organelle spaces do not send metabolites to other compartments without passing through
             # their membranes, that is the assert.
-            assert rs_address[0] == compartment.id
-            rs_model_name = reaction_sets[rs_address][0]
-            ic += [(space, space, port_number, rs_model_name, 'pmgbp::models::reaction', 0), (rs_model_name, 'pmgbp::models::reaction', 0, space, space, 0)]
+            assert es_address[0] == compartment.id
+            rs_model_name = enzyme_sets[es_address][0]
+            ic += [(space, space, port_number, rs_model_name, 'pmgbp::models::enzyme', 0), (rs_model_name, 'pmgbp::models::enzyme', 0, space, space, 0)]
 
         # If the output port amount is equal to 1, then the model only sends messages to the space
         # and there is no communication with the extra cellular space, thus, it must not be linked
@@ -221,18 +272,18 @@ class ModelGenerator:
         out_port_numbers = []
         out_ports = []
         eoc = []
-        for (rs_model_name, _, output_port_amount) in reaction_sets.values():
+        for (es_model_name, _, output_port_amount) in enzyme_sets.values():
             for port_number in range(1, output_port_amount):
-                eoc.append((rs_model_name, 'pmgbp::models::reaction', port_number, port_number))
+                eoc.append((es_model_name, 'pmgbp::models::enzyme', port_number, port_number))
                 if port_number not in out_port_numbers:
                     out_port_numbers.append(port_number)
                     out_ports.append((port_number, PRODUCT_MESSAGE_TYPE, 'out'))
 
         in_ports = []
         eic = []
-        for rs_name, port_number in compartment.membrane_eic.items():
-            rs_model_name = reaction_sets[(compartment.id, rs_name)][0]
-            eic.append((rs_model_name, 'pmgbp::models::reaction', 0, port_number))
+        for es_name, port_number in compartment.membrane_eic.items():
+            es_model_name = enzyme_sets[(compartment.id, es_name)][0]
+            eic.append((es_model_name, 'pmgbp::models::enzyme', 0, port_number))
             in_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'in'))
 
         return self.coder.write_coupled_model(compartment.id,
@@ -246,10 +297,10 @@ class ModelGenerator:
     # cell and the organelles live
     def generate_bulk_compartment(self, compartment):
         cid = compartment.id
-        reaction_sets = self.generate_reaction_sets(compartment)
-        assert len(reaction_sets) == 1  # cytoplasm has no membranes
+        enzyme_sets = self.generate_enzyme_sets(compartment)
+        assert len(enzyme_sets) == 1  # cytoplasm has no membranes
 
-        bulk = reaction_sets[(cid, BULK)][0]
+        bulk = enzyme_sets[(cid, BULK)][0]
 
         self.parameter_writer.add_space(cid,
                                         compartment.space_parameters,
@@ -267,12 +318,12 @@ class ModelGenerator:
         sub_models = [space, bulk]
 
         bulk_port_number = compartment.routing_table[(cid, BULK)]
-        ic = [(space, space, bulk_port_number, bulk, 'pmgbp::models::reaction', 0), (bulk, 'pmgbp::models::reaction', 0, space, space, 0)]
+        ic = [(space, space, bulk_port_number, bulk, 'pmgbp::models::enzyme', 0), (bulk, 'pmgbp::models::enzyme', 0, space, space, 0)]
 
         out_ports = []
         eoc = []
-        for (rs_cid, _), port_number in compartment.routing_table.items():
-            if rs_cid != cid:
+        for (es_cid, _), port_number in compartment.routing_table.items():
+            if es_cid != cid:
                 eoc.append((space, space, port_number, port_number))
                 out_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'out'))
 
@@ -310,15 +361,15 @@ class ModelGenerator:
                                         periplasm_model)
 
         for cid, (model_name, _, output_port_amount) in organelle_models.items():
-            for rsn, rs_port_number in self.organelles[cid].membrane_eic.items():
-                c_port_number = self.cytoplasm.routing_table[(cid, rsn)]
-                ic.append((cytoplasm_model, c_port_number, model_name, rs_port_number))
+            for esn, es_port_number in self.organelles[cid].membrane_eic.items():
+                c_port_number = self.cytoplasm.routing_table[(cid, esn)]
+                ic.append((cytoplasm_model, c_port_number, model_name, es_port_number))
                 # *1) organelle output port 1 always goes to cytoplasm
                 ic.append((model_name, model_name, 1, cytoplasm_model, cytoplasm_model, 0))
 
                 if output_port_amount > 1:
-                    e_port_number = self.cytoplasm.routing_table[(cid, rsn)]
-                    ic.append((extra_cellular_model, extra_cellular_model, e_port_number, model_name, model_name, rs_port_number))
+                    e_port_number = self.cytoplasm.routing_table[(cid, esn)]
+                    ic.append((extra_cellular_model, extra_cellular_model, e_port_number, model_name, model_name, es_port_number))
                     # *1) organelle output port 2 always goes to extracellular
                     ic.append((model_name, model_name, 2, extra_cellular_model, extra_cellular_model, 0))
 

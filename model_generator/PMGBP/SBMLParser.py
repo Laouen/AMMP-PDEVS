@@ -64,6 +64,15 @@ class Location:
         else:
             return False
 
+    def __hash__(self):
+        return hash(str(self))
+
+    def __str__(self):
+        return self.cid + ':' + self.rsn
+
+    def __unicode__(self):
+        return self.cid + ':' + self.rsn        
+
     def as_tuple(self):
         return tuple([self.cid, self.rsn])
 
@@ -207,6 +216,18 @@ class SBMLParser:
         return {eid: enzyme_parameters
                 for eid, enzyme_parameters in self.enzymes.items()
                 if not_empty_intersection(enzyme_parameters['handled_reactions'], reactions)}
+
+    def get_enzyme_set(self, cid, rsn):
+        location = Location(cid, rsn)
+        
+        return {eid: parameters 
+                for eid, parameters 
+                in self.enzymes.items() 
+                if all([self.reactions[rid]['location'] == location 
+                        for rid 
+                        in parameters['handled_reactions']
+                        ])
+                }
 
     def get_eids(self, reaction):
         """

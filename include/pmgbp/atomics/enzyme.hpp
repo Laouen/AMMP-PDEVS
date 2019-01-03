@@ -61,6 +61,25 @@ using namespace cadmium;
 using namespace pmgbp::types;
 using namespace pmgbp::structs::reaction;
 
+struct enzyme_ports {
+
+    struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_1: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_2: public cadmium::out_port<pmgbp::types::Product>{};
+
+    struct in_0: public cadmium::in_port<pmgbp::types::Reactant>{};
+
+    using output_type=pmgbp::types::Product;
+    using input_type=pmgbp::types::Reactant;
+
+    using output_ports=std::tuple<
+            out_0,
+            out_1,
+            out_2
+    >;
+    using input_ports=std::tuple<in_0>;
+};
+
 template<class TIME>
 class enzyme {
 public:
@@ -71,29 +90,10 @@ public:
 
     using rejected_type=map<pair<string, Way>, map<rid, Integer>>;
 
-    struct ports {
+    using Product=typename enzyme_ports::output_type;
 
-        struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
-        struct out_1: public cadmium::out_port<pmgbp::types::Product>{};
-        struct out_2: public cadmium::out_port<pmgbp::types::Product>{};
-
-        struct in_0: public cadmium::in_port<pmgbp::types::Reactant>{};
-
-        using output_type=pmgbp::types::Product;
-        using input_type=pmgbp::types::Reactant;
-
-        using output_ports=std::tuple<
-            out_0,
-            out_1,
-            out_2
-        >;
-        using input_ports=std::tuple<in_0>;
-    };
-
-    using Product=typename ports::output_type;
-
-    using input_ports=typename ports::input_ports;
-    using output_ports=typename ports::output_ports;
+    using input_ports=typename enzyme_ports::input_ports;
+    using output_ports=typename enzyme_ports::output_ports;
 
     using output_bags=typename make_message_bags<output_ports>::type;
     using input_bags=typename make_message_bags<input_ports>::type;
@@ -107,6 +107,8 @@ public:
         double koff_PTS;
         map<rid, MetaboliteAmounts> substrate_sctry; // the stoichiometry is separated by compartments
         map<rid, MetaboliteAmounts> products_sctry; // the stoichiometry is separated by compartments
+
+        reaction_props_type() = default;
 
         reaction_props_type(const TIME& other_rate, const TIME& other_reject_rate, double other_koff_STP, double other_koff_PTS) {
 
@@ -216,7 +218,7 @@ public:
         tinyxml2::XMLElement* enzyme = root->FirstChildElement("enzymes")->FirstChildElement(id);
 
         // Load reactions information
-        tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reaction");
+        tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reactions")->FirstChildElement("reaction");
         while (enzyme_reaction != nullptr) {
             const char* reaction_id = enzyme_reaction->Attribute("id");
             tinyxml2::XMLElement* reaction = root->FirstChildElement("reactions")->FirstChildElement(reaction_id);
@@ -293,7 +295,6 @@ public:
         os << "{";
         os << "\"model_class\":\"enzyme\",";
         os << "\"id\":\"" << s.id << "\",";
-        os << "\"free enzymes\":" << s.free_enzymes << ",";
         os << "\"reactions_in_progress\": [";
 
         bool separate = false;
@@ -428,7 +429,7 @@ private:
 
     void bindMetabolites(typename make_message_bags<input_ports>::type mbs, rejected_type& rejected) {
 
-        for (const auto &x : get_messages<typename ports::in_0>(mbs)) {
+        for (const auto &x : get_messages<typename enzyme_ports::in_0>(mbs)) {
 
             reaction_state_type& reaction_state = this->state.reactions.at(x.rid);
             const reaction_props_type& reaction_props = this->props.reactions.at(x.rid);
@@ -466,7 +467,7 @@ private:
                 rejected.at(key).insert({reaction_id, 1});
             }
         } else {
-            map<rid, int> rejected_by_reactions;
+            map<rid, Integer> rejected_by_reactions;
             rejected_by_reactions.insert({reaction_id, 1});
             rejected.insert({key, rejected_by_reactions});
         }
@@ -475,16 +476,16 @@ private:
     void sendBackRejected(const rejected_type& rejected, output_bags &bags) const {
 
         Product message;
-        for ( const auto &it : rejected) {
+        for (const auto& it : rejected) {
 
-            for (const auto & jt : it.second) {
+            for (const auto& jt : it.second) {
 
-                reaction_props_type reaction_props = this->props.reactions[jt.first];
+                const reaction_props_type& reaction_props = this->props.reactions.at(jt.first);
 
                 if (it.first.second == Way::STP) {
                     assert(reaction_props.substrate_sctry.find(it.first.first) != reaction_props.substrate_sctry.end());
 
-                    for (const auto &metabolite : reaction_props.substrate_sctry.at(it.first.first)) {
+                    for (const auto& metabolite : reaction_props.substrate_sctry.at(it.first.first)) {
 
                         message.clear();
                         message.enzyme_id = this->state.id;
@@ -495,7 +496,7 @@ private:
                 } else {
                     assert(reaction_props.products_sctry.find(it.first.first) != reaction_props.products_sctry.end());
 
-                    for (const auto &metabolite : reaction_props.products_sctry.at(it.first.first)) {
+                    for (const auto& metabolite : reaction_props.products_sctry.at(it.first.first)) {
 
                         message.clear();
                         message.enzyme_id = this->state.id;

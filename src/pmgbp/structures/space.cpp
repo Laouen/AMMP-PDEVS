@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::Status& 
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::ReactionAddress& s) {
+std::ostream& operator<<(std::ostream& os, const pmgbp::structs::space::EnzymeAddress& s) {
     os << (std::string)("compartment: ") << s.compartment;
     os << (std::string)(" - reaction set: ") << s.reaction_set;
 

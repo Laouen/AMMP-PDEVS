@@ -83,7 +83,7 @@ public:
         TIME interval_time;
         MetaboliteAmounts metabolites;
         map<string, Enzyme> enzymes;
-        RoutingTable<ReactionAddress> routing_table;
+        RoutingTable<EnzymeAddress> routing_table;
         long double volume;
         
         //TODO: Take the volume from the .xml parameter
@@ -237,7 +237,7 @@ public:
             enzyme_entry = enzyme_entry->NextSiblingElement();
         }
 
-        // Read routing_table
+        // Load routing_table
         tinyxml2::XMLElement* routing_table;
         tinyxml2::XMLElement* entry;
         int port_number;

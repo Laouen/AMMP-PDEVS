@@ -16,10 +16,12 @@ class XMLParametersGenerator:
 
         self.spaces = etree.Element('spaces')
         self.routers = etree.Element('routers')
+        self.enzymes = etree.Element('enzymes')
         self.reactions = etree.Element('reactions')
 
         self.parameters.append(self.spaces)
         self.parameters.append(self.routers)
+        self.parameters.append(self.enzymes)
         self.parameters.append(self.reactions)
 
     def add_router(self, model_id, routing_table):
@@ -28,7 +30,7 @@ class XMLParametersGenerator:
         xml_routing_table = self.generate_table(routing_table,
                                                 'routingTable',
                                                 'entry',
-                                                ['metaboliteId'],
+                                                ['enzymeID'],
                                                 'port')
         xml_router.append(xml_routing_table)
         self.routers.append(xml_router)
@@ -86,6 +88,20 @@ class XMLParametersGenerator:
         xml_reaction.append(xml_stoichiometry_by_compartments)
         self.reactions.append(xml_reaction)
 
+    def add_enzyme(self, model_id, parameters):
+
+        xml_enzyme = etree.Element(model_id)
+        xml_enzyme_reactions = etree.Element("reactions")
+
+        for rid in parameters['handled_reactions']:
+            xml_reaction = etree.Element("reaction")
+            xml_reaction.set("id", rid)
+            xml_enzyme_reactions.append(xml_reaction)
+
+        xml_enzyme.append(xml_enzyme_reactions)
+
+        self.enzymes.append(xml_enzyme)
+
     def add_space(self, model_id, parameters, routing_table):
         xml_space = etree.Element(model_id)
 
@@ -115,9 +131,7 @@ class XMLParametersGenerator:
 
             parameter_keys = ['id', 'amount']
             for key in parameter_keys:
-                xml_parameter = etree.Element(key)
-                xml_parameter.text = str(enzyme_parameters[key])
-                xml_enzyme.append(xml_parameter)
+                xml_enzyme.set(key, str(enzyme_parameters[key]))
 
             xml_handled_reactions = etree.Element('handledReactions')
 
@@ -127,6 +141,18 @@ class XMLParametersGenerator:
                                                          if rid
                                                          in list(parameters['reaction_parameters'].keys())]
 
+            # all reactions must have the same address
+            all_locations = set([parameters['reaction_parameters'][rid]['location'] for rid in enzyme_parameters['handled_reactions']])
+            assert(len(all_locations) == 1)
+
+            # Set enzyme address
+            location = all_locations.pop()
+            xml_address = etree.Element('address')
+            xml_address.set('cid', location.cid)
+            xml_address.set('rsn', location.rsn)
+            xml_enzyme.append(xml_address)
+
+            # Set reaction parameters 
             for rid in enzyme_parameters['handled_reactions']:
                 reaction_parameters = parameters['reaction_parameters'][rid]
                 xml_reaction = etree.Element('reaction')
@@ -137,11 +163,6 @@ class XMLParametersGenerator:
                     parameter = etree.Element(key)
                     parameter.text = str(reaction_parameters[key])
                     xml_reaction.append(parameter)
-
-                xml_address = etree.Element('address')
-                xml_address.set('cid', reaction_parameters['location'].cid)
-                xml_address.set('rsn', reaction_parameters['location'].rsn)
-                xml_reaction.append(xml_address)
 
                 xml_stoichiometry = etree.Element('stoichiometry')
 

@@ -102,7 +102,7 @@ int main(int argc, char ** argv) {
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
         memore_sink_provider::sink().new_collection(argv[2]);
 
-
+        
         // Initialize model
         auto start = hclock::now();
         
@@ -121,7 +121,7 @@ int main(int argc, char ** argv) {
         r.run_until({3000});
         std::cout << "simulation finished" << std::endl;
 
-        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
+        elapsed = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >(hclock::now() - start).count();
         cout << "Simulation took:" << elapsed << "sec" << endl;
     
     #endif

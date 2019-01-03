@@ -9,6 +9,7 @@ DYNAMIC_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_at
 DYNAMIC_COUPLED = pkg_resources.resource_filename(__name__, 'templates/dynamic_coupled.tpl.hpp')
 DYNAMIC_DEFINED_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_defined_atomic.tpl.hpp')
 DYNAMIC_REACTION_SET = pkg_resources.resource_filename(__name__, 'templates/dynamic_reaction_set.tpl.hpp')
+DYNAMIC_ENZYME_SET = pkg_resources.resource_filename(__name__, 'templates/dynamic_enzyme_set.tpl.hpp')
 
 class DynamicModelCodeGenerator:
     """
@@ -24,20 +25,19 @@ class DynamicModelCodeGenerator:
         self.atomic_model_def_template = open(ATOMIC_MODEL_DEFINITION, 'r').read()
 
         # atomic template
-        atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_atomic.tpl.hpp'
         self.atomic_template = open(DYNAMIC_ATOMIC, 'r').read().format(TIME=TIME)
 
         # coupled template
-        coupled_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_coupled.tpl.hpp'
         self.coupled_template = open(DYNAMIC_COUPLED, 'r').read().format(TIME=TIME)
 
         # defined atomic template
-        defined_atomic_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_defined_atomic.tpl.hpp'
         self.defined_atomic_template = open(DYNAMIC_DEFINED_ATOMIC, 'r').read().format(TIME=TIME)
 
         # reaction set definition template
-        reaction_set_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'dynamic_reaction_set.tpl.hpp'
         self.reaction_set_template = open(DYNAMIC_REACTION_SET, 'r').read().format(TIME=TIME)
+
+        # enzyme set definition template
+        self.enzyme_set_template = open(DYNAMIC_ENZYME_SET, 'r').read().format(TIME=TIME)
 
         # port template
         self.port_template = 'struct {out_in}_{port_number}: public ' \
@@ -82,6 +82,19 @@ class DynamicModelCodeGenerator:
         )
 
         return '_'.join([cid, rsn]), 1, 3 # ioport amount of reaction sets are constants and equal to a reaction   
+
+    def write_enzyme_set(self, cid, esn, enzyme_ids):
+        enzyme_ids = '{ {"' + '"}, {"'.join(['", "'.join(ids) for ids in enzyme_ids]) + '"} }'
+
+        self.write(
+            self.enzyme_set_template.format(
+                cid=cid,
+                esn=esn,
+                enzyme_ids=enzyme_ids
+            )
+        )
+
+        return '_'.join([cid, esn]), 1, 3 # ioport amount of reaction sets are constants and equal to a reaction   
 
     def write_atomic_model(self, model_class, model_id, parameters, out_ports, in_ports, output_type, input_type):
         # ARGS mut be generated before the parameter input is modified. 
@@ -201,7 +214,7 @@ class DynamicModelCodeGenerator:
         self.write_to_model_def("")
         
         self.write('/* atomic model includes */')
-        models = ['reaction', 'router', 'space']
+        models = ['enzyme', 'router', 'space']
         for model in models:
             self.write_to_model_def('#include <pmgbp/atomics/' + model + '.hpp>')
         
@@ -210,7 +223,7 @@ class DynamicModelCodeGenerator:
         self.write('#include <typeinfo>')
         self.write("")
         
-        self.write('#include <pmgbp/model_generator/reaction_set.hpp>')
+        self.write('#include <pmgbp/model_generator/enzyme_set.hpp>')
 
         self.write('\n#include \"' + self.model_name + '_model_definitions.hpp\"')
 
