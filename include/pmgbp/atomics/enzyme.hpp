@@ -66,6 +66,10 @@ template<class TIME>
 class enzyme {
 public:
 
+    using rid=std::string;
+    using cid=std::string;
+    using sid=std::string;
+
     struct ports {
 
         struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
@@ -94,13 +98,13 @@ public:
     using input_bags=typename make_message_bags<input_ports>::type;
 
     
-    struct reaction_props {
+    struct reaction_props_type {
         TIME rate;
         TIME reject_rate;
         double koff_STP;
         double koff_PTS;
-        map<string, MetaboliteAmounts> substrate_sctry; // the stoichiometry is separated by compartments
-        map<string, MetaboliteAmounts> products_sctry; // the stoichiometry is separated by compartments
+        map<rid, MetaboliteAmounts> substrate_sctry; // the stoichiometry is separated by compartments
+        map<rid, MetaboliteAmounts> products_sctry; // the stoichiometry is separated by compartments
     };
 
     /**
@@ -114,9 +118,15 @@ public:
      * of an enzyme atomic model.
      */
     struct props_type {
-        string id;
-        std::map<std::string, reaction_props> reactions;
+        std::string id;
+        std::map<rid, reaction_props_type> reactions;
         RoutingTable<string> routing_table;
+    };
+
+    struct reaction_state_type {
+        std::string id; // only te print then enzyme ID
+        map<cid, Integer> substrate_comps;
+        map<cid, Integer> product_comps;
     };
 
     /**
@@ -131,17 +141,14 @@ public:
      *
      */
     struct state_type {
-
-        std::string current_reaction;
-        Integer available;
-
-        map<string, Integer> substrate_comps;
-        map<string, Integer> product_comps;
-
+        // Number of free enzymes
+        Integer free_enzymes;
+        std::map<rid, reaction_state_type> reactions;
         TaskScheduler<TIME, output_bags> tasks;
     };
 
     state_type state;
+    props_type props;
 
     enzyme() = default;
 
@@ -170,8 +177,9 @@ public:
      * @param id model id.
      */
     explicit enzyme(const char* xml_file, const char* id) {
+        this->props.id = id;
         this->state.id = id;
-        this->logger.setModuleName("Reaction_" + this->state.id);
+        this->logger.setModuleName("Enzyme_" + this->props.id);
 
         // Initialize random generators
         this->initialize_random_engines();
@@ -180,67 +188,25 @@ public:
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
         assert(opened == tinyxml2::XML_SUCCESS);
 
-        tinyxml2::XMLElement* root = doc.RootElement()
-                ->FirstChildElement("reactions")
+        // Search the enzyme information
+        tinyxml2::XMLElement* enzyme = doc.RootElement()
+                ->FirstChildElement("enzymes")
                 ->FirstChildElement(id);
 
 
-        // Read simple state parameters
-        this->state.rate = TIME(root->FirstChildElement("rate")->GetText());
-        this->state.reject_rate = TIME(root->FirstChildElement("rejectRate")->GetText());
-        this->state.koff_STP = std::stod(root->FirstChildElement("koffSTP")->GetText());
-        this->state.koff_PTS = std::stod(root->FirstChildElement("koffPTS")->GetText());
-
-        // Read stoichiometry by compartments
-        tinyxml2::XMLElement* compartment;
-        tinyxml2::XMLElement* stoichiometry_specie;
-        MetaboliteAmounts  substrate_sctry, products_sctry;
-        string specie_id, cid;
-        int specie_amount;
-
-        compartment = root
-                ->FirstChildElement("stoichiometryByCompartments")
-                ->FirstChildElement("compartment");
-        while (compartment != nullptr) {
-
-            cid = compartment->FirstChildElement("id")->GetText();
-
-            substrate_sctry.clear();
-            stoichiometry_specie = compartment->FirstChildElement("substrate");
-            if (stoichiometry_specie != nullptr) {
-                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
-            }
-            while (stoichiometry_specie != nullptr) {
-                specie_id = stoichiometry_specie->Attribute("id");
-                specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
-                substrate_sctry.insert({specie_id, specie_amount});
-
-                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
-            }
-            if (!substrate_sctry.empty()) {
-                this->state.substrate_sctry.insert({cid, substrate_sctry});
-                this->state.substrate_comps.insert({cid, 0});
-            }
-
-            products_sctry.clear();
-            stoichiometry_specie = compartment->FirstChildElement("product");
-            if (stoichiometry_specie != nullptr) {
-                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
-            }
-            while (stoichiometry_specie != nullptr) {
-                specie_id = stoichiometry_specie->Attribute("id");
-                specie_amount = std::stoi(stoichiometry_specie->Attribute("amount"));
-                products_sctry.insert({specie_id, specie_amount});
-
-                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
-            }
-            if (!products_sctry.empty()) {
-                this->state.products_sctry.insert({cid, products_sctry});
-                this->state.product_comps.insert({cid, 0});
-            }
-
-            compartment = compartment->NextSiblingElement();
+        // Load reactions information
+        tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reaction");
+        while (enzyme_reaction != nullptr) {
+            rid reaction_id = enzyme_reaction->Attribute("id");
+            tinyxml2::XMLElement* reaction = doc.RootElement()
+                    ->FirstChildElement("reactions")
+                    ->FirstChildElement(reaction_id);
+            this->add_reaction_from_xml(reaction, reaction_id);
+            enzyme_reaction = enzyme_reaction->NextSiblingElement();
         }
+
+        // Read initial available enzymes
+        this->state.free_enzymes = Integer(enzyme->Attribute("amount"));
 
         // Read routing_table
         tinyxml2::XMLElement* routing_table;
@@ -248,12 +214,12 @@ public:
         int port_number;
         string metabolite_id;
 
-        routing_table = root->FirstChildElement("routingTable");
+        routing_table = enzyme->FirstChildElement("routingTable");
         entry = routing_table->FirstChildElement();
         while (entry != nullptr) {
             metabolite_id = entry->Attribute("metaboliteId");
             port_number = std::stoi(entry->Attribute("port"));
-            this->state.routing_table.insert(metabolite_id, port_number);
+            this->props.routing_table.insert(metabolite_id, port_number);
 
             entry = entry->NextSiblingElement();
         }
@@ -316,9 +282,10 @@ public:
         return result;
     }
 
-    friend std::ostringstream& operator<<(std::ostringstream& os, const typename reaction_template<PORTS,TIME>::state_type& s) {
+    // TODO: remove PORTS and set for enzyme instead of reaction_template
+    friend std::ostringstream& operator<<(std::ostringstream& os, const typename enzyme<TIME>::state_type& s) {
         os << "{";
-        os << "\"model_class\":\"reaction\",";
+        os << "\"model_class\":\"enzyme\",";
         os << "\"id\":\"" << s.id << "\",";
         os << "\"reactions_in_progress\": [";
 
@@ -353,6 +320,70 @@ private:
     /***************************************
     ********* helper functions *************
     ***************************************/
+
+    void add_reaction_from_xml(tinyxml2::XMLElement *reaction, rid reaction_id) {
+        reaction_props_type new_reaction_props;
+        reaction_state_type new_reaction_state;
+
+        // Read simple state parameters
+        new_reaction_props.rate = TIME(reaction->FirstChildElement("rate")->GetText());
+        new_reaction_props.reject_rate = TIME(reaction->FirstChildElement("rejectRate")->GetText());
+        new_reaction_props.koff_STP = std::stod(reaction->FirstChildElement("koffSTP")->GetText());
+        new_reaction_props.koff_PTS = std::stod(reaction->FirstChildElement("koffPTS")->GetText());
+
+        // Read stoichiometry by compartments
+        tinyxml2::XMLElement* compartment;
+        tinyxml2::XMLElement* stoichiometry_specie;
+        MetaboliteAmounts  substrate_sctry, products_sctry;
+        cid compartment_id;
+        sid specie_id;
+        Integer specie_amount;
+
+        compartment = reaction->FirstChildElement("stoichiometryByCompartments")->FirstChildElement("compartment");
+        while (compartment != nullptr) {
+
+            compartment_id = compartment->FirstChildElement("id")->GetText();
+
+            substrate_sctry.clear();
+            stoichiometry_specie = compartment->FirstChildElement("substrate");
+            if (stoichiometry_specie != nullptr) {
+                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+            }
+            while (stoichiometry_specie != nullptr) {
+                specie_id = stoichiometry_specie->Attribute("id");
+                specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
+                substrate_sctry.insert({specie_id, specie_amount});
+
+                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+            }
+            if (!substrate_sctry.empty()) {
+                new_reaction_props.substrate_sctry.insert({compartment_id, substrate_sctry});
+                new_reaction_state.substrate_comps.insert({compartment_id, 0});
+            }
+
+            products_sctry.clear();
+            stoichiometry_specie = compartment->FirstChildElement("product");
+            if (stoichiometry_specie != nullptr) {
+                stoichiometry_specie = stoichiometry_specie->FirstChildElement();
+            }
+            while (stoichiometry_specie != nullptr) {
+                specie_id = stoichiometry_specie->Attribute("id");
+                specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
+                products_sctry.insert({specie_id, specie_amount});
+
+                stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+            }
+            if (!products_sctry.empty()) {
+                new_reaction_props.products_sctry.insert({compartment_id, products_sctry});
+                new_reaction_state.product_comps.insert({compartment_id, 0});
+            }
+
+            compartment = compartment->NextSiblingElement();
+        }
+
+        this->props.reactions.insert({reaction_id, new_reaction_props});
+        this->state.reactions.insert({reaction_id, new_reaction_state});
+    }
 
     void initialize_random_engines() {
 
