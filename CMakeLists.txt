@@ -4,7 +4,7 @@ project(PMGBP_PDEVS)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(
-        include
+        include/pmgbp
         vendor/tinyxml2
         vendor/cadmium/include
         vendor/DESTimes/include
@@ -12,8 +12,8 @@ include_directories(
         vendor/DEVSDiagrammer/model_json_exporter/include)
 
 set(SOURCES
-        src/structures/types.cpp
-        src/structures/space.cpp
+        src/pmgbp/structures/types.cpp
+        src/pmgbp/structures/space.cpp
         main.cpp
         vendor/tinyxml2/tinyxml2.cpp
         vendor/DEVSDiagrammer/model_json_exporter)
@@ -32,4 +32,17 @@ foreach(testSrc ${TestSources})
     add_test(${testName} ${testName})
 endforeach(testSrc)
 
+find_package(libmongocxx REQUIRED)
+find_package(libbsoncxx REQUIRED)
+include_directories(${LIBMONGOCXX_INCLUDE_DIR})
+include_directories(${LIBBSONCXX_INCLUDE_DIRS})
+include_directories("/usr/local/include/mongocxx/v_noabi")
+include_directories("/usr/local/include/bsoncxx/v_noabi")
+include_directories("/usr/local/include/libmongoc-1.0")
+include_directories("/usr/local/include/libbson-1.0")
+include_directories("/usr/local/lib")
+
 add_executable(pmgbp ${SOURCES})
+
+target_link_libraries(pmgbp ${LIBMONGOCXX_LIBRARIES})
+target_link_libraries(pmgbp ${LIBBSONCXX_LIBRARIES})

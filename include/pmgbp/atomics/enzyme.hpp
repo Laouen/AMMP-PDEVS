@@ -365,7 +365,7 @@ private:
 
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
-                specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
+                specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
                 substrate_sctry.insert({specie_id, specie_amount});
 
                 stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
@@ -386,7 +386,7 @@ private:
 
             while (stoichiometry_specie != nullptr) {
                 specie_id = stoichiometry_specie->Attribute("id");
-                specie_amount = Integer(stoichiometry_specie->Attribute("amount"));
+                specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
                 products_sctry.insert({specie_id, specie_amount});
 
                 stoichiometry_specie = stoichiometry_specie->NextSiblingElement();

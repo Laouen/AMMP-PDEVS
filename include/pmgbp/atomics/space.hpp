@@ -143,11 +143,9 @@ public:
         // Load metabolites
         tinyxml2::XMLElement* metabolites = root->FirstChildElement("metabolites");
         tinyxml2::XMLElement* metabolite = metabolites->FirstChildElement();
-        string specie;
-        int amount;
         while (metabolite != nullptr) {
-            specie = metabolite->Attribute("id");
-            amount = std::stoi(metabolite->Attribute("amount"));
+            string specie = metabolite->Attribute("id");
+            Integer amount = Integer(std::stoi(metabolite->Attribute("amount")));
             this->state.metabolites.insert({specie, amount});
             metabolite = metabolite->NextSiblingElement();
         }
@@ -187,7 +185,7 @@ public:
 
                 while (stoichiometry_specie != nullptr) {
                     specie_id = stoichiometry_specie->Attribute("id");
-                    specie_amount = Integer((stoichiometry_specie->Attribute("amount")));
+                    specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
                     substrate_sctry.insert({specie_id, specie_amount});
 
                     stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
@@ -228,8 +226,8 @@ public:
             tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
             EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("rsn"));
 
-            string enzyme_id = enzyme_entry->FirstChildElement("id")->GetText();
-            Integer enzyme_amount = Integer(std::stoi(enzyme_entry->FirstChildElement("amount")->GetText()));
+            string enzyme_id = enzyme_entry->Attribute("id");
+            Integer enzyme_amount = Integer(std::stoi(enzyme_entry->Attribute("amount")));
 
             Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
 
@@ -402,6 +400,7 @@ private:
     }
 
     void selectMetabolitesToReact(output_bags& bags) {
+
         Reactant reactant;
         double rv, total, partial;
         map<string, double> sons, pons;
