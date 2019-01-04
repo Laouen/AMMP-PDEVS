@@ -290,8 +290,14 @@ public:
 
         this->state.tasks.update(e);
 
+        // Receive new metabolites
         for (const auto &x : get_messages<typename PORTS::in_0_product>(mbs)) {
             this->addMultipleMetabolites(this->state.metabolites, x.metabolites);
+        }
+
+        // Receive released enzymes
+        for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
+            this->state.enzymes[x.enzyme_id].amount += x.released_enzymes;
         }
 
         this->setNextSelection();
@@ -448,6 +454,7 @@ private:
 
                 partial += son.second;
                 if (rv < partial) {
+
                     // send message to trigger the reaction
                     re = enzyme.handled_reactions.at(son.first);
                     reactant.clear();
@@ -457,6 +464,10 @@ private:
                     reactant.reaction_direction = Way::STP;
                     reactant.reaction_amount = 1;
                     this->push_to_correct_port(enzyme.location, bags, reactant);
+
+                    // update enzyme amount
+                    this->state.enzymes[eid].amount--;
+
                     break;
                 }
             }
@@ -483,6 +494,7 @@ private:
 
                 partial += pon.second;
                 if (rv < partial) {
+
                     // send message to trigger the reaction
                     re = enzyme.handled_reactions.at(pon.first);
                     reactant.clear();
@@ -492,6 +504,10 @@ private:
                     reactant.reaction_direction = Way::PTS;
                     reactant.reaction_amount = 1;
                     this->push_to_correct_port(enzyme.location, bags, reactant);
+
+                    // update enzyme amount
+                    this->state.enzymes[eid].amount--;
+
                     break;
                 }
             }

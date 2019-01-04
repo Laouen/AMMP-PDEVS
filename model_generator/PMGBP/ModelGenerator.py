@@ -39,7 +39,7 @@ class ModelStructure:
         self.id = cid
         self.space = {}
         self.routing_table = {}
-        self.reaction_sets = {}
+        #self.reaction_sets = {}
 
         # Compartment input-membrane mapping
         port_numbers = range(len(membranes))
@@ -55,11 +55,11 @@ class ModelStructure:
         # considered in the input-membrane mapping.
         #
         # Initial ports are for IC (internal reaction sets)
-        internal_reaction_sets = [BULK] + membranes
-        port_numbers = range(len(internal_reaction_sets))
+        internal_enzyme_sets = [BULK] + membranes
+        port_numbers = range(len(internal_enzyme_sets))
         self.routing_table = {(self.id, rsn): port
                               for rsn, port
-                              in zip(internal_reaction_sets, port_numbers)}
+                              in zip(internal_enzyme_sets, port_numbers)}
 
         # Final ports are for EOC (external reaction sets from other compartments)
         port_number = len(self.routing_table)
@@ -69,16 +69,15 @@ class ModelStructure:
                 port_number += 1
 
         # Building reaction sets
-        self.reaction_sets = {}
-        for reaction_set in internal_reaction_sets:
-            reaction_ids = parser.get_reaction_set_rids(cid, reaction_set)
-            self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
+        # self.reaction_sets = {}
+        # for reaction_set in internal_enzyme_sets:
+        #     reaction_ids = parser.get_reaction_set_rids(cid, reaction_set)
+        #     self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
 
         # Building enzyme sets
-        # TODO: Change reaction_set by enzyme set every where
         self.enzyme_sets = {}
-        for reaction_set in internal_reaction_sets:
-            self.enzyme_sets[reaction_set] = parser.get_enzyme_set(cid, reaction_set)
+        for enzyme_set in internal_enzyme_sets:
+            self.enzyme_sets[enzyme_set] = parser.get_enzyme_set(cid, enzyme_set)
 
         # Building space
         reaction_parameters = parser.get_reaction_parameters(cid)

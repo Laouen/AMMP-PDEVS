@@ -204,6 +204,7 @@ class SBMLParser:
                 for rid, parameters in self.reactions.items()
                 if not_empty_intersection(compartment_species, parameters['species'])}
 
+    # Deprecated
     def get_enzymes(self, reactions):
         """
         :param reactions: A set of rid (reaction IDs).

@@ -431,12 +431,23 @@ private:
         this->real_random.seed(real_rd());
     }
 
-    void push_to_correct_port(string metabolite_id, output_bags& bags, const Product& m) const {
+    void push_metabolite_to_correct_port(string metabolite_id, output_bags &bags, const Product &m) const {
         int port_number = this->props.routing_table.at(metabolite_id);
         switch (port_number) {
             case 0: std::get<0>(bags).messages.emplace_back(m); break;
             case 1: std::get<1>(bags).messages.emplace_back(m); break;
             case 2: std::get<2>(bags).messages.emplace_back(m); break;
+            default:
+                throw std::exception();
+        }
+    }
+
+    void push_information_to_correct_port(string metabolite_id, output_bags &bags, const Information &m) const {
+        int port_number = this->props.routing_table.at(metabolite_id);
+        switch (port_number) {
+            case 0: std::get<3>(bags).messages.emplace_back(m); break;
+            case 1: std::get<4>(bags).messages.emplace_back(m); break;
+            case 2: std::get<5>(bags).messages.emplace_back(m); break;
             default:
                 throw std::exception();
         }
@@ -506,7 +517,7 @@ private:
                         message.enzyme_id = this->state.id;
                         message.released_enzymes = jt.second;
                         message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
-                        this->push_to_correct_port(metabolite.first, bags, message);
+                        this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
                 } else {
                     assert(reaction_props.products_sctry.find(it.first.first) != reaction_props.products_sctry.end());
@@ -517,7 +528,7 @@ private:
                         message.enzyme_id = this->state.id;
                         message.released_enzymes = jt.second;
                         message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
-                        this->push_to_correct_port(metabolite.first, bags, message);
+                        this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
                 }
 
@@ -534,37 +545,62 @@ private:
             reaction_state_type reaction_state = this->state.reactions[reaction_id];
             reaction_props_type reaction_props = this->props.reactions[reaction_id];
 
-            Product message;
             Integer stp_ready = totalReadyFor(reaction_state.substrate_comps);
             Integer pts_ready = totalReadyFor(reaction_state.product_comps);
 
             if (stp_ready > 0) {
 
                 this->removeMetabolites(reaction_state.substrate_comps, stp_ready);
+
+                // Send the produced metabolites
                 for (const auto &compartment_sctry : reaction_props.products_sctry) {
 
                     for (const auto &metabolite : compartment_sctry.second) {
-                        message.clear();
-                        message.enzyme_id = this->state.id;
-                        message.released_enzymes = stp_ready;
-                        message.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
-                        this->push_to_correct_port(metabolite.first, bags, message);
+                        Product metaboliteMessage;
+                        metaboliteMessage.enzyme_id = this->state.id;
+                        metaboliteMessage.released_enzymes = stp_ready;
+                        metaboliteMessage.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
+                        this->push_metabolite_to_correct_port(metabolite.first, bags, metaboliteMessage);
                     }
+                }
+
+                // Send the released enzymes
+                Information enzymeMessage;
+                enzymeMessage.enzyme_id = this->state.id;
+                enzymeMessage.released_enzymes = stp_ready;
+
+                // Each compartment of the reactant stoichiometry will have relesed enzymes.
+                // The reactant stoichiometry is used to route the released enzymes.
+                for (const auto &compartment_sctry : reaction_props.substrate_sctry) {
+                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, enzymeMessage);
                 }
             }
 
             if (pts_ready > 0) {
 
                 this->removeMetabolites(reaction_state.product_comps, pts_ready);
+
+                // Send the produced metabolites
                 for (const auto &compartment_sctry : reaction_props.substrate_sctry) {
 
                     for (const auto &metabolite : compartment_sctry.second) {
-                        message.clear();
+                        Product message;
                         message.enzyme_id = this->state.id;
                         message.released_enzymes = pts_ready;
                         message.metabolites.insert({metabolite.first, pts_ready * metabolite.second});
-                        this->push_to_correct_port(metabolite.first, bags, message);
+                        this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
+                }
+
+                // Send the released enzymes
+                Information enzymeMessage;
+                enzymeMessage.enzyme_id = this->state.id;
+                enzymeMessage.released_enzymes = pts_ready;
+
+                // Each compartment of the reactant stoichiometry will have relesed enzymes.
+                // The reactant stoichiometry is used to route the released enzymes.
+                for (const auto &compartment_sctry : reaction_props.products_sctry) {
+                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, enzymeMessage);
                 }
             }
         }
