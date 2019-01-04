@@ -70,7 +70,7 @@ class space {
 
 public:
 
-    using Reactant=typename PORTS::output_type;
+    using Reactant=typename PORTS::reactant_type;
 
     using input_ports=typename PORTS::input_ports;
     using output_ports=typename PORTS::output_ports;
@@ -290,7 +290,7 @@ public:
 
         this->state.tasks.update(e);
 
-        for (const auto &x : get_messages<typename PORTS::in_0>(mbs)) {
+        for (const auto &x : get_messages<typename PORTS::in_0_product>(mbs)) {
             this->addMultipleMetabolites(this->state.metabolites, x.metabolites);
         }
 

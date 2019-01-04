@@ -63,19 +63,27 @@ using namespace pmgbp::structs::reaction;
 
 struct enzyme_ports {
 
-    struct out_0: public cadmium::out_port<pmgbp::types::Product>{};
-    struct out_1: public cadmium::out_port<pmgbp::types::Product>{};
-    struct out_2: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_0_product: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_1_product: public cadmium::out_port<pmgbp::types::Product>{};
+    struct out_2_product: public cadmium::out_port<pmgbp::types::Product>{};
+
+    struct out_0_information: public cadmium::out_port<pmgbp::types::Information>{};
+    struct out_1_information: public cadmium::out_port<pmgbp::types::Information>{};
+    struct out_2_information: public cadmium::out_port<pmgbp::types::Information>{};
+
 
     struct in_0: public cadmium::in_port<pmgbp::types::Reactant>{};
 
-    using output_type=pmgbp::types::Product;
-    using input_type=pmgbp::types::Reactant;
+    using product_type=pmgbp::types::Product;
+    using information_type=pmgbp::types::Information;
 
     using output_ports=std::tuple<
-            out_0,
-            out_1,
-            out_2
+            out_0_product,
+            out_1_product,
+            out_2_product,
+            out_0_information,
+            out_1_information,
+            out_2_information
     >;
     using input_ports=std::tuple<in_0>;
 };
@@ -90,7 +98,8 @@ public:
 
     using rejected_type=map<pair<string, Way>, map<rid, Integer>>;
 
-    using Product=typename enzyme_ports::output_type;
+    using Product=typename enzyme_ports::product_type;
+    using Information=typename enzyme_ports::information_type;
 
     using input_ports=typename enzyme_ports::input_ports;
     using output_ports=typename enzyme_ports::output_ports;
@@ -424,7 +433,13 @@ private:
 
     void push_to_correct_port(string metabolite_id, output_bags& bags, const Product& m) const {
         int port_number = this->props.routing_table.at(metabolite_id);
-        pmgbp::tuple::get<Product>(bags, port_number).emplace_back(m);
+        switch (port_number) {
+            case 0: std::get<0>(bags).messages.emplace_back(m); break;
+            case 1: std::get<1>(bags).messages.emplace_back(m); break;
+            case 2: std::get<2>(bags).messages.emplace_back(m); break;
+            default:
+                throw std::exception();
+        }
     }
 
     void bindMetabolites(typename make_message_bags<input_ports>::type mbs, rejected_type& rejected) {

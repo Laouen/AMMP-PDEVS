@@ -101,6 +101,15 @@ struct Reactant {
     }
 };
 
+struct Information {
+    string enzyme_id;
+    Integer released_enzymes;
+
+    bool operator==(const Information& other) const {
+        return enzyme_id == other.enzyme_id && released_enzymes == other.released_enzymes;
+    }
+};
+
 /*******************************************/
 /************** End Messages ***************/
 /*******************************************/

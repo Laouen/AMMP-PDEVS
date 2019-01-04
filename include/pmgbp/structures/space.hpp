@@ -62,22 +62,6 @@ struct EnzymeAddress {
     }
 };
 
-/**********************************************/
-/***************** PORTS **********************/
-/**********************************************/
-template<class REACTANT, class PRODUCT>
-struct ports {
-
-    struct inner : public cadmium::out_port<REACTANT> {};
-    struct in : public cadmium::in_port<PRODUCT> {};
-
-    using output_type=REACTANT;
-    using input_type=PRODUCT;
-
-    using input_ports=std::tuple<in>;
-    using output_ports=std::tuple<inner>;
-};
-
 /*******************************************/
 /****************** Task *******************/
 /*******************************************/

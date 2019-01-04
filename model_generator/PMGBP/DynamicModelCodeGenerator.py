@@ -5,6 +5,7 @@ import json
 import pkg_resources
 
 ATOMIC_MODEL_DEFINITION = pkg_resources.resource_filename(__name__, 'templates/atomic_model_definition.tpl.hpp')
+SPACE_ATOMIC_MODEL_DEFINITION = pkg_resources.resource_filename(__name__, 'templates/space_atomic_model_definition.tpl.hpp')
 DYNAMIC_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_atomic.tpl.hpp')
 DYNAMIC_COUPLED = pkg_resources.resource_filename(__name__, 'templates/dynamic_coupled.tpl.hpp')
 DYNAMIC_DEFINED_ATOMIC = pkg_resources.resource_filename(__name__, 'templates/dynamic_defined_atomic.tpl.hpp')
@@ -21,8 +22,10 @@ class DynamicModelCodeGenerator:
 
 
         # atomic ports definition template
-        atomic_model_definition_tpl_path = os.curdir + os.sep + template_folder + os.sep + 'atomic_model_definition.tpl.hpp'
         self.atomic_model_def_template = open(ATOMIC_MODEL_DEFINITION, 'r').read()
+
+        # space atomic model definition template
+        self.space_atomic_model_def_template = open(SPACE_ATOMIC_MODEL_DEFINITION, 'r').read()
 
         # atomic template
         self.atomic_template = open(DYNAMIC_ATOMIC, 'r').read().format(TIME=TIME)
@@ -159,11 +162,11 @@ class DynamicModelCodeGenerator:
                                                 eoc=', '.join(eoc_cpp),
                                                 ic=', '.join(ic_cpp)))
 
-        input_port_numbers = [port_number for (port_number, _, out_in) in ports if out_in == 'in']
+        input_port_numbers = [int(str(port_number).split('_')[0]) for (port_number, _, out_in) in ports if out_in == 'in']
         # If there is no input ports -> max = -1 -> output_ports_amount = -1 +1 = 0
         input_ports_amount = max(input_port_numbers + [-1]) + 1
 
-        output_port_numbers = [port_number for (port_number, _, out_in) in ports if out_in == 'out']
+        output_port_numbers = [int(str(port_number).split('_')[0]) for (port_number, _, out_in) in ports if out_in == 'out']
         # If there is no output ports -> max = -1 -> output_ports_amount = -1 +1 = 0
         output_ports_amount = max(output_port_numbers + [-1]) + 1
 
@@ -177,10 +180,13 @@ class DynamicModelCodeGenerator:
         output_port_names = ','.join(['out_' + str(port_number)
                                        for port_number in range(out_ports)])
 
-        input_ports_def = '\n\t'.join([self.port_template.format(out_in='in', port_number=port_number, message_type='INPUT_TYPE')
-                                       for port_number in range(in_ports)])
+        # Input ports are duplacated to recive product and information messages
+        input_port_defs = [self.port_template.format(out_in='in', port_number=str(port_number) + '_product', message_type='INPUT_TYPE') for port_number in range(in_ports)]
+        input_port_defs += [self.port_template.format(out_in='in', port_number=str(port_number) + '_information', message_type='INPUT_TYPE') for port_number in range(in_ports)]
 
-        input_port_names = ','.join(['in_' + str(port_number) for port_number in range(in_ports)])
+        input_ports_def = '\n\t'.join(input_port_defs)
+
+        input_port_names = ','.join(['in_' + str(port_number) + '_product' for port_number in range(in_ports)] + ['in_' + str(port_number) + '_information' for port_number in range(in_ports)])
 
         self.write_to_model_def(self.atomic_model_def_template.format(model_name=model_name,
                                                                       model_class=model_class,
@@ -241,6 +247,49 @@ class DynamicModelCodeGenerator:
         self.write('}')
         self.model_file.close()
         self.model_definitions_file.close()
+
+    def write_space_atomic_model(self, model_id, parameters, out_ports, in_ports, product_type, reactant_type, information_type):
+        # ARGS mut be generated before the parameter input is modified. 
+        ARGS = ', '.join(['const char*' for i in range(len(parameters))])
+        ARGS = 'const char*, ' + ARGS
+        parameters = ',\n\t\t'.join(map(json.dumps, parameters))
+        parameters = 'xml_parameter_path.c_str(),\n\t\t' + parameters
+        model_name = 'space_' + model_id
+
+        self.define_space_atomic_model_with_ports(model_name, out_ports, in_ports, product_type, reactant_type, information_type)
+        self.write(self.atomic_template.format(model_name=model_name, ARGS=ARGS, parameters=parameters))
+
+        return model_name
+
+    def define_space_atomic_model_with_ports(self, model_name, out_ports, in_ports, product_type, reactant_type, information_type):
+
+        # Create output ports
+        output_ports_def = [self.port_template.format(out_in='out', port_number=port_number, message_type='pmgbp::types::' + reactant_type) 
+                            for port_number in range(out_ports)]
+        output_ports_def = '\n\t'.join(output_ports_def)
+
+        output_port_names = ['out_' + str(port_number) for port_number in range(out_ports)]
+        output_port_names = ','.join(output_port_names)
+
+        # Create input ports
+        # Input ports are duplacated to recive product and information messages
+        input_port_defs = [self.port_template.format(out_in='in', port_number=str(port_number) + '_product', message_type='pmgbp::types::' + product_type) for port_number in range(in_ports)]
+        input_port_defs += [self.port_template.format(out_in='in', port_number=str(port_number) + '_information', message_type='pmgbp::types::' + information_type) for port_number in range(in_ports)]
+
+        input_ports_def = '\n\t'.join(input_port_defs)
+
+        input_port_names = ['in_' + str(port_number) + '_product' for port_number in range(in_ports)]
+        input_port_names += ['in_' + str(port_number) + '_information' for port_number in range(in_ports)]
+        input_port_names = ','.join(input_port_names)
+
+        self.write_to_model_def(self.space_atomic_model_def_template.format(model_name=model_name,
+                                                                            input_ports_definitions=input_ports_def,
+                                                                            output_ports_definitions=output_ports_def,
+                                                                            input_port_names=input_port_names,
+                                                                            output_port_names=output_port_names,
+                                                                            product_type=product_type,
+                                                                            reactant_type=reactant_type,
+                                                                            information_type=information_type))
 
     # WARNING: deprecated
     def write_reaction_group(self, group_id, reaction_ids, parameters_xml):

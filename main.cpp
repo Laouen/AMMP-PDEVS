@@ -28,15 +28,14 @@
 #include <chrono>
 
 #include <cadmium/engine/pdevs_dynamic_runner.hpp>
-#include <cadmium/logger/dynamic_common_loggers.hpp>
 
 #include <NDTime.hpp>
 #include <model_json_exporter.hpp>
 
 #include <memore/logger.hpp>
-#include <memore/sink.hpp>
+//#include <memore/sink.hpp>
 
-#include <mongocxx/instance.hpp>
+//#include <mongocxx/instance.hpp>
 
 #include "top.hpp"
 
@@ -48,7 +47,9 @@ using hclock=chrono::high_resolution_clock;
 
 /*************** Loggers *******************/
 
-// NOTE: it is necesary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
+/************** MeMoRe sink ******************/
+/*
+// NOTE: it is necessary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
 mongocxx::instance instance{};
 
 namespace {  
@@ -58,6 +59,17 @@ namespace {
     struct memore_sink_provider {
         static memore::sink& sink() {
             return memore_sink;
+        }
+    };
+}
+*/
+
+/************** cout sink ******************/
+
+namespace {
+    struct memore_sink_provider {
+        static std::ostream& sink() {
+            return std::cout;
         }
     };
 }
@@ -100,7 +112,7 @@ int main(int argc, char ** argv) {
         std::string xml_parameters_path = std::string(argv[1]);
 
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
-        memore_sink_provider::sink().new_collection(argv[2]);
+        //memore_sink_provider::sink().new_collection(argv[2]);
 
         
         // Initialize model

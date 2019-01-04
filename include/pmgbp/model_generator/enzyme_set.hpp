@@ -51,16 +51,23 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_enzyme_set(
 
         ics.push_back(make_router_enzyme_ic(group_number, router_id, group_id));
 
-        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_0, pmgbp::models::enzyme_ports::out_0>(group_id));
-        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_1, pmgbp::models::enzyme_ports::out_1>(group_id));
-        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_2, pmgbp::models::enzyme_ports::out_2>(group_id));
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_0_product, pmgbp::models::enzyme_ports::out_0_product>(group_id));
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_1_product, pmgbp::models::enzyme_ports::out_1_product>(group_id));
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_2_product, pmgbp::models::enzyme_ports::out_2_product>(group_id));
+
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_0_information, pmgbp::models::enzyme_ports::out_0_information>(group_id));
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_1_information, pmgbp::models::enzyme_ports::out_1_information>(group_id));
+        eocs.push_back(cadmium::dynamic::translate::make_EOC<pmgbp::models::enzyme_ports::out_2_information, pmgbp::models::enzyme_ports::out_2_information>(group_id));
     }
 
     cadmium::dynamic::modeling::Ports iports = { typeid(pmgbp::models::enzyme_ports::in_0) };
     cadmium::dynamic::modeling::Ports oports = { 
-        typeid(pmgbp::models::enzyme_ports::out_0),
-        typeid(pmgbp::models::enzyme_ports::out_1),
-        typeid(pmgbp::models::enzyme_ports::out_2)
+        typeid(pmgbp::models::enzyme_ports::out_0_product),
+        typeid(pmgbp::models::enzyme_ports::out_1_product),
+        typeid(pmgbp::models::enzyme_ports::out_2_product),
+        typeid(pmgbp::models::enzyme_ports::out_0_information),
+        typeid(pmgbp::models::enzyme_ports::out_1_information),
+        typeid(pmgbp::models::enzyme_ports::out_2_information)
     };
 
     return std::make_shared<cadmium::dynamic::modeling::coupled<NDTime>>(

@@ -246,13 +246,14 @@ class ModelGenerator:
         self.parameter_writer.add_space(compartment.id,
                                         compartment.space_parameters,
                                         compartment.routing_table)
-        space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
-                                              compartment.id,
-                                              [compartment.id],
-                                              len(enzyme_sets),
-                                              1,
-                                              REACTANT_MESSAGE_TYPE,
-                                              PRODUCT_MESSAGE_TYPE)
+        
+        space = self.coder.write_space_atomic_model(compartment.id,
+                                                    [compartment.id],
+                                                    len(enzyme_sets),
+                                                    1,
+                                                    PRODUCT_MESSAGE_TYPE,
+                                                    REACTANT_MESSAGE_TYPE,
+                                                    INFORMATION_MESSAGE_TYPE)
 
         sub_models = [space] + [es_model_name for (es_model_name, _, _) in enzyme_sets.values()]
 
@@ -261,8 +262,12 @@ class ModelGenerator:
             # Organelle spaces do not send metabolites to other compartments without passing through
             # their membranes, that is the assert.
             assert es_address[0] == compartment.id
-            rs_model_name = enzyme_sets[es_address][0]
-            ic += [(space, space, port_number, rs_model_name, 'pmgbp::models::enzyme', 0), (rs_model_name, 'pmgbp::models::enzyme', 0, space, space, 0)]
+            es_model_name = enzyme_sets[es_address][0]
+            ic += [
+                (space, 'pmgbp::structs::'+space+'::'+space, port_number, es_model_name, 'pmgbp::models::enzyme', 0),
+                (es_model_name, 'pmgbp::models::enzyme', "0_product", space, 'pmgbp::structs::'+space+'::'+space, "0_product"),
+                (es_model_name, 'pmgbp::models::enzyme', "0_information", space, 'pmgbp::structs::'+space+'::'+space, "0_information")
+            ]
 
         # If the output port amount is equal to 1, then the model only sends messages to the space
         # and there is no communication with the extra cellular space, thus, it must not be linked
@@ -274,10 +279,12 @@ class ModelGenerator:
         eoc = []
         for (es_model_name, _, output_port_amount) in enzyme_sets.values():
             for port_number in range(1, output_port_amount):
-                eoc.append((es_model_name, 'pmgbp::models::enzyme', port_number, port_number))
+                eoc.append((es_model_name, 'pmgbp::models::enzyme', str(port_number) + "_product", str(port_number) + "_product"))
+                eoc.append((es_model_name, 'pmgbp::models::enzyme', str(port_number) + "_information", str(port_number) + "_information"))
                 if port_number not in out_port_numbers:
                     out_port_numbers.append(port_number)
-                    out_ports.append((port_number, PRODUCT_MESSAGE_TYPE, 'out'))
+                    out_ports.append((str(port_number) + "_product", PRODUCT_MESSAGE_TYPE, 'out'))
+                    out_ports.append((str(port_number) + "_information", INFORMATION_MESSAGE_TYPE, 'out'))
 
         in_ports = []
         eic = []
@@ -285,6 +292,8 @@ class ModelGenerator:
             es_model_name = enzyme_sets[(compartment.id, es_name)][0]
             eic.append((es_model_name, 'pmgbp::models::enzyme', 0, port_number))
             in_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'in'))
+            # TODO: Check if this link shouldn't be removed
+            # in_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'in'))
 
         return self.coder.write_coupled_model(compartment.id,
                                               sub_models,
@@ -302,33 +311,43 @@ class ModelGenerator:
 
         bulk = enzyme_sets[(cid, BULK)][0]
 
-        self.parameter_writer.add_space(cid,
-                                        compartment.space_parameters,
-                                        compartment.routing_table)
+        self.parameter_writer.add_space(cid, compartment.space_parameters, compartment.routing_table)
+
         # port numbers starts in zero -> port amount = max{port numbers} + 1.
         output_port_amount = max(compartment.routing_table.values()) + 1
-        space = self.coder.write_atomic_model(SPACE_MODEL_CLASS,
-                                              cid,
-                                              [cid],
-                                              output_port_amount,
-                                              1,
-                                              REACTANT_MESSAGE_TYPE,
-                                              PRODUCT_MESSAGE_TYPE)
+        space = self.coder.write_space_atomic_model(cid,
+                                                    [cid],
+                                                    output_port_amount,
+                                                    1,
+                                                    PRODUCT_MESSAGE_TYPE,
+                                                    REACTANT_MESSAGE_TYPE,
+                                                    INFORMATION_MESSAGE_TYPE)
 
         sub_models = [space, bulk]
 
         bulk_port_number = compartment.routing_table[(cid, BULK)]
-        ic = [(space, space, bulk_port_number, bulk, 'pmgbp::models::enzyme', 0), (bulk, 'pmgbp::models::enzyme', 0, space, space, 0)]
+        ic = [
+            (space, 'pmgbp::structs::'+space+'::'+space, bulk_port_number, bulk, 'pmgbp::models::enzyme', 0), 
+            (bulk, 'pmgbp::models::enzyme', "0_product", space, 'pmgbp::structs::'+space+'::'+space, "0_product"),
+            (bulk, 'pmgbp::models::enzyme', "0_information", space, 'pmgbp::structs::'+space+'::'+space, "0_information")
+        ]
 
         out_ports = []
         eoc = []
         for (es_cid, _), port_number in compartment.routing_table.items():
             if es_cid != cid:
-                eoc.append((space, space, port_number, port_number))
+                eoc.append((space, 'pmgbp::structs::'+space+'::'+space, port_number, port_number))
                 out_ports.append((port_number, REACTANT_MESSAGE_TYPE, 'out'))
 
-        in_ports = [(0, PRODUCT_MESSAGE_TYPE, 'in')]
-        eic = [(space, space, 0, 0)]
+        in_ports = [
+            ("0_product", PRODUCT_MESSAGE_TYPE, 'in'),
+            ("0_information", INFORMATION_MESSAGE_TYPE, 'in')
+        ]
+
+        eic = [
+            (space, 'pmgbp::structs::'+space+'::'+space, "0_product", "0_product"),
+            (space, 'pmgbp::structs::'+space+'::'+space, "0_information", "0_information")
+        ]
 
         return self.coder.write_coupled_model(cid,
                                               sub_models,
@@ -365,13 +384,15 @@ class ModelGenerator:
                 c_port_number = self.cytoplasm.routing_table[(cid, esn)]
                 ic.append((cytoplasm_model, c_port_number, model_name, es_port_number))
                 # *1) organelle output port 1 always goes to cytoplasm
-                ic.append((model_name, model_name, 1, cytoplasm_model, cytoplasm_model, 0))
+                ic.append((model_name, model_name, "1_product", cytoplasm_model, cytoplasm_model, "0_product"))
+                ic.append((model_name, model_name, "1_information", cytoplasm_model, cytoplasm_model, "0_information"))
 
                 if output_port_amount > 1:
                     e_port_number = self.cytoplasm.routing_table[(cid, esn)]
                     ic.append((extra_cellular_model, extra_cellular_model, e_port_number, model_name, model_name, es_port_number))
                     # *1) organelle output port 2 always goes to extracellular
-                    ic.append((model_name, model_name, 2, extra_cellular_model, extra_cellular_model, 0))
+                    ic.append((model_name, model_name, "2_product", extra_cellular_model, extra_cellular_model, "0_product"))
+                    ic.append((model_name, model_name, "2_information", extra_cellular_model, extra_cellular_model, "0_information"))
 
         self.parameter_writer.save_xml()
         cell_coupled = self.coder.write_coupled_model(top, sub_models, [], [], [], ic)
@@ -383,14 +404,15 @@ class ModelGenerator:
 
         # this is the same logic as *1)
         periplasm_oport_number = 1 if bulk_cid == self.cytoplasm.id else 2
-        ic.append((periplasm_model, periplasm_model, periplasm_oport_number, bulk_model, bulk_model, 0))
+        ic.append((periplasm_model, periplasm_model, str(periplasm_oport_number) + "_product", bulk_model, bulk_model, "0_product"))
+        ic.append((periplasm_model, periplasm_model, str(periplasm_oport_number) + "_information", bulk_model, bulk_model, "0_information"))
 
-        for (cid, rsn), c_port_number in bulk_routing_table.items():
+        for (cid, esn), c_port_number in bulk_routing_table.items():
             if cid == bulk_cid:
                 continue
 
             if cid == self.periplasm.id:
-                periplasm_port_number = self.periplasm.membrane_eic[rsn]
+                periplasm_port_number = self.periplasm.membrane_eic[esn]
                 ic.append((bulk_model, bulk_model, c_port_number, periplasm_model, periplasm_model, periplasm_port_number))
         return ic
 
