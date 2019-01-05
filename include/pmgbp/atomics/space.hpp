@@ -297,7 +297,10 @@ public:
 
         // Receive released enzymes
         for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
-            this->state.enzymes[x.enzyme_id].amount += x.released_enzymes;
+            std::cout << "released enzyme: " << x.enzyme_id << " - amount: " << x.released_enzymes << std::endl;
+            std::cout << "current: " << this->state.enzymes.at(x.enzyme_id).amount << std::endl;
+            this->state.enzymes.at(x.enzyme_id).amount += x.released_enzymes;
+            std::cout << "new: " << this->state.enzymes.at(x.enzyme_id).amount << std::endl;
         }
 
         this->setNextSelection();

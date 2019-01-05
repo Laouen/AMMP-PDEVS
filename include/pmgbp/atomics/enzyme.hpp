@@ -466,7 +466,9 @@ private:
                 for (int i = 0; i < x.reaction_amount; ++i) {
                     if (acceptedMetabolites(reaction_props.koff_STP)) reaction_state.substrate_comps.at(x.from) += 1;
                     else increaseRejected(rejected, x.from, x.rid, Way::STP);
+                    std::cout << "bind metabolites: " << this->state.id << " from: " << x.from << " amount: " << reaction_state.substrate_comps.at(x.from) << std::endl;
                 }
+
             } else {
 
                 // TODO: this step could be replaced by a single step using uniform distribution to calculate the rejected and accepted amount
@@ -503,33 +505,42 @@ private:
 
         Product message;
         for (const auto& it : rejected) {
-
             for (const auto& jt : it.second) {
 
                 const reaction_props_type& reaction_props = this->props.reactions.at(jt.first);
 
+                // Send the released enzymes
+                Information enzymeMessage;
+                enzymeMessage.enzyme_id = this->state.id;
+                enzymeMessage.released_enzymes = jt.second;
+
                 if (it.first.second == Way::STP) {
                     assert(reaction_props.substrate_sctry.find(it.first.first) != reaction_props.substrate_sctry.end());
 
+                    // Send metabolites
                     for (const auto& metabolite : reaction_props.substrate_sctry.at(it.first.first)) {
 
                         message.clear();
-                        message.enzyme_id = this->state.id;
-                        message.released_enzymes = jt.second;
-                        message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
+                        message.metabolites.insert({metabolite.first, jt.second * metabolite.second});
                         this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
+
+                    // Send the released enzymes
+                    this->push_information_to_correct_port(reaction_props.substrate_sctry.at(it.first.first).cbegin()->first, bags, enzymeMessage);
+
                 } else {
                     assert(reaction_props.products_sctry.find(it.first.first) != reaction_props.products_sctry.end());
 
+                    // Send metabolites
                     for (const auto& metabolite : reaction_props.products_sctry.at(it.first.first)) {
 
                         message.clear();
-                        message.enzyme_id = this->state.id;
-                        message.released_enzymes = jt.second;
-                        message.metabolites.insert({metabolite.first, jt.second*metabolite.second});
+                        message.metabolites.insert({metabolite.first, jt.second * metabolite.second});
                         this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
+
+                    // Send the released enzymes
+                    this->push_information_to_correct_port(reaction_props.products_sctry.at(it.first.first).cbegin()->first, bags, enzymeMessage);
                 }
 
             }
@@ -542,11 +553,13 @@ private:
 
             rid reaction_id = reaction.first;
 
-            reaction_state_type reaction_state = this->state.reactions[reaction_id];
-            reaction_props_type reaction_props = this->props.reactions[reaction_id];
+            reaction_state_type& reaction_state = this->state.reactions[reaction_id];
+            const reaction_props_type& reaction_props = this->props.reactions[reaction_id];
 
             Integer stp_ready = totalReadyFor(reaction_state.substrate_comps);
             Integer pts_ready = totalReadyFor(reaction_state.product_comps);
+
+            std::cout << "ready " << this->state.id << " stp: " << stp_ready << " pts: " << pts_ready << std::endl;
 
             if (stp_ready > 0) {
 
@@ -557,8 +570,6 @@ private:
 
                     for (const auto &metabolite : compartment_sctry.second) {
                         Product metaboliteMessage;
-                        metaboliteMessage.enzyme_id = this->state.id;
-                        metaboliteMessage.released_enzymes = stp_ready;
                         metaboliteMessage.metabolites.insert({metabolite.first, stp_ready * metabolite.second});
                         this->push_metabolite_to_correct_port(metabolite.first, bags, metaboliteMessage);
                     }
@@ -585,8 +596,6 @@ private:
 
                     for (const auto &metabolite : compartment_sctry.second) {
                         Product message;
-                        message.enzyme_id = this->state.id;
-                        message.released_enzymes = pts_ready;
                         message.metabolites.insert({metabolite.first, pts_ready * metabolite.second});
                         this->push_metabolite_to_correct_port(metabolite.first, bags, message);
                     }
