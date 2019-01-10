@@ -33,9 +33,9 @@
 #include <model_json_exporter.hpp>
 
 #include <memore/logger.hpp>
-//#include <memore/sink.hpp>
+#include <memore/sink.hpp>
 
-//#include <mongocxx/instance.hpp>
+#include <mongocxx/instance.hpp>
 
 #include "top.hpp"
 
@@ -48,7 +48,7 @@ using hclock=chrono::high_resolution_clock;
 /*************** Loggers *******************/
 
 /************** MeMoRe sink ******************/
-/*
+
 // NOTE: it is necessary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
 mongocxx::instance instance{};
 
@@ -62,10 +62,11 @@ namespace {
         }
     };
 }
-*/
+
 
 /************** cout sink ******************/
 
+/* For debug purposes use this sink, to print in screen and to compile without problems with Cmake
 namespace {
     struct memore_sink_provider {
         static std::ostream& sink() {
@@ -73,6 +74,7 @@ namespace {
         }
     };
 }
+*/
 
 using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, memore_sink_provider>;
 using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, memore_sink_provider>;
