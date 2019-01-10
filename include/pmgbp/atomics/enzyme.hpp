@@ -359,15 +359,15 @@ private:
         sid specie_id;
         Integer specie_amount;
 
-        tinyxml2::XMLElement* compartment = reaction->FirstChildElement("stoichiometryByCompartments")->FirstChildElement("compartment");
-        while (compartment != nullptr) {
+        tinyxml2::XMLElement* compartment_sctry = reaction->FirstChildElement("stoichiometryByCompartments")->FirstChildElement("compartmentStoichiometry");
+        while (compartment_sctry != nullptr) {
 
-            compartment_id = compartment->FirstChildElement("id")->GetText();
+            compartment_id = compartment_sctry->Attribute("cid");
 
             // Load substrate stoichiometry
             substrate_sctry.clear();
 
-            tinyxml2::XMLElement* stoichiometry_specie = compartment->FirstChildElement("substrate");
+            tinyxml2::XMLElement* stoichiometry_specie = compartment_sctry->FirstChildElement("substrate");
             if (stoichiometry_specie != nullptr) {
                 stoichiometry_specie = stoichiometry_specie->FirstChildElement();
             }
@@ -388,7 +388,7 @@ private:
             // Load product stoichiometry
             products_sctry.clear();
 
-            stoichiometry_specie = compartment->FirstChildElement("product");
+            stoichiometry_specie = compartment_sctry->FirstChildElement("product");
             if (stoichiometry_specie != nullptr) {
                 stoichiometry_specie = stoichiometry_specie->FirstChildElement();
             }
@@ -406,7 +406,7 @@ private:
                 new_reaction_state.product_comps.insert({compartment_id, 0});
             }
 
-            compartment = compartment->NextSiblingElement();
+            compartment_sctry = compartment_sctry->NextSiblingElement();
         }
 
         this->props.reactions.insert({reaction_id, new_reaction_props});
@@ -466,7 +466,6 @@ private:
                 for (int i = 0; i < x.reaction_amount; ++i) {
                     if (acceptedMetabolites(reaction_props.koff_STP)) reaction_state.substrate_comps.at(x.from) += 1;
                     else increaseRejected(rejected, x.from, x.rid, Way::STP);
-                    std::cout << "bind metabolites: " << this->state.id << " from: " << x.from << " amount: " << reaction_state.substrate_comps.at(x.from) << std::endl;
                 }
 
             } else {
@@ -558,8 +557,6 @@ private:
 
             Integer stp_ready = totalReadyFor(reaction_state.substrate_comps);
             Integer pts_ready = totalReadyFor(reaction_state.product_comps);
-
-            std::cout << "ready " << this->state.id << " stp: " << stp_ready << " pts: " << pts_ready << std::endl;
 
             if (stp_ready > 0) {
 

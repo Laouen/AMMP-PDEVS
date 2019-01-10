@@ -3,7 +3,6 @@
 
 from .SBMLParser import SBMLParser
 from .ModelCodeGenerator import ModelCodeGenerator
-from .DynamicModelCodeGenerator import DynamicModelCodeGenerator
 from .XMLParametersGenerator import XMLParametersGenerator
 from .constants import *
 from itertools import islice
@@ -68,12 +67,6 @@ class ModelStructure:
                 self.routing_table[(external_cid, reaction_set)] = port_number
                 port_number += 1
 
-        # Building reaction sets
-        # self.reaction_sets = {}
-        # for reaction_set in internal_enzyme_sets:
-        #     reaction_ids = parser.get_reaction_set_rids(cid, reaction_set)
-        #     self.reaction_sets[reaction_set] = {rid: parser.reactions[rid] for rid in reaction_ids}
-
         # Building enzyme sets
         self.enzyme_sets = {}
         for enzyme_set in internal_enzyme_sets:
@@ -123,7 +116,7 @@ class ModelGenerator:
 
         self.groups_size = groups_size
         self.parameter_writer = XMLParametersGenerator(model_dir=model_dir)
-        self.coder = DynamicModelCodeGenerator(model_dir=model_dir)
+        self.coder = ModelCodeGenerator(model_dir=model_dir)
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
                                  periplasm_id,
@@ -155,53 +148,12 @@ class ModelGenerator:
         self.organelles = {comp_id: ModelStructure(comp_id, self.parser, [MEMBRANE])
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_compartment_ids}
-
-    # Deprecated
-    def generate_reaction_sets(self, compartment):
-        cid = compartment.id
-        return {(cid, rsn): self.generate_reaction_set(cid, rsn, reaction_set)
-                for rsn, reaction_set in compartment.reaction_sets.items()}
     
-    # New
     def generate_enzyme_sets(self, compartment):
         cid = compartment.id
         return {(cid, esn): self.generate_enzyme_set(cid, esn, enzyme_set)
                 for esn, enzyme_set in compartment.enzyme_sets.items()}
 
-    # Deprecated
-    def generate_reaction_set(self, cid, rsn, reaction_set):
-        reaction_set_id = '_'.join([cid, rsn])
-
-        # Reaction sets are separated in groups, this is because the C++ problem compiling large tuples
-        # Currently the maximum group amount is 150 and each group can hold 150 reactions, thus, each compartment
-        # can have a maximum of 150 * 150 = 22500 reactions.
-        groups = chunks(reaction_set, SIZE=self.groups_size)
-        groups_reaction_ids = []
-        routing_table = {}
-        
-        # Routers xml parameters
-        port = 0
-        for group in groups:
-            reaction_ids = list(group.keys())
-            groups_reaction_ids.append(reaction_ids)
-
-            group_id = '_'.join([cid, rsn, str(port)])
-            routing_table.update({rid: port for rid in reaction_ids})
-            port += 1
-
-            port_numbers = range(len(reaction_ids))
-            group_routing_table = {rid: port_number for rid, port_number in zip(reaction_ids, port_numbers)}
-            self.parameter_writer.add_router(group_id, group_routing_table)
-
-        self.parameter_writer.add_router(reaction_set_id, routing_table)
-
-        # Reaction xml parameters 
-        for rid, parameters in reaction_set.items():
-            self.parameter_writer.add_reaction(rid, parameters)
-
-        return self.coder.write_reaction_set(cid, rsn, groups_reaction_ids)
-
-    # New
     def generate_enzyme_set(self, cid, esn, enzyme_set):
         enzyme_set_id = '_'.join([cid, esn])
 
@@ -236,7 +188,6 @@ class ModelGenerator:
             self.parameter_writer.add_enzyme(eid, parameters)
 
         return self.coder.write_enzyme_set(cid, esn, groups_enzyme_ids)
-
 
     def generate_organelle_compartment(self, compartment):
 

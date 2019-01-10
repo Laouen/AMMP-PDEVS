@@ -151,7 +151,6 @@ public:
         }
 
         // Load enzymes
-        tinyxml2::XMLElement* stoichiometry;
         tinyxml2::XMLElement* stoichiometry_specie;
         string specie_id;
         Integer specie_amount;
@@ -161,23 +160,28 @@ public:
 
             // Load handled reactions
             map<string, ReactionInfo> handled_reactions;
-            tinyxml2::XMLElement* handled_reaction = enzyme_entry->FirstChildElement("handledReactions")->FirstChildElement();
+            tinyxml2::XMLElement* handled_reaction = enzyme_entry->FirstChildElement("reactions")->FirstChildElement();
             while (handled_reaction != nullptr) {
 
-                string reaction_id = handled_reaction->FirstChildElement("rid")->GetText();
+                string reaction_id = handled_reaction->Attribute("id");
+                tinyxml2::XMLElement* reaction_parameters = doc.RootElement()->FirstChildElement("reactions")->FirstChildElement(reaction_id.c_str());
 
-                double konSTP = std::stod(handled_reaction->FirstChildElement("konSTP")->GetText());
-                double konPTS = std::stod(handled_reaction->FirstChildElement("konPTS")->GetText());
-                double koffSTP = std::stod(handled_reaction->FirstChildElement("koffSTP")->GetText());
-                double koffPTS = std::stod(handled_reaction->FirstChildElement("koffPTS")->GetText());
-                bool reversible = handled_reaction->FirstChildElement("reversible")->GetText() == "true";
+                double konSTP = std::stod(reaction_parameters->FirstChildElement("konSTP")->GetText());
+                double konPTS = std::stod(reaction_parameters->FirstChildElement("konPTS")->GetText());
+                double koffSTP = std::stod(reaction_parameters->FirstChildElement("koffSTP")->GetText());
+                double koffPTS = std::stod(reaction_parameters->FirstChildElement("koffPTS")->GetText());
+                bool reversible = reaction_parameters->FirstChildElement("reversible")->GetText() == "true";
 
                 // Load the reaction stoichiometry
-                stoichiometry = handled_reaction->FirstChildElement("stoichiometry");
+                tinyxml2::XMLElement* compartment_sctry = reaction_parameters->FirstChildElement("stoichiometryByCompartments")->FirstChildElement();
+
+                while (std::string(compartment_sctry->Attribute("cid")) != this->state.id) {
+                    compartment_sctry = compartment_sctry->NextSiblingElement();
+                }
 
                 // Load the substrate stoichiometry
                 MetaboliteAmounts substrate_sctry;
-                stoichiometry_specie = stoichiometry->FirstChildElement("substrate");
+                stoichiometry_specie = compartment_sctry->FirstChildElement("substrate");
 
                 if (stoichiometry_specie != nullptr) {
                     stoichiometry_specie = stoichiometry_specie->FirstChildElement();
@@ -193,7 +197,7 @@ public:
 
                 // Load the product stoichiometry
                 MetaboliteAmounts products_sctry;
-                stoichiometry_specie = stoichiometry->FirstChildElement("product");
+                stoichiometry_specie = compartment_sctry->FirstChildElement("product");
 
                 if (stoichiometry_specie != nullptr) {
                     stoichiometry_specie = stoichiometry_specie->FirstChildElement();
@@ -297,10 +301,7 @@ public:
 
         // Receive released enzymes
         for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
-            std::cout << "released enzyme: " << x.enzyme_id << " - amount: " << x.released_enzymes << std::endl;
-            std::cout << "current: " << this->state.enzymes.at(x.enzyme_id).amount << std::endl;
             this->state.enzymes.at(x.enzyme_id).amount += x.released_enzymes;
-            std::cout << "new: " << this->state.enzymes.at(x.enzyme_id).amount << std::endl;
         }
 
         this->setNextSelection();

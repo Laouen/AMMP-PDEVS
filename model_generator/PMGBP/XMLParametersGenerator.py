@@ -39,7 +39,7 @@ class XMLParametersGenerator:
 
         xml_reaction = etree.Element(model_id)
 
-        parameter_keys = ['rate', 'rejectRate', 'koffSTP', 'koffPTS']
+        parameter_keys = ['rate', 'rejectRate', 'koffSTP', 'koffPTS', 'konSTP', 'konPTS', 'reversible']
         for key in parameter_keys:
             xml_parameter = etree.Element(key)
             xml_parameter.text = str(parameters[key])
@@ -60,11 +60,8 @@ class XMLParametersGenerator:
         compartments = set(product_compartments + reactant_compartments)
 
         for cid in compartments:
-            xml_compartment = etree.Element('compartment')
-
-            xml_cid = etree.Element('id')
-            xml_cid.text = cid
-            xml_compartment.append(xml_cid)
+            xml_compartment = etree.Element('compartmentStoichiometry')
+            xml_compartment.set('cid', cid)
 
             if cid in reactant_compartments:
                 stoichiometry = parameters['reactant_by_compartment'][cid]
@@ -125,71 +122,42 @@ class XMLParametersGenerator:
         xml_space.append(xml_routing_table)
 
         cid = parameters['cid']
-        xml_enzymes = etree.Element('enzymes')
+        xml_enzymes_parameters = etree.Element('enzymes')
+
         for eid, enzyme_parameters in parameters['enzymes'].items():
-            xml_enzyme = etree.Element('enzyme')
-
-            parameter_keys = ['id', 'amount']
-            for key in parameter_keys:
-                xml_enzyme.set(key, str(enzyme_parameters[key]))
-
-            xml_handled_reactions = etree.Element('handledReactions')
-
-            # remove reactions from other compartments handled by the same enzyme
-            enzyme_parameters['handled_reactions'][:] = [rid for rid
-                                                         in enzyme_parameters['handled_reactions']
-                                                         if rid
-                                                         in list(parameters['reaction_parameters'].keys())]
-
-            # all reactions must have the same address
+            
+            # separate related enzymes by location
             all_locations = set([parameters['reaction_parameters'][rid]['location'] for rid in enzyme_parameters['handled_reactions']])
-            assert(len(all_locations) == 1)
 
-            # Set enzyme address
-            location = all_locations.pop()
-            xml_address = etree.Element('address')
-            xml_address.set('cid', location.cid)
-            xml_address.set('rsn', location.rsn)
-            xml_enzyme.append(xml_address)
+            for location in all_locations:
 
-            # Set reaction parameters 
-            for rid in enzyme_parameters['handled_reactions']:
-                reaction_parameters = parameters['reaction_parameters'][rid]
-                xml_reaction = etree.Element('reaction')
+                xml_enzyme_parameters = etree.Element("enzyme")
+                xml_enzyme_parameters.set('id', enzyme_parameters['id'])
+                xml_enzyme_parameters.set('amount', str(enzyme_parameters['amount']))
 
-                parameter_keys = ['rid', 'konSTP', 'konPTS',
-                                  'koffSTP', 'koffPTS', 'reversible']
-                for key in parameter_keys:
-                    parameter = etree.Element(key)
-                    parameter.text = str(reaction_parameters[key])
-                    xml_reaction.append(parameter)
+                # Set enzyme address
+                xml_address = etree.Element('address')
+                xml_address.set('cid', location.cid)
+                xml_address.set('rsn', location.rsn)
+                xml_enzyme_parameters.append(xml_address)
 
-                xml_stoichiometry = etree.Element('stoichiometry')
+                # Set enzyme handled reactions
+                xml_handled_reactions = etree.Element('reactions')
+                handled_reactions = [rid for rid in enzyme_parameters['handled_reactions'] if rid in list(parameters['reaction_parameters'].keys())]                                
 
-                if cid in list(reaction_parameters['product_by_compartment'].keys()):
-                    product = reaction_parameters['product_by_compartment'][cid]
-                    xml_product = self.generate_table(product,
-                                                      'product',
-                                                      'specie',
-                                                      ['id'],
-                                                      'amount')
-                    xml_stoichiometry.append(xml_product)
+                # Set reactions' parameters 
+                for rid in handled_reactions:
+                    reaction_parameters = parameters['reaction_parameters'][rid]
+                    xml_reaction = etree.Element('reaction')
+                    xml_reaction.set('id', reaction_parameters['rid'])
 
-                if cid in list(reaction_parameters['reactant_by_compartment'].keys()):
-                    substrate = reaction_parameters['reactant_by_compartment'][cid]
-                    xml_substrate = self.generate_table(substrate,
-                                                        'substrate',
-                                                        'specie',
-                                                        ['id'],
-                                                        'amount')
-                    xml_stoichiometry.append(xml_substrate)
-                xml_reaction.append(xml_stoichiometry)
+                    xml_handled_reactions.append(xml_reaction)
+            
+                xml_enzyme_parameters.append(xml_handled_reactions)
+                xml_enzymes_parameters.append(xml_enzyme_parameters)
 
-                xml_handled_reactions.append(xml_reaction)
-            xml_enzyme.append(xml_handled_reactions)
+            xml_space.append(xml_enzymes_parameters)
 
-            xml_enzymes.append(xml_enzyme)
-        xml_space.append(xml_enzymes)
         self.spaces.append(xml_space)
 
     def print_parameters(self):

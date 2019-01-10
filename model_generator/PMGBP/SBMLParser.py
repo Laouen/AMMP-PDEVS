@@ -204,7 +204,6 @@ class SBMLParser:
                 for rid, parameters in self.reactions.items()
                 if not_empty_intersection(compartment_species, parameters['species'])}
 
-    # Deprecated
     def get_enzymes(self, reactions):
         """
         :param reactions: A set of rid (reaction IDs).
@@ -337,20 +336,6 @@ class SBMLParser:
                 }
             else:
                 self.enzymes[eid]['handled_reactions'].append(rid)
-
-    def get_reaction_set_rids(self, cid, rsn):
-        """
-        :param cid: The compartment ID where the reaction set belongs
-        :type cid: str
-        :type rsn: str
-        :param rsn: The reaction set name of the reactions to be retrieved
-        :return: A list with all the rids (Reaction IDs) from the specified reaction set within the
-        compartment with id cid
-        :rtype: list[str]
-        """
-
-        location = Location(cid, rsn)
-        return [rid for rid, p in self.reactions.items() if p['location'] == location]
 
     def parse_reactions(self):
         """
