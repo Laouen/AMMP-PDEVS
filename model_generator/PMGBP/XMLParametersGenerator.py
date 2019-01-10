@@ -117,7 +117,7 @@ class XMLParametersGenerator:
         xml_routing_table = self.generate_table(routing_table,
                                                 'routingTable',
                                                 'entry',
-                                                ['cid', 'rsn'],
+                                                ['cid', 'esn'],
                                                 'port')
         xml_space.append(xml_routing_table)
 
@@ -138,7 +138,7 @@ class XMLParametersGenerator:
                 # Set enzyme address
                 xml_address = etree.Element('address')
                 xml_address.set('cid', location.cid)
-                xml_address.set('rsn', location.rsn)
+                xml_address.set('esn', location.esn)
                 xml_enzyme_parameters.append(xml_address)
 
                 # Set enzyme handled reactions

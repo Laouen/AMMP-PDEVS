@@ -16,7 +16,7 @@ def chunks(data, SIZE=150):
 
 class ModelStructure:
 
-    def __init__(self, cid, parser, membranes=None, external_reaction_sets=None):
+    def __init__(self, cid, parser, membranes=None, external_enzyme_sets=None):
         """
         Defines the basic structure of a compartment. A compartment has at least one internal
         reaction set called the bulk (i.e. the compartment internal reactions).
@@ -24,16 +24,16 @@ class ModelStructure:
         :param cid: The compartment id.
         :param membranes: A list of all the compartment internal reaction sets less the bulk.
         :param parser: A SBMLParser with the sbml file loaded.
-        :param external_reaction_sets:  A dictionary of all the related external reaction sets
+        :param external_enzyme_sets:  A dictionary of all the related external reaction sets
         grouped by their compartments. Optional.
-        :type external_reaction_sets: dict[str, list[str]]
+        :type external_enzyme_sets: dict[str, list[str]]
         """
 
         if membranes is None:
             membranes = []
 
-        if external_reaction_sets is None:
-            external_reaction_sets = {}
+        if external_enzyme_sets is None:
+            external_enzyme_sets = {}
 
         self.id = cid
         self.space = {}
@@ -42,8 +42,8 @@ class ModelStructure:
 
         # Compartment input-membrane mapping
         port_numbers = range(len(membranes))
-        self.membrane_eic = {rsn: port
-                             for rsn, port
+        self.membrane_eic = {esn: port
+                             for esn, port
                              in zip(membranes, port_numbers)}
 
         # Building routing table, each reaction can be reached using the port
@@ -56,13 +56,13 @@ class ModelStructure:
         # Initial ports are for IC (internal reaction sets)
         internal_enzyme_sets = [BULK] + membranes
         port_numbers = range(len(internal_enzyme_sets))
-        self.routing_table = {(self.id, rsn): port
-                              for rsn, port
+        self.routing_table = {(self.id, esn): port
+                              for esn, port
                               in zip(internal_enzyme_sets, port_numbers)}
 
         # Final ports are for EOC (external reaction sets from other compartments)
         port_number = len(self.routing_table)
-        for external_cid, reaction_sets in external_reaction_sets.items():
+        for external_cid, reaction_sets in external_enzyme_sets.items():
             for reaction_set in reaction_sets:
                 self.routing_table[(external_cid, reaction_set)] = port_number
                 port_number += 1
@@ -125,12 +125,12 @@ class ModelGenerator:
 
         special_compartment_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
 
-        c_external_reaction_sets = {cid: [MEMBRANE]
+        c_external_enzyme_sets = {cid: [MEMBRANE]
                                     for cid in self.parser.get_compartments()
                                     if cid not in special_compartment_ids}
-        c_external_reaction_sets[periplasm_id] = [INNER, TRANS]
+        c_external_enzyme_sets[periplasm_id] = [INNER, TRANS]
 
-        e_external_reaction_sets = {periplasm_id: [OUTER, TRANS]}
+        e_external_enzyme_sets = {periplasm_id: [OUTER, TRANS]}
 
         # Compartment model structures
         self.periplasm = ModelStructure(periplasm_id,
@@ -139,11 +139,11 @@ class ModelGenerator:
 
         self.extra_cellular = ModelStructure(extra_cellular_id,
                                              self.parser,
-                                             external_reaction_sets=e_external_reaction_sets)
+                                             external_enzyme_sets=e_external_enzyme_sets)
 
         self.cytoplasm = ModelStructure(cytoplasm_id,
                                         self.parser,
-                                        external_reaction_sets=c_external_reaction_sets)
+                                        external_enzyme_sets=c_external_enzyme_sets)
 
         self.organelles = {comp_id: ModelStructure(comp_id, self.parser, [MEMBRANE])
                            for comp_id in self.parser.get_compartments()

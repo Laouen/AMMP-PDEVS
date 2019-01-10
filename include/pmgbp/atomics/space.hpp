@@ -228,7 +228,7 @@ public:
 
             // Load the enzyme address
             tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
-            EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("rsn"));
+            EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("esn"));
 
             string enzyme_id = enzyme_entry->Attribute("id");
             Integer enzyme_amount = Integer(std::stoi(enzyme_entry->Attribute("amount")));
@@ -247,7 +247,7 @@ public:
         routing_table = root->FirstChildElement("routingTable");
         entry = routing_table->FirstChildElement();
         while (entry != nullptr) {
-            EnzymeAddress enzyme_address(entry->Attribute("cid"), entry->Attribute("rsn"));
+            EnzymeAddress enzyme_address(entry->Attribute("cid"), entry->Attribute("esn"));
             port_number = std::stoi(entry->Attribute("port"));
             this->state.routing_table.insert(enzyme_address, port_number);
 

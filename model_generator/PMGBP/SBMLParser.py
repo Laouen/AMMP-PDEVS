@@ -45,18 +45,18 @@ class IllegalCompartmentCombination(Exception):
 class Location:
     """
     Represent a specie location composed by the compartment id (cid attribute) and the
-    reaction set name (rsn attribute) where the specie belongs
+    reaction set name (esn attribute) where the specie belongs
     """
-    def __init__(self, cid, rsn):
+    def __init__(self, cid, esn):
         """
 
         :param cid: The compartment id
         :type cid: str
-        :param rsn: Te reaction set name
-        :type rsn: str
+        :param esn: Te reaction set name
+        :type esn: str
         """
         self.cid = cid
-        self.rsn = rsn
+        self.esn = esn
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -68,13 +68,13 @@ class Location:
         return hash(str(self))
 
     def __str__(self):
-        return self.cid + ':' + self.rsn
+        return self.cid + ':' + self.esn
 
     def __unicode__(self):
-        return self.cid + ':' + self.rsn        
+        return self.cid + ':' + self.esn        
 
     def as_tuple(self):
-        return tuple([self.cid, self.rsn])
+        return tuple([self.cid, self.esn])
 
 
 class SBMLParser:
