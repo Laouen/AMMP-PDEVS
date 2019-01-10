@@ -114,7 +114,7 @@ int main(int argc, char ** argv) {
         std::string xml_parameters_path = std::string(argv[1]);
 
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
-        //memore_sink_provider::sink().new_collection(argv[2]);
+        memore_sink_provider::sink().new_collection(argv[2]);
 
         
         // Initialize model
