@@ -143,7 +143,7 @@ class SBMLParser:
 
         for key in list(self.reactions.keys()):
             cid = self.reactions[key]['location']['cid']
-            rsn = self.reactions[key]['location']['rsn']
+            rsn = self.reactions[key]['location']['esn']
             self.reactions[key]['location'] = Location(cid, rsn)
 
     def load_sbml_file(self, sbml_file):
@@ -217,13 +217,13 @@ class SBMLParser:
                 for eid, enzyme_parameters in self.enzymes.items()
                 if not_empty_intersection(enzyme_parameters['handled_reactions'], reactions)}
 
-    def get_enzyme_set(self, cid, rsn):
-        location = Location(cid, rsn)
+    def get_enzyme_set(self, cid, esn):
+        location = Location(cid, esn)
         
         return {eid: parameters 
                 for eid, parameters 
                 in self.enzymes.items() 
-                if all([self.reactions[rid]['location'] == location 
+                if any([self.reactions[rid]['location'] == location 
                         for rid 
                         in parameters['handled_reactions']
                         ])

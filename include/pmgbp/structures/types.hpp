@@ -100,9 +100,10 @@ struct Reactant {
 struct Information {
     string enzyme_id;
     Integer released_enzymes;
+    pmgbp::structs::space::EnzymeAddress location;
 
     bool operator==(const Information& other) const {
-        return enzyme_id == other.enzyme_id && released_enzymes == other.released_enzymes;
+        return enzyme_id == other.enzyme_id && released_enzymes == other.released_enzymes && location == other.location;
     }
 };
 

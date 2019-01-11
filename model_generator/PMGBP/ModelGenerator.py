@@ -71,7 +71,7 @@ class ModelStructure:
         self.enzyme_sets = {}
         for enzyme_set in internal_enzyme_sets:
             self.enzyme_sets[enzyme_set] = parser.get_enzyme_set(cid, enzyme_set)
-
+ 
         # Building space
         reaction_parameters = parser.get_reaction_parameters(cid)
         metabolites = {specie: parser.metabolite_amounts[specie]
@@ -148,7 +148,7 @@ class ModelGenerator:
         self.organelles = {comp_id: ModelStructure(comp_id, self.parser, [MEMBRANE])
                            for comp_id in self.parser.get_compartments()
                            if comp_id not in special_compartment_ids}
-    
+
     def generate_enzyme_sets(self, compartment):
         cid = compartment.id
         return {(cid, esn): self.generate_enzyme_set(cid, esn, enzyme_set)
@@ -179,13 +179,6 @@ class ModelGenerator:
             self.parameter_writer.add_router(group_id, group_routing_table)
 
         self.parameter_writer.add_router(enzyme_set_id, routing_table)
-
-        # Enzymes xml parameters 
-        for eid, parameters in enzyme_set.items():
-            for rid in parameters['handled_reactions']:
-                self.parameter_writer.add_reaction(rid, self.parser.reactions[rid])
-
-            self.parameter_writer.add_enzyme(eid, parameters)
 
         return self.coder.write_enzyme_set(cid, esn, groups_enzyme_ids)
 
@@ -257,7 +250,7 @@ class ModelGenerator:
     def generate_bulk_compartment(self, compartment):
         cid = compartment.id
         enzyme_sets = self.generate_enzyme_sets(compartment)
-        assert len(enzyme_sets) == 1  # cytoplasm has no membranes
+        assert len(enzyme_sets) == 1  # bulk compartments have no membranes
 
         bulk = enzyme_sets[(cid, BULK)][0]
 
@@ -307,6 +300,15 @@ class ModelGenerator:
                                               ic)
 
     def generate_top(self, top='cell'):
+
+        # add all the reaction parameters
+        for rid, parameters in self.parser.reactions.items():
+            self.parameter_writer.add_reaction(rid, parameters)
+
+        # add all the enzyme parameters
+        for eid, parameters in self.parser.enzymes.items():
+            self.parameter_writer.add_enzyme(eid, parameters)
+
 
         cytoplasm_model = self.generate_bulk_compartment(self.cytoplasm)[0]
         extra_cellular_model = self.generate_bulk_compartment(self.extra_cellular)[0]

@@ -9,6 +9,7 @@
 #include <cadmium/modeling/dynamic_model.hpp>
 
 #include <pmgbp/structures/types.hpp>
+#include <pmgbp/structures/space.hpp>
 #include <pmgbp/atomics/router.hpp>
 #include <pmgbp/atomics/enzyme.hpp>
 
@@ -172,6 +173,7 @@ cadmium::dynamic::modeling::IC make_router_enzyme_ic(int index, std::string& rou
 
 std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_enzyme_group(
 	std::string group_id,
+    pmgbp::structs::space::EnzymeAddress location,
     std::vector<std::string> enzyme_ids,
     std::string parameters_xml)
 {
@@ -202,10 +204,11 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_enzyme_group(
         
         enzyme_id = enzyme_ids[enzyme_index]; 
         models.push_back(
-            cadmium::dynamic::translate::make_dynamic_atomic_model<pmgbp::models::enzyme, NDTime, const char*, const char*>(
+            cadmium::dynamic::translate::make_dynamic_atomic_model<pmgbp::models::enzyme, NDTime, const char*, const char*, pmgbp::structs::space::EnzymeAddress>(
                 enzyme_id,
                 parameters_xml.c_str(),
-                enzyme_id.c_str()
+                enzyme_id.c_str(),
+                pmgbp::structs::space::EnzymeAddress(location)
             )
         );
 

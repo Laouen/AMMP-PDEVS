@@ -49,6 +49,7 @@
 #include <pmgbp/lib/TupleOperators.hpp>
 
 #include <pmgbp/structures/types.hpp> // MetaboliteAmounts, RTask_t, Way, RTaskQueue_t
+#include <pmgbp/structures/space.hpp> // EnzymeAddress
 #include <pmgbp/structures/reaction.hpp>
 
 #include <tinyxml2.h>
@@ -143,6 +144,7 @@ public:
      */
     struct props_type {
         std::string id;
+        pmgbp::structs::space::EnzymeAddress location;
         TIME reject_rate; // Temporal hotFix to fast test with the same reject_rate for all the reactions
         TIME rate; // Temporal hotFix to fast test with the same rate for all the reactions
         std::map<rid, reaction_props_type> reactions;
@@ -207,11 +209,14 @@ public:
      * @param xml_file path where the xml file containing all the parameters is located.
      * @param id model id.
      */
-    explicit enzyme(const char* xml_file, const char* id) {
+    explicit enzyme(const char* xml_file, const char* id, pmgbp::structs::space::EnzymeAddress location) {
         // Set enzyme id
         this->props.id = id;
+        this->props.location = location;
         this->state.id = id;
         this->logger.setModuleName("Enzyme_" + this->props.id);
+
+        std::cout << "Enzyme: " << location.str() << std::endl;
 
         // Initialize random generators
         this->initialize_random_engines();
@@ -509,9 +514,10 @@ private:
                 const reaction_props_type& reaction_props = this->props.reactions.at(jt.first);
 
                 // Send the released enzymes
-                Information enzymeMessage;
-                enzymeMessage.enzyme_id = this->state.id;
-                enzymeMessage.released_enzymes = jt.second;
+                Information informationMessage;
+                informationMessage.enzyme_id = this->state.id;
+                informationMessage.released_enzymes = jt.second;
+                informationMessage.location = this->props.location;
 
                 if (it.first.second == Way::STP) {
                     assert(reaction_props.substrate_sctry.find(it.first.first) != reaction_props.substrate_sctry.end());
@@ -525,7 +531,7 @@ private:
                     }
 
                     // Send the released enzymes
-                    this->push_information_to_correct_port(reaction_props.substrate_sctry.at(it.first.first).cbegin()->first, bags, enzymeMessage);
+                    this->push_information_to_correct_port(reaction_props.substrate_sctry.at(it.first.first).cbegin()->first, bags, informationMessage);
 
                 } else {
                     assert(reaction_props.products_sctry.find(it.first.first) != reaction_props.products_sctry.end());
@@ -539,7 +545,7 @@ private:
                     }
 
                     // Send the released enzymes
-                    this->push_information_to_correct_port(reaction_props.products_sctry.at(it.first.first).cbegin()->first, bags, enzymeMessage);
+                    this->push_information_to_correct_port(reaction_props.products_sctry.at(it.first.first).cbegin()->first, bags, informationMessage);
                 }
 
             }
@@ -573,14 +579,15 @@ private:
                 }
 
                 // Send the released enzymes
-                Information enzymeMessage;
-                enzymeMessage.enzyme_id = this->state.id;
-                enzymeMessage.released_enzymes = stp_ready;
+                Information informationMessage;
+                informationMessage.enzyme_id = this->state.id;
+                informationMessage.released_enzymes = stp_ready;
+                informationMessage.location = this->props.location;
 
                 // Each compartment of the reactant stoichiometry will have relesed enzymes.
                 // The reactant stoichiometry is used to route the released enzymes.
                 for (const auto &compartment_sctry : reaction_props.substrate_sctry) {
-                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, enzymeMessage);
+                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, informationMessage);
                 }
             }
 
@@ -599,14 +606,15 @@ private:
                 }
 
                 // Send the released enzymes
-                Information enzymeMessage;
-                enzymeMessage.enzyme_id = this->state.id;
-                enzymeMessage.released_enzymes = pts_ready;
+                Information informationMessage;
+                informationMessage.enzyme_id = this->state.id;
+                informationMessage.released_enzymes = pts_ready;
+                informationMessage.location = this->props.location;
 
                 // Each compartment of the reactant stoichiometry will have relesed enzymes.
                 // The reactant stoichiometry is used to route the released enzymes.
                 for (const auto &compartment_sctry : reaction_props.products_sctry) {
-                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, enzymeMessage);
+                    this->push_information_to_correct_port(compartment_sctry.second.cbegin()->first, bags, informationMessage);
                 }
             }
         }

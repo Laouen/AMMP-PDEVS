@@ -235,7 +235,7 @@ public:
 
             Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
 
-            this->state.enzymes.insert({enzyme_id, enzyme});
+            this->state.enzymes.insert({enzyme_id + ":" + enzyme.location.str(), enzyme});
             enzyme_entry = enzyme_entry->NextSiblingElement();
         }
 
@@ -301,7 +301,7 @@ public:
 
         // Receive released enzymes
         for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
-            this->state.enzymes.at(x.enzyme_id).amount += x.released_enzymes;
+            this->state.enzymes.at(x.enzyme_id + ":" + x.location.str()).amount += x.released_enzymes;
         }
 
         this->setNextSelection();
@@ -415,15 +415,16 @@ private:
         double rv, total, partial;
         map<string, double> sons, pons;
         ReactionInfo re;
-        vector<string> enzyme_IDs;
+        vector<string> unfolded_enzymes;
 
         // Enzyme are individually considered
-        this->unfoldEnzymes(enzyme_IDs);
+        this->unfoldEnzymes(unfolded_enzymes);
 
         // Enzymes are randomly iterated
-        this->shuffleEnzymes(enzyme_IDs);
+        this->shuffleEnzymes(unfolded_enzymes);
 
-        for (auto &eid : enzyme_IDs) {
+        for (auto &eid : unfolded_enzymes) {
+
             partial;
             sons.clear();
             pons.clear();
@@ -432,7 +433,6 @@ private:
             Enzyme enzyme = this->state.enzymes.at(eid);
 
             this->collectOns(enzyme.handled_reactions, sons, pons);
-
 
             // sons + pons can't be greater than 1. If that happen, they are normalized
             // if sons + pons is smaller than 1, there is a chance that the enzyme does'nt react
@@ -463,7 +463,7 @@ private:
                     re = enzyme.handled_reactions.at(son.first);
                     reactant.clear();
                     reactant.rid = re.id;
-                    reactant.enzyme_id = eid;
+                    reactant.enzyme_id = enzyme.id;
                     reactant.from = this->state.id;
                     reactant.reaction_direction = Way::STP;
                     reactant.reaction_amount = 1;
@@ -503,7 +503,7 @@ private:
                     re = enzyme.handled_reactions.at(pon.first);
                     reactant.clear();
                     reactant.rid = re.id;
-                    reactant.enzyme_id = eid;
+                    reactant.enzyme_id = enzyme.id;
                     reactant.from = this->state.id;
                     reactant.reaction_direction = Way::PTS;
                     reactant.reaction_amount = 1;
@@ -531,7 +531,7 @@ private:
 
     void unfoldEnzymes(vector<string> &ce) const {
         for (const auto &enzyme : this->state.enzymes) {
-            ce.insert(ce.end(), enzyme.second.amount, enzyme.second.id);
+            ce.insert(ce.end(), enzyme.second.amount, enzyme.first);
         }
     }
 

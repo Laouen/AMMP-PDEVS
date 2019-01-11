@@ -17,7 +17,6 @@ namespace pmgbp {
 namespace structs {
 namespace space {
 
-
 enum class Status {
     SELECTING_FOR_REACTION = 2,
     SENDING_BIOMASS = 3,
@@ -50,6 +49,10 @@ struct EnzymeAddress {
     inline bool operator<(const EnzymeAddress& o) const {
         return (this->compartment < o.compartment) ||
                 ((this->compartment == o.compartment) && (this->reaction_set < o.reaction_set));
+    }
+
+    std::string str() const {
+        return this->compartment + "_" + this->reaction_set;
     }
 
     bool empty() const {

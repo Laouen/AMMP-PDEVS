@@ -49,6 +49,7 @@ using hclock=chrono::high_resolution_clock;
 
 /************** MeMoRe sink ******************/
 
+/*
 // NOTE: it is necessary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
 mongocxx::instance instance{};
 
@@ -62,11 +63,12 @@ namespace {
         }
     };
 }
+*/
 
 
 /************** cout sink ******************/
 
-/* For debug purposes use this sink, to print in screen and to compile without problems with Cmake
+/* For debug purposes use this sink, to print in screen and to compile without problems with Cmake */
 namespace {
     struct memore_sink_provider {
         static std::ostream& sink() {
@@ -74,7 +76,6 @@ namespace {
         }
     };
 }
-*/
 
 using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, memore_sink_provider>;
 using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, memore_sink_provider>;
@@ -114,7 +115,7 @@ int main(int argc, char ** argv) {
         std::string xml_parameters_path = std::string(argv[1]);
 
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
-        memore_sink_provider::sink().new_collection(argv[2]);
+        //memore_sink_provider::sink().new_collection(argv[2]);
 
         
         // Initialize model

@@ -11,6 +11,7 @@
 
 #include <pmgbp/model_generator/enzyme_group.hpp>
 #include <pmgbp/structures/types.hpp>
+#include <pmgbp/structures/space.hpp>
 #include <pmgbp/atomics/router.hpp>
 #include <pmgbp/atomics/enzyme.hpp>
 
@@ -26,6 +27,8 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_enzyme_set(
     std::string enzyme_set_id = cid + '_' + esn;
     std::string router_id = "router_" + enzyme_set_id;
     std::string group_id;
+
+    pmgbp::structs::space::EnzymeAddress enzymes_location(cid, esn);
 
     cadmium::dynamic::modeling::Models models;
 
@@ -47,7 +50,7 @@ std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> make_enzyme_set(
     for (int group_number = 0; group_number < groups_enzyme_ids.size(); group_number++) {
         
         group_id = cid + '_' + esn + '_' + std::to_string(group_number);
-        models.push_back(make_enzyme_group(group_id, groups_enzyme_ids[group_number], parameters_xml));
+        models.push_back(make_enzyme_group(group_id, enzymes_location, groups_enzyme_ids[group_number], parameters_xml));
 
         ics.push_back(make_router_enzyme_ic(group_number, router_id, group_id));
 

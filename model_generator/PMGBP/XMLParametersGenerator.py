@@ -35,9 +35,9 @@ class XMLParametersGenerator:
         xml_router.append(xml_routing_table)
         self.routers.append(xml_router)
 
-    def add_reaction(self, model_id, parameters):
+    def add_reaction(self, rid, parameters):
 
-        xml_reaction = etree.Element(model_id)
+        xml_reaction = etree.Element(rid)
 
         parameter_keys = ['rate', 'rejectRate', 'koffSTP', 'koffPTS', 'konSTP', 'konPTS', 'reversible']
         for key in parameter_keys:
@@ -127,10 +127,12 @@ class XMLParametersGenerator:
         for eid, enzyme_parameters in parameters['enzymes'].items():
             
             # separate related enzymes by location
-            all_locations = set([parameters['reaction_parameters'][rid]['location'] for rid in enzyme_parameters['handled_reactions']])
-
+            space_related_reactions = list(parameters['reaction_parameters'].keys())
+            all_locations = set([parameters['reaction_parameters'][rid]['location'] 
+                                 for rid in enzyme_parameters['handled_reactions'] 
+                                 if rid in space_related_reactions])
+    
             for location in all_locations:
-
                 xml_enzyme_parameters = etree.Element("enzyme")
                 xml_enzyme_parameters.set('id', enzyme_parameters['id'])
                 xml_enzyme_parameters.set('amount', str(enzyme_parameters['amount']))
@@ -141,9 +143,11 @@ class XMLParametersGenerator:
                 xml_address.set('esn', location.esn)
                 xml_enzyme_parameters.append(xml_address)
 
-                # Set enzyme handled reactions
+                # Set enzyme handled reactions in the location
                 xml_handled_reactions = etree.Element('reactions')
-                handled_reactions = [rid for rid in enzyme_parameters['handled_reactions'] if rid in list(parameters['reaction_parameters'].keys())]                                
+                handled_reactions = [rid for rid in enzyme_parameters['handled_reactions']
+                                     if rid in space_related_reactions
+                                     and parameters['reaction_parameters'][rid]['location'] == location]
 
                 # Set reactions' parameters 
                 for rid in handled_reactions:
