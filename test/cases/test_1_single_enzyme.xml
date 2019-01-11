@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="Test">
+    <listOfUnitDefinitions>
+      <unitDefinition id="mmol_per_gDW_per_hr">
+        <listOfUnits>
+          <unit kind="mole" scale="-3"/>
+          <unit kind="gram" exponent="-1"/>
+          <unit kind="second" exponent="-1" multiplier="0.000277777777777778"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="c" name="Cytoplasm"/>
+      <compartment id="e" name="Extracellular"/>
+      <compartment id="p" name="Periplasm"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="A_e" name="A_extracellular" compartment="e"></species>
+      <species id="B_e" name="B_extracellular" compartment="e"></species>
+      <species id="A_p" name="A_periplasm" compartment="p"></species>
+      <species id="B_p" name="B_periplasm" compartment="p"></species>
+      <species id="A_c" name="A_cytoplasm" compartment="c"></species>
+      <species id="B_c" name="B_cytoplasm" compartment="c"></species>
+    </listOfSpecies>
+    <listOfReactions>
+
+      <reaction id="A_from_extracellular_space_to_periplasm" name="transport A from extra cellular space to Periplasm" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="A_e"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_p"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="A_from_periplasm_space_to_cytoplasm" name="transport A from Periplasm to Cytoplasm" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="A_p"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="A_to_2A_in_cytoplasm" name="reaction from A to B in the extracellular space" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="A_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="B_to_B_in_extracellular_space" name="reaction from B to B in the extracellular space" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="B_e"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="B_e"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="B_to_B_in_periplasm" name="reaction from B to B in the periplasm space" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="B_p"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="B_p"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="B_to_B_in_trans_membrane" name="reaction from B to B in the trans membrane" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="B_e"/>
+          <speciesReference species="B_p"/>
+          <speciesReference species="B_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="B_e"/>
+          <speciesReference species="B_p"/>
+          <speciesReference species="B_c"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="R_Ec_biomass_iJO1366_WT_53p95M" name="biomass" reversible="false">
+        <notes>
+          <body xmlns="http://www.w3.org/1999/xhtml">
+            <p>GENE_ASSOCIATION: b0000</p>
+            <p>SUBSYSTEM: </p>
+            <p>EC Number: </p>
+          </body>
+        </notes>
+        <listOfReactants>
+          <speciesReference species="A_c" stoichiometry="1000"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c"/>
+        </listOfProducts>
+      </reaction>
+
+    </listOfReactions>
+  </model>
+</sbml>

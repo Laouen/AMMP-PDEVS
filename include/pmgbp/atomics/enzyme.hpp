@@ -216,8 +216,6 @@ public:
         this->state.id = id;
         this->logger.setModuleName("Enzyme_" + this->props.id);
 
-        std::cout << "Enzyme: " << location.str() << std::endl;
-
         // Initialize random generators
         this->initialize_random_engines();
 

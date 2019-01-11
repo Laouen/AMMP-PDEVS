@@ -156,14 +156,22 @@ class ModelCodeGenerator:
                                                   ports_model_2=ports_model_2,
                                                   port_number_2=str(port_number_2)))
 
+        ports_str = '' if len(ports_cpp) == 0 else '\n\t' + '\n\t'.join(ports_cpp) + '\n'
+        oports_str = '' if len(oiports_cpp['out']) == 0 else '\n\t' + ',\n\t'.join(oiports_cpp['out']) + '\n'
+        iports_str = '' if len(oiports_cpp['in']) == 0 else '\n\t' + ',\n\t'.join(oiports_cpp['in']) + '\n'
+        sub_models_str = '' if len(sub_models) == 0 else '\n\t' + ',\n\t'.join(sub_models) + '\n'
+        eic_str = '' if len(eic_cpp) == 0 else '\n\t' + ',\n\t'.join(eic_cpp) + '\n'
+        eoc_str = '' if len(eoc_cpp) == 0 else '\n\t' + ',\n\t'.join(eoc_cpp) + '\n'
+        ic_str = '' if len(ic_cpp) == 0 else '\n\t' + ',\n\t'.join(ic_cpp) + '\n'
+
         self.write(self.coupled_template.format(model_name=model_name,
-                                                ports='\n\t'.join(ports_cpp),
-                                                oports=', '.join(oiports_cpp['out']),
-                                                iports=', '.join(oiports_cpp['in']),
-                                                sub_models=', '.join(sub_models),
-                                                eic=', '.join(eic_cpp),
-                                                eoc=', '.join(eoc_cpp),
-                                                ic=', '.join(ic_cpp)))
+                                                ports=ports_str,
+                                                oports=oports_str,
+                                                iports=iports_str,
+                                                sub_models=sub_models_str,
+                                                eic=eic_str,
+                                                eoc=eoc_str,
+                                                ic=ic_str))
 
         input_port_numbers = [int(str(port_number).split('_')[0]) for (port_number, _, out_in) in ports if out_in == 'in']
         # If there is no input ports -> max = -1 -> output_ports_amount = -1 +1 = 0
