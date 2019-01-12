@@ -8,6 +8,8 @@
 #include <tuple>
 #include <cadmium/modeling/message_bag.hpp>
 #include <cassert>
+#include <iostream>
+#include <boost/core/demangle.hpp>
 
 namespace pmgbp {
 namespace tuple {
@@ -27,6 +29,53 @@ public:
         return message_.c_str();
     }
 };
+
+
+/*****************************************/
+/*************** PRINT *******************/
+/*****************************************/
+
+template<int index, typename... Ts>
+struct print_tuple {
+    std::ostream& operator()(std::ostream& os, const std::tuple<Ts...> &t) {
+
+        using port_type = typename std::tuple_element<index, std::tuple<Ts...>>::type::port;
+        std::string port_name = boost::core::demangle(std::type_index(typeid(port_type)).name());
+        port_name = port_name.substr(port_name.find_last_of(':') + 1);
+
+        os << "port_name: " << port_name << " messages:[";
+        for (const auto& m : std::get<index>(t).messages) {
+            os << " " << m;
+        }
+        os << "] ";
+
+        return print_tuple<index - 1, Ts...>{}(os, t);
+    }
+};
+
+template<typename... Ts>
+struct print_tuple<0, Ts...> {
+    std::ostream& operator()(std::ostream& os, const std::tuple<Ts...> &t) {
+
+        using port_type = typename std::tuple_element<0, std::tuple<Ts...>>::type::port;
+        std::string port_name = boost::core::demangle(std::type_index(typeid(port_type)).name());
+        port_name = port_name.substr(port_name.find_last_of(':') + 1);
+
+        os << "port_name: " << port_name << " messages:[";
+        for (const auto& m : std::get<0>(t).messages) {
+            os << " " << m;
+        }
+        os << "] ";
+
+        return os;
+    }
+};
+
+template<typename... Ts>
+std::ostream& print(std::ostream& os, const std::tuple<Ts...> &t) {
+    const auto size = std::tuple_size<std::tuple<Ts...>>::value;
+    return print_tuple<size - 1, Ts...>{}(os, t);
+}
 
 /*****************************************/
 /**************** GET ********************/
