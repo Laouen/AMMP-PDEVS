@@ -214,7 +214,11 @@ public:
         this->props.id = id;
         this->props.location = location;
         this->state.id = id;
-        this->logger.setModuleName("Enzyme_" + this->props.id);
+
+        // Set the module name as the enzyme and location
+        std::ostringstream oss;
+        oss << "Enzyme_" << this->props.id << ":" << this->props.location;
+        this->logger.setModuleName(oss.str());
 
         // Initialize random generators
         this->initialize_random_engines();
@@ -250,6 +254,11 @@ public:
 
     void external_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin external_transition");
+
+        std::ostringstream oss;
+        oss << "External: ";
+        pmgbp::tuple::print(oss, mbs);
+        this->logger.debug(oss.str());
 
         this->state.tasks.update(e);
 
@@ -287,6 +296,11 @@ public:
         for (const auto &current_bags: outputs) {
             pmgbp::tuple::merge(bags, current_bags);
         }
+
+        std::ostringstream oss;
+        oss << "Output: ";
+        pmgbp::tuple::print(oss, bags);
+        this->logger.debug(oss.str());
 
         this->logger.info("End confluence_transition");
         return bags;

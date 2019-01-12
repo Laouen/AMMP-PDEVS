@@ -81,8 +81,8 @@ ostream& operator<<(ostream& os, const ReactionInfo& r) {
 
 ostream& operator<<(ostream& os, const Product& p) {
     os << "{";
-    os << "\"message_type\":\"product\",";
-    os << "\"metabolites\":[";
+    os << "\"Message_type\":\"product\",";
+    os << "\"Metabolites\":[";
 
     bool separate = false;
     for (const auto& metabolite : p.metabolites) {
@@ -91,8 +91,8 @@ ostream& operator<<(ostream& os, const Product& p) {
         }
 
         os << "{";
-        os << "\"id\":\"" << metabolite.first << "\",";
-        os << "\"amount\":" << metabolite.second;
+        os << "\"Id\":\"" << metabolite.first << "\",";
+        os << "\"Amount\":" << metabolite.second;
         os << "}";
     }
 
@@ -103,11 +103,21 @@ ostream& operator<<(ostream& os, const Product& p) {
 
 ostream& operator<<(ostream& os, const Reactant& r) {
     os << "{";
-    os << "\"message_type\":\"reactant\",";
-    os << "\"for_reaction\":\"" << r.rid << "\",";
-    os << "\"from\":\"" << r.from << "\",";
+    os << "\"Message_type\":\"reactant\",";
+    os << "\"Reaction_amount\":" << r.reaction_amount;
+    os << "\"From\":\"" << r.from << "\",";
+    os << "\"For_reaction\":\"" << r.rid << "\",";
     os << "\"Way\":\"" << r.reaction_direction << "\",";
-    os << "\"reaction_amount\":" << r.reaction_amount;
+    os << "}";
+    return os;
+}
+
+ostream& operator<<(ostream& os, const Information& i) {
+    os << "{";
+    os << "\"Message_type\":\"information\",";
+    os << "\"Enzyme ID\":\"" << i.enzyme_id << "\",";
+    os << "\"Released amount\":\"" << i.released_enzymes << "\",";
+    os << "\"Location\":\"" << i.location << "\",";
     os << "}";
     return os;
 }

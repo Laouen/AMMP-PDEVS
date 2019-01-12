@@ -225,6 +225,7 @@ std::ostream& operator<<(std::ostream& os, const pmgbp::types::Way& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::ReactionInfo& r);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Product& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Reactant& s);
+std::ostream& operator<<(std::ostream& os, const pmgbp::types::Information& s);
 std::ostream& operator<<(std::ostream& os, const pmgbp::types::Enzyme& e);
 
 #endif // PMGBP_TYPES_HPP

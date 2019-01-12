@@ -290,6 +290,11 @@ public:
     void external_transition(TIME e, input_bags mbs) {
         this->logger.info("Begin external_transition");
 
+        std::ostringstream oss;
+        oss << "External: ";
+        pmgbp::tuple::print(oss, mbs);
+        this->logger.debug(oss.str());
+
         bool show_metabolites = false;
 
         this->state.tasks.update(e);
@@ -301,7 +306,9 @@ public:
 
         // Receive released enzymes
         for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
-            this->state.enzymes.at(x.enzyme_id + ":" + x.location.str()).amount += x.released_enzymes;
+            string eid = x.enzyme_id + ":" + x.location.str();
+            this->state.enzymes.at(eid).amount += x.released_enzymes;
+            this->logger.debug("released enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
         }
 
         this->setNextSelection();
@@ -326,6 +333,11 @@ public:
             if (task.kind == Status::SELECTING_FOR_REACTION) continue;
             pmgbp::tuple::merge(bags, task.message_bags);
         }
+
+        std::ostringstream oss;
+        oss << "Output: ";
+        pmgbp::tuple::print(oss, bags);
+        this->logger.debug(oss.str());
 
         this->logger.info("End output");
         return bags;
@@ -430,7 +442,7 @@ private:
             pons.clear();
             re.clear();
 
-            Enzyme enzyme = this->state.enzymes.at(eid);
+            Enzyme& enzyme = this->state.enzymes.at(eid);
 
             this->collectOns(enzyme.handled_reactions, sons, pons);
 
@@ -470,7 +482,8 @@ private:
                     this->push_to_correct_port(enzyme.location, bags, reactant);
 
                     // update enzyme amount
-                    this->state.enzymes[eid].amount--;
+                    enzyme.amount--;
+                    this->logger.debug("consumed enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
 
                     break;
                 }
@@ -510,7 +523,8 @@ private:
                     this->push_to_correct_port(enzyme.location, bags, reactant);
 
                     // update enzyme amount
-                    this->state.enzymes[eid].amount--;
+                    enzyme.amount--;
+                    this->logger.debug("consumed enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
 
                     break;
                 }
