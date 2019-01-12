@@ -231,7 +231,11 @@ public:
         tinyxml2::XMLElement* root = doc.RootElement();
 
         // Search the enzyme information
-        tinyxml2::XMLElement* enzyme = root->FirstChildElement("enzymes")->FirstChildElement(id);
+        tinyxml2::XMLElement* enzyme = root->FirstChildElement("spaces")
+                ->FirstChildElement(this->props.location.compartment.c_str())
+                ->FirstChildElement("enzymes")
+                ->FirstChildElement(id);
+        //tinyxml2::XMLElement* enzyme = root->FirstChildElement("enzymes")->FirstChildElement(id);
 
         // Load reactions information
         tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reactions")->FirstChildElement("reaction");
@@ -432,10 +436,16 @@ private:
         // Add reaction metabolite addresses to the routing_table
         tinyxml2::XMLElement* entry = reaction->FirstChildElement("routingTable")->FirstChildElement();
         while (entry != nullptr) {
-            this->props.routing_table.insert(
-                    entry->Attribute("metaboliteId"),
-                    std::stoi(entry->Attribute("port"))
-            );
+            if (this->props.routing_table.at(entry->Attribute("metaboliteId")) >= 0) {
+
+                assert(this->props.routing_table.at(entry->Attribute("metaboliteId")) == std::stoi(entry->Attribute("port")));
+            } else {
+
+                this->props.routing_table.insert(
+                        entry->Attribute("metaboliteId"),
+                        std::stoi(entry->Attribute("port"))
+                );
+            }
 
             entry = entry->NextSiblingElement();
         }

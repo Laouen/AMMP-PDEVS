@@ -133,8 +133,7 @@ class XMLParametersGenerator:
                                  if rid in space_related_reactions])
     
             for location in all_locations:
-                xml_enzyme_parameters = etree.Element("enzyme")
-                xml_enzyme_parameters.set('id', enzyme_parameters['id'])
+                xml_enzyme_parameters = etree.Element(enzyme_parameters['id'])
                 xml_enzyme_parameters.set('amount', str(enzyme_parameters['amount']))
 
                 # Set enzyme address

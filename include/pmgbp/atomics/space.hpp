@@ -230,7 +230,7 @@ public:
             tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
             EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("esn"));
 
-            string enzyme_id = enzyme_entry->Attribute("id");
+            string enzyme_id = enzyme_entry->Value();
             Integer enzyme_amount = Integer(std::stoi(enzyme_entry->Attribute("amount")));
 
             Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
@@ -308,7 +308,6 @@ public:
         for (const auto &x : get_messages<typename PORTS::in_0_information>(mbs)) {
             string eid = x.enzyme_id + ":" + x.location.str();
             this->state.enzymes.at(eid).amount += x.released_enzymes;
-            this->logger.debug("released enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
         }
 
         this->setNextSelection();
@@ -483,7 +482,6 @@ private:
 
                     // update enzyme amount
                     enzyme.amount--;
-                    this->logger.debug("consumed enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
 
                     break;
                 }
@@ -524,7 +522,6 @@ private:
 
                     // update enzyme amount
                     enzyme.amount--;
-                    this->logger.debug("consumed enzyme " + eid + " " + std::to_string(this->state.enzymes.at(eid).amount));
 
                     break;
                 }
