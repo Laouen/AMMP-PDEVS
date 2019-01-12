@@ -235,7 +235,10 @@ public:
                 ->FirstChildElement(this->props.location.compartment.c_str())
                 ->FirstChildElement("enzymes")
                 ->FirstChildElement(id);
-        //tinyxml2::XMLElement* enzyme = root->FirstChildElement("enzymes")->FirstChildElement(id);
+
+        while (enzyme->FirstChildElement("address")->Attribute("esn") != this->props.location.reaction_set) {
+            enzyme = enzyme->NextSiblingElement();
+        }
 
         // Load reactions information
         tinyxml2::XMLElement* enzyme_reaction = enzyme->FirstChildElement("reactions")->FirstChildElement("reaction");
