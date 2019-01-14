@@ -20,6 +20,7 @@ model_generator/*.json
 
 # Python modules
 model_generator/PMGBP.egg-info
+model_generator/dist/
 
 # Virtualenv
 env/
