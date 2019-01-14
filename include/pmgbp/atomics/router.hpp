@@ -46,7 +46,7 @@ public:
     explicit router_template(const char* xml_file, const char* id) {
         this->state.id = id;
         logger.setModuleName("Router_" + this->state.id);
-        logger.debug("Loading from XML");
+        logger.info("Loading from XML");
 
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);

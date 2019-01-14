@@ -219,7 +219,7 @@ public:
         std::ostringstream oss;
         oss << "Enzyme_" << this->props.id << ":" << this->props.location;
         this->logger.setModuleName(oss.str());
-        logger.debug("Loading from XML");
+        logger.info("Loading from XML");
 
         // Initialize random generators
         this->initialize_random_engines();

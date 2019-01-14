@@ -124,7 +124,7 @@ public:
     explicit space(const char* xml_file, const char* id) {
         this->state.id = id;
         logger.setModuleName("Space_" + this->state.id);
-        logger.debug("Loading from XML");
+        logger.info("Loading from XML");
 
         // Initialize random generators
         this->initialize_random_engines();
