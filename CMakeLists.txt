@@ -3,6 +3,9 @@ project(PMGBP_PDEVS)
 
 set(CMAKE_CXX_STANDARD 17)
 
+SET(SHOW_INFO "-D show_info")
+SET(CMAKE_CXX_FLAGS  "${SHOW_INFO}")
+
 include_directories(
         include/pmgbp
         vendor/tinyxml2

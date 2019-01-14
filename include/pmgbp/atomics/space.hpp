@@ -487,21 +487,21 @@ private:
                     // update enzyme amount
                     enzyme.amount--;
 
+                    // update the metabolite amount in the space
+                    for (auto &metabolite : re.substrate_sctry) {
+                        if (this->state.metabolites.find(metabolite.first) != this->state.metabolites.end()) {
+                            assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
+                            this->state.metabolites.at(metabolite.first) -= metabolite.second;
+                        }
+                    }
+
+                    // once the reaction is set the enzyme was processed and it moves on to the next enzyme
                     break;
                 }
             }
 
-            // update the metabolite amount in the space
             if (!re.empty()) {
-                for (auto &metabolite : re.substrate_sctry) {
-                    if (this->state.metabolites.find(metabolite.first) !=
-                        this->state.metabolites.end()) {
-                        assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
-                        this->state.metabolites.at(metabolite.first) -= metabolite.second;
-                    }
-                }
-                // once the reaction is set the enzyme was processed and it moves on to the
-                // next enzyme
+                // If a reaction was triggered, then, we move to the next enzyme
                 continue;
             }
 
@@ -527,18 +527,16 @@ private:
                     // update enzyme amount
                     enzyme.amount--;
 
-                    break;
-                }
-            }
-
-            // update the metabolite amount in the space
-            if (!re.empty()) {
-                for (auto &metabolite : re.products_sctry) {
-                    if (this->state.metabolites.find(metabolite.first) !=
-                        this->state.metabolites.end()) {
-                        assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
-                        this->state.metabolites.at(metabolite.first) -= metabolite.second;
+                    // update the metabolite amount in the space
+                    for (auto &metabolite : re.products_sctry) {
+                        if (this->state.metabolites.find(metabolite.first) != this->state.metabolites.end()) {
+                            assert(this->state.metabolites.at(metabolite.first) >= metabolite.second);
+                            this->state.metabolites.at(metabolite.first) -= metabolite.second;
+                        }
                     }
+
+                    // once the reaction is set the enzyme was processed and it moves on to the next enzyme
+                    break;
                 }
             }
         }
@@ -559,22 +557,27 @@ private:
 
     void collectOns(const map<string, ReactionInfo>& reactions, map<string, double>& son, map<string, double>& pon) {
 
-        long double threshold;
-
+        double threshold;
         for (const auto &reaction : reactions) {
 
-            // calculating the sons and pons
-            if (this->thereAreEnoughFor(reaction.second.substrate_sctry)) {
-                threshold = this->bindingThreshold(reaction.second.substrate_sctry,
-                                                   reaction.second.konSTP);
+            // calculating the sons
+            bool can_react_STP = this->consumeMetaboliteFromSpace(reaction.second.substrate_sctry)
+                                 && this->thereAreEnoughToReact(reaction.second.substrate_sctry);
+
+            if (can_react_STP) {
+                threshold = this->bindingThreshold(reaction.second.substrate_sctry, reaction.second.konSTP);
                 son.insert({reaction.first, threshold});
             } else {
                 son.insert({reaction.first, 0});
             }
 
-            if (reaction.second.reversible && this->thereAreEnoughFor(reaction.second.products_sctry)) {
-                threshold = this->bindingThreshold(reaction.second.products_sctry,
-                                                   reaction.second.konPTS);
+            // calculating the pons
+            bool can_react_PTS = reaction.second.reversible
+                                 && this->consumeMetaboliteFromSpace(reaction.second.products_sctry)
+                                 && this->thereAreEnoughToReact(reaction.second.products_sctry);
+
+            if (can_react_PTS) {
+                threshold = this->bindingThreshold(reaction.second.products_sctry, reaction.second.konPTS);
                 pon.insert({reaction.first, threshold});
             } else {
                 pon.insert({reaction.first, 0});
@@ -582,8 +585,8 @@ private:
         }
     }
 
-    // TODO: test this function specially
-    long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
+    // TODO: use the correct formula using the volume and everything and test this function specially
+    double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
         // concentrations calculation [A][B][C]
 
         double concentration = 1.0;
@@ -600,21 +603,26 @@ private:
         // exp(-(1.0 / (concentration * kon)));
     }
 
-    bool thereAreEnoughFor(const MetaboliteAmounts &stcry) const {
-        bool is_local, not_enough, there_is_enough;
-        there_is_enough = false;
+    bool consumeMetaboliteFromSpace(const MetaboliteAmounts &stcry) const {
 
         for (const auto &metabolite : stcry) {
-            is_local = this->state.metabolites.find(metabolite.first) != this->state.metabolites.end();
-            not_enough = this->state.metabolites.at(metabolite.first) < metabolite.second;
-            if (is_local && not_enough) {
-                return false;
-            }
-            if (is_local) {
-                there_is_enough = true;
+            if (this->state.metabolites.find(metabolite.first) != this->state.metabolites.end()) {
+                return true;
             }
         }
-        return there_is_enough;
+
+        return false;
+    }
+
+    bool thereAreEnoughToReact(const MetaboliteAmounts &stcry) const {
+        for (const auto &metabolite : stcry) {
+            auto metabolite_info = this->state.metabolites.find(metabolite.first);
+            if (metabolite_info == this->state.metabolites.end() || metabolite_info->second < metabolite.second) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
