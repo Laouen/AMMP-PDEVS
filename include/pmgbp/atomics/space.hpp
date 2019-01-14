@@ -124,6 +124,7 @@ public:
     explicit space(const char* xml_file, const char* id) {
         this->state.id = id;
         logger.setModuleName("Space_" + this->state.id);
+        logger.debug("Loading from XML");
 
         // Initialize random generators
         this->initialize_random_engines();
@@ -151,64 +152,72 @@ public:
         }
 
         // Load enzymes
-        tinyxml2::XMLElement* stoichiometry_specie;
         string specie_id;
         Integer specie_amount;
 
-        tinyxml2::XMLElement* enzyme_entry = root->FirstChildElement("enzymes")->FirstChildElement();
-        while (enzyme_entry != nullptr) {
+        tinyxml2::XMLElement* enzymes = root->FirstChildElement("enzymes");
+        for (tinyxml2::XMLElement* enzyme_entry = enzymes->FirstChildElement(); enzyme_entry != nullptr; enzyme_entry = enzyme_entry->NextSiblingElement()) {
+
+            string enzyme_id = enzyme_entry->Value();
+            logger.debug("Loading enzyme " + enzyme_id);
+
+            // Load the enzyme address
+            tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
+            EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("esn"));
+
+            Integer enzyme_amount = Integer(std::stoi(enzyme_entry->Attribute("amount")));
 
             // Load handled reactions
             map<string, ReactionInfo> handled_reactions;
-            tinyxml2::XMLElement* handled_reaction = enzyme_entry->FirstChildElement("reactions")->FirstChildElement();
-            while (handled_reaction != nullptr) {
+            tinyxml2::XMLElement* reactions = enzyme_entry->FirstChildElement("reactions");
+            for (tinyxml2::XMLElement* handled_reaction = reactions->FirstChildElement(); handled_reaction != nullptr; handled_reaction = handled_reaction->NextSiblingElement()) {
 
                 string reaction_id = handled_reaction->Attribute("id");
-                tinyxml2::XMLElement* reaction_parameters = doc.RootElement()->FirstChildElement("reactions")->FirstChildElement(reaction_id.c_str());
+                logger.debug("Loading enzyme " + enzyme_id + " reaction " + reaction_id);
+
+                tinyxml2::XMLElement* reaction_parameters = doc.RootElement()
+                        ->FirstChildElement("reactions")
+                        ->FirstChildElement(reaction_id.c_str());
+
+                // Load the reaction stoichiometry
+                tinyxml2::XMLElement* compartment_sctry = reaction_parameters
+                        ->FirstChildElement("stoichiometryByCompartments")
+                        ->FirstChildElement();
+
+                while (compartment_sctry != nullptr && std::string(compartment_sctry->Attribute("cid")) != this->state.id) {
+                    compartment_sctry = compartment_sctry->NextSiblingElement();
+                }
+
+                // If the reaction don't consume nor produce any metabolite from the compartment
+                // the compartment must not handle the reaction
+                if (compartment_sctry == nullptr) continue;
 
                 double konSTP = std::stod(reaction_parameters->FirstChildElement("konSTP")->GetText());
                 double konPTS = std::stod(reaction_parameters->FirstChildElement("konPTS")->GetText());
                 double koffSTP = std::stod(reaction_parameters->FirstChildElement("koffSTP")->GetText());
                 double koffPTS = std::stod(reaction_parameters->FirstChildElement("koffPTS")->GetText());
-                bool reversible = reaction_parameters->FirstChildElement("reversible")->GetText() == "true";
-
-                // Load the reaction stoichiometry
-                tinyxml2::XMLElement* compartment_sctry = reaction_parameters->FirstChildElement("stoichiometryByCompartments")->FirstChildElement();
-
-                while (std::string(compartment_sctry->Attribute("cid")) != this->state.id) {
-                    compartment_sctry = compartment_sctry->NextSiblingElement();
-                }
+                bool reversible =reaction_parameters->FirstChildElement("reversible")->GetText() == "true";
 
                 // Load the substrate stoichiometry
                 MetaboliteAmounts substrate_sctry;
-                stoichiometry_specie = compartment_sctry->FirstChildElement("substrate");
-
-                if (stoichiometry_specie != nullptr) {
-                    stoichiometry_specie = stoichiometry_specie->FirstChildElement();
-                }
-
-                while (stoichiometry_specie != nullptr) {
-                    specie_id = stoichiometry_specie->Attribute("id");
-                    specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
-                    substrate_sctry.insert({specie_id, specie_amount});
-
-                    stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+                tinyxml2::XMLElement* substrate = compartment_sctry->FirstChildElement("substrate");
+                if (substrate != nullptr) {
+                    for (tinyxml2::XMLElement* species = substrate->FirstChildElement(); species != nullptr; species = species->NextSiblingElement()) {
+                        specie_id = species->Attribute("id");
+                        specie_amount = Integer(std::stoi(species->Attribute("amount")));
+                        substrate_sctry.insert({specie_id, specie_amount});
+                    }
                 }
 
                 // Load the product stoichiometry
                 MetaboliteAmounts products_sctry;
-                stoichiometry_specie = compartment_sctry->FirstChildElement("product");
-
-                if (stoichiometry_specie != nullptr) {
-                    stoichiometry_specie = stoichiometry_specie->FirstChildElement();
-                }
-
-                while (stoichiometry_specie != nullptr) {
-                    specie_id = stoichiometry_specie->Attribute("id");
-                    specie_amount = Integer(std::stoi(stoichiometry_specie->Attribute("amount")));
-                    products_sctry.insert({specie_id, specie_amount});
-
-                    stoichiometry_specie = stoichiometry_specie->NextSiblingElement();
+                tinyxml2::XMLElement* product = compartment_sctry->FirstChildElement("product");
+                if (product != nullptr) {
+                    for (tinyxml2::XMLElement* species = product->FirstChildElement(); species != nullptr; species = species->NextSiblingElement()) {
+                        specie_id = species->Attribute("id");
+                        specie_amount = Integer(std::stoi(species->Attribute("amount")));
+                        products_sctry.insert({specie_id, specie_amount});
+                    }
                 }
 
                 // Save the reaction information
@@ -222,23 +231,19 @@ public:
                                                                  reversible);
 
                 handled_reactions.insert({reaction_id, reaction_information});
-
-                handled_reaction = handled_reaction->NextSiblingElement();
             }
 
-            // Load the enzyme address
-            tinyxml2::XMLElement* address = enzyme_entry->FirstChildElement("address");
-            EnzymeAddress enzyme_location(address->Attribute("cid"), address->Attribute("esn"));
+            // If all the enzyme reactions are not related with the compartment, then, the compartment
+            // mustn't handle the enzyme at all.
+            if (!handled_reactions.empty()) {
+                Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
+                this->state.enzymes.insert({enzyme_id + ":" + enzyme.location.str(), enzyme});
+            }
 
-            string enzyme_id = enzyme_entry->Value();
-            Integer enzyme_amount = Integer(std::stoi(enzyme_entry->Attribute("amount")));
-
-            Enzyme enzyme(enzyme_id, enzyme_location, enzyme_amount, handled_reactions);
-
-            this->state.enzymes.insert({enzyme_id + ":" + enzyme.location.str(), enzyme});
-            enzyme_entry = enzyme_entry->NextSiblingElement();
+            logger.debug("Loaded enzyme " + enzyme_id);
         }
 
+        logger.debug("Loading routing table");
         // Load routing_table
         tinyxml2::XMLElement* routing_table;
         tinyxml2::XMLElement* entry;
@@ -250,7 +255,6 @@ public:
             EnzymeAddress enzyme_address(entry->Attribute("cid"), entry->Attribute("esn"));
             port_number = std::stoi(entry->Attribute("port"));
             this->state.routing_table.insert(enzyme_address, port_number);
-
             entry = entry->NextSiblingElement();
         }
     }

@@ -191,18 +191,19 @@ class SBMLParser:
 
         return self.compartment_species
 
-    def get_reaction_parameters(self, cid):
+    def get_related_reaction_parameters(self, cid):
         """
         :return: All the reaction parameters for the reactions that uses species from the compartment
         :rtype: list[str]
         """
 
-        # todo: Use the reaction paraemter product_by_compartment and subtract_by_compartment to determine if the reaction
-        # belongs to the compartment id because theses dicts have the reaction related compartments as keys.
+        # related reactions are those occurring in the compartment and those that produce or consume 
+        # metabolites from the compartment
         compartment_species = list(self.parse_compartments_species()[cid].keys())
         return {rid: parameters
                 for rid, parameters in self.reactions.items()
-                if not_empty_intersection(compartment_species, parameters['species'])}
+                if parameters['location'].cid == cid
+                or not_empty_intersection(compartment_species, parameters['species'])}
 
     def get_enzymes(self, reactions):
         """
@@ -219,7 +220,7 @@ class SBMLParser:
 
     def get_enzyme_set(self, cid, esn):
         location = Location(cid, esn)
-        
+
         return {eid: parameters 
                 for eid, parameters 
                 in self.enzymes.items() 

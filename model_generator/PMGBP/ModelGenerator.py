@@ -73,7 +73,7 @@ class ModelStructure:
             self.enzyme_sets[enzyme_set] = parser.get_enzyme_set(cid, enzyme_set)
  
         # Building space
-        reaction_parameters = parser.get_reaction_parameters(cid)
+        reaction_parameters = parser.get_related_reaction_parameters(cid)
         metabolites = {specie: parser.metabolite_amounts[specie]
                        for specie in list(parser.parse_compartments_species()[cid].keys())}
         self.space_parameters = {

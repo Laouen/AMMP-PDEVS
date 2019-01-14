@@ -46,6 +46,7 @@ public:
     explicit router_template(const char* xml_file, const char* id) {
         this->state.id = id;
         logger.setModuleName("Router_" + this->state.id);
+        logger.debug("Loading from XML");
 
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLError opened = doc.LoadFile(xml_file);
@@ -57,13 +58,10 @@ public:
 
         // Load routing table
         tinyxml2::XMLElement* routing_table = root->FirstChildElement("routingTable");
-        tinyxml2::XMLElement* entry = routing_table->FirstChildElement();
-        while (entry != nullptr) {
+        for (tinyxml2::XMLElement* entry = routing_table->FirstChildElement(); entry != nullptr; entry = entry->NextSiblingElement()) {
             string enzyme_id = entry->Attribute("enzymeID");
             int port_number = std::stoi(entry->Attribute("port"));
             this->state.routing_table.insert({enzyme_id, port_number});
-
-            entry = entry->NextSiblingElement();
         }
     }
 

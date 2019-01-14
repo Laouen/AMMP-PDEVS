@@ -30,26 +30,22 @@
 #include <cadmium/engine/pdevs_dynamic_runner.hpp>
 
 #include <NDTime.hpp>
-#include <model_json_exporter.hpp>
+#include <dynamic_json_exporter.hpp>
 
 #include <memore/logger.hpp>
-#include <memore/sink.hpp>
-
-#include <mongocxx/instance.hpp>
 
 #include "top.hpp"
 
 
-using namespace std;
-using namespace pmgbp;
-using hclock=chrono::high_resolution_clock;
-
-
 /*************** Loggers *******************/
+
+#ifdef MEMORE
+
+#include <memore/sink.hpp>
+#include <mongocxx/instance.hpp>
 
 /************** MeMoRe sink ******************/
 
-/*
 // NOTE: it is necessary to create a unique instance of the mongocxx::instance in order to use the memore::recorder
 mongocxx::instance instance{};
 
@@ -57,54 +53,55 @@ namespace {
 
     memore::sink memore_sink("pmgbp", "pmgbp", "simulation_results");
     
-    struct memore_sink_provider {
+    struct sink_provider {
         static memore::sink& sink() {
             return memore_sink;
         }
     };
 }
-*/
 
+#else
 
 /************** cout sink ******************/
-
-/* For debug purposes use this sink, to print in screen and to compile without problems with Cmake */
 namespace {
-    struct memore_sink_provider {
+    struct sink_provider {
         static std::ostream& sink() {
             return std::cout;
         }
     };
 }
+#endif
 
-using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, memore_sink_provider>;
-using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, memore_sink_provider>;
-using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, memore::logger::formatter<NDTime>, memore_sink_provider>;
+using log_states=cadmium::logger::logger<cadmium::logger::logger_state, memore::logger::formatter<NDTime>, sink_provider>;
+using log_msg=cadmium::logger::logger<cadmium::logger::logger_messages, memore::logger::formatter<NDTime>, sink_provider>;
+using log_gt=cadmium::logger::logger<cadmium::logger::logger_global_time, memore::logger::formatter<NDTime>, sink_provider>;
 
 using logger_top=cadmium::logger::multilogger<log_states, log_msg, log_gt>;
 
 /*******************************************/
 
+using namespace std;
+using namespace pmgbp;
+using hclock=chrono::high_resolution_clock;
 
 int main(int argc, char ** argv) {
 
     #ifdef DIAGRAM
 
-        if (argc != 2) {
-            std::cout << "Usage: " + std::string(argv[0]) + " <diagram_output_file>" << std::endl;
+        if (argc != 3) {
+            std::cout << "Usage: " + std::string(argv[0]) + "<xml_parameters_path> <diagram_output_file>" << std::endl;
             exit(0);
         }
 
-        std::ofstream file;
-        file.open(argv[1]);
+        std::string xml_parameters_path = std::string(argv[1]);
+        const char * json_file = argv[2];
 
-        if (argc == 2) {
-            export_model_to_json<NDTime, generate_model()>(file);
-        } else {
-            export_model_to_json<NDTime, generate_model()>(file, atoi(argv[2]));
-        }
+        std::ofstream file;
+        file.open(json_file);
+        std::shared_ptr<cadmium::dynamic::modeling::coupled<NDTime>> top_model = generate_model(xml_parameters_path);
+        dynamic_export_model_to_json<NDTime>(file, top_model);
         file.close();
-    
+
     #else
 
         if (argc != 3) {
@@ -113,10 +110,12 @@ int main(int argc, char ** argv) {
         }
         
         std::string xml_parameters_path = std::string(argv[1]);
+        const char * simulation_db_identifier = argv[2];
 
+        #ifdef MEMORE
         // New custom collection used so Django or other platform can set the desired collection name to retrieve results
-        //memore_sink_provider::sink().new_collection(argv[2]);
-
+        sink_provider::sink().new_collection(simulation_db_identifier);
+        #endif
         
         // Initialize model
         auto start = hclock::now();
