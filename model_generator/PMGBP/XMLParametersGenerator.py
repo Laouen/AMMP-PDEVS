@@ -102,6 +102,11 @@ class XMLParametersGenerator:
     def add_space(self, model_id, parameters, routing_table):
         xml_space = etree.Element(model_id)
 
+        xml_volume = etree.Element('volume')
+        xml_volume.text = str(parameters['volume'])
+
+        xml_space.append(xml_volume)
+
         xml_interval_time = etree.Element('intervalTime')
         xml_interval_time.text = parameters['interval_time']
 

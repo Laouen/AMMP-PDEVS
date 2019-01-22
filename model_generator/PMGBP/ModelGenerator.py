@@ -38,7 +38,6 @@ class ModelStructure:
         self.id = cid
         self.space = {}
         self.routing_table = {}
-        #self.reaction_sets = {}
 
         # Compartment input-membrane mapping
         port_numbers = range(len(membranes))
@@ -81,6 +80,7 @@ class ModelStructure:
             'interval_time': parser.interval_times[cid],
             'metabolites': metabolites,
             'reaction_parameters': reaction_parameters,
+            'volume': parser.get_compartment_volume(cid),
             'enzymes': parser.get_enzymes(list(reaction_parameters.keys()))
         }
 

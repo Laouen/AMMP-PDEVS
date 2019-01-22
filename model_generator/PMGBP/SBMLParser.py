@@ -125,6 +125,11 @@ class SBMLParser:
         self.rates = defaultdict(lambda: '0:0:0:1')
         self.reject_rates = defaultdict(lambda: '0:0:0:1')
         self.interval_times = defaultdict(lambda: '0:0:0:1')
+        self.volumes = {
+            self.cytoplasm_id: 5.28e-19,
+            self.periplasm_id: 7.2e-20,
+            self.extra_cellular_id: 7.2e-20
+        }
 
         self.load_sbml_file(sbml_file)
 
@@ -469,6 +474,9 @@ class SBMLParser:
                 separated_stoichiometry[cid][sid] = amount
 
         return separated_stoichiometry
+
+    def get_compartment_volume(self, cid):
+        return self.volumes[cid]
 
     @staticmethod
     def parse_stoichiometry(reaction):

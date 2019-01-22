@@ -641,7 +641,11 @@ private:
 
     Integer totalReadyFor(const map<string, Integer>& comp) {
 
-        Integer result = 0;
+        if (comp.empty()) {
+            return 0;
+        }
+
+        Integer result = comp.cbegin()->second;
         for (const auto &it : comp) {
             if (result > it.second) {
                 result = it.second;

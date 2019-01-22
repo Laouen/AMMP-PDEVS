@@ -84,8 +84,8 @@ public:
         MetaboliteAmounts metabolites;
         map<string, Enzyme> enzymes;
         RoutingTable<EnzymeAddress> routing_table;
-        long double volume;
         // Volume in cubic meters
+        long double volume;
         //long double volume = 6e-19L;
 
         // E.coli volume: 0.6 cubic micrometers = 6e-10 cubic milimeters = 6e-19 cubic meter
@@ -143,6 +143,9 @@ public:
                 ->FirstChildElement("spaces")
                 ->FirstChildElement(id);
 
+
+        // Load compartment volume
+        this->state.volume = std::stold(root->FirstChildElement("volume")->GetText());
 
         // Load interval_time
         this->state.interval_time = TIME(root->FirstChildElement("intervalTime")->GetText());
@@ -589,8 +592,8 @@ private:
 
     // TODO: use the correct formula using the volume and everything and test this function specially
     long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
-        // concentrations calculation [A][B][C]
 
+        // concentrations calculation [A][B][C]
         long double concentration = 1.0;
         long double LxVolume = L * this->state.volume;
         for (const auto &metabolite : sctry) {
@@ -600,10 +603,10 @@ private:
             }
         }
 
+        // binding probability depending on the concentration
         if (concentration == 0.0)
             return 0.0;
-        return 0.2;
-        //return exp(-(1.0 / (concentration * kon)));
+        return exp(-(1.0 / (concentration * kon)));
     }
 
     bool consumeMetaboliteFromSpace(const MetaboliteAmounts &stcry) const {
