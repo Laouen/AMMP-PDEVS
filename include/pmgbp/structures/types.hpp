@@ -51,7 +51,7 @@ using MetaboliteAmounts = map<string, Integer>;
 /******************************************/
 
 const long double L = 6.0221413e+23L;
-const long double MOL = 1e-6;
+//const long double MOL = 1e-6;
 
 /******************************************/
 /************ End Constants ***************/

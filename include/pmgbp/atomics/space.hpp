@@ -54,17 +54,17 @@ using namespace cadmium;
 using namespace pmgbp::types;
 using namespace pmgbp::structs::space;
 
-    /**
-     * @author Laouen Mayal Louan Belloli
-     *
-     * @struct space::space space.hpp
-     *
-     * @brief Represents a valid P-DEVS atomic space model
-     *
-     * @typedef PORTS the ports struct ...
-     * @typedef TIME The type of the time class
-     *
-     */
+/**
+ * @author Laouen Mayal Louan Belloli
+ *
+ * @struct space::space space.hpp
+ *
+ * @brief Represents a valid P-DEVS atomic space model
+ *
+ * @typedef PORTS the ports struct ...
+ * @typedef TIME The type of the time class
+ *
+ */
 template<typename PORTS, class TIME>
 class space {
 
@@ -85,6 +85,12 @@ public:
         map<string, Enzyme> enzymes;
         RoutingTable<EnzymeAddress> routing_table;
         long double volume;
+        // Volume in cubic meters
+        //long double volume = 6e-19L;
+
+        // E.coli volume: 0.6 cubic micrometers = 6e-10 cubic milimeters = 6e-19 cubic meter
+        // Periplasm volume ~12% of E.coli volume = 0.072 cubic micrometers = 7.2e-11 cubic milimeters
+        // Cytoplasm volume ~ 88% of E.coli volume = 0.528 cubic micrometers = 5.28e-10 cubic milimeters
         
         //TODO: Take the volume from the .xml parameter
         //long double volume = 0.0000000000000000001;
@@ -427,20 +433,16 @@ private:
     void selectMetabolitesToReact(output_bags& bags) {
 
         Reactant reactant;
-        double rv, total, partial;
-        map<string, double> sons, pons;
+        map<string, long double> sons, pons;
         ReactionInfo re;
+
+        // Enzyme are individually considered and randomly iterated
         vector<string> unfolded_enzymes;
-
-        // Enzyme are individually considered
         this->unfoldEnzymes(unfolded_enzymes);
-
-        // Enzymes are randomly iterated
         this->shuffleEnzymes(unfolded_enzymes);
 
         for (auto &eid : unfolded_enzymes) {
 
-            partial;
             sons.clear();
             pons.clear();
             re.clear();
@@ -451,7 +453,7 @@ private:
 
             // sons + pons can't be greater than 1. If that happen, they are normalized
             // if sons + pons is smaller than 1, there is a chance that the enzyme does'nt react
-            total = this->sumAll(sons) + this->sumAll(pons);
+            long double total = this->sumAll(sons) + this->sumAll(pons);
             if (total > 1) {
                 this->normalize(sons, total);
                 this->normalize(pons, total);
@@ -466,9 +468,9 @@ private:
             // Depending to which intervals rv belongs, the enzyme triggers
             // the corresponding reaction or do nothing (last interval).
 
-            rv = real_random.drawNumber(0.0, 1.0);
+            long double rv = real_random.drawNumber(0.0, 1.0);
 
-            partial = 0.0;
+            long double partial = 0.0;
             for (auto &son : sons) {
 
                 partial += son.second;
@@ -555,9 +557,9 @@ private:
         shuffle(ce.begin(), ce.end(), g);
     }
 
-    void collectOns(const map<string, ReactionInfo>& reactions, map<string, double>& son, map<string, double>& pon) {
+    void collectOns(const map<string, ReactionInfo>& reactions, map<string, long double>& son, map<string, long double>& pon) {
 
-        double threshold;
+        long double threshold;
         for (const auto &reaction : reactions) {
 
             // calculating the sons
@@ -586,21 +588,22 @@ private:
     }
 
     // TODO: use the correct formula using the volume and everything and test this function specially
-    double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
+    long double bindingThreshold(const MetaboliteAmounts &sctry, double kon) const {
         // concentrations calculation [A][B][C]
 
-        double concentration = 1.0;
+        long double concentration = 1.0;
+        long double LxVolume = L * this->state.volume;
         for (const auto &metabolite : sctry) {
             if (this->state.metabolites.find(metabolite.first) != this->state.metabolites.end()) {
                 Integer amount = this->state.metabolites.at(metabolite.first);
-                concentration *= amount / (L * this->state.volume);
+                concentration *= amount / LxVolume;
             }
         }
 
         if (concentration == 0.0)
             return 0.0;
         return 0.2;
-        // exp(-(1.0 / (concentration * kon)));
+        //return exp(-(1.0 / (concentration * kon)));
     }
 
     bool consumeMetaboliteFromSpace(const MetaboliteAmounts &stcry) const {
@@ -702,8 +705,8 @@ private:
         return this->state.tasks.exists(Task<output_ports >(Status::SELECTING_FOR_REACTION));
     }
 
-    double sumAll(const map<string, double> &ons) const {
-        double result = 0;
+    long double sumAll(const map<string, long double> &ons) const {
+        long double result = 0.0;
 
         for (const auto &on : ons) {
             result += on.second;
@@ -711,9 +714,9 @@ private:
         return result;
     }
 
-    void normalize(map<string, double> &ons, double t) {
+    void normalize(map<string, long double> &ons, long double total) {
         for (auto &on : ons) {
-            on.second /= t;
+            on.second /= total;
         }
     }
 };
