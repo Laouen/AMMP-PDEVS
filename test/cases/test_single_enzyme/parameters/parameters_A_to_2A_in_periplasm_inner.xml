@@ -1,0 +1,388 @@
+<parameters>
+  <spaces>
+    <c>
+      <volume>5.28e-19</volume>
+      <intervalTime>0:0:0:1</intervalTime>
+      <metabolites>
+        <metabolite id="A_c" amount="600000"/>
+      </metabolites>
+      <routingTable>
+        <entry cid="c" esn="bulk" port="0"/>
+        <entry cid="p" esn="inner" port="1"/>
+        <entry cid="p" esn="trans" port="2"/>
+      </routingTable>
+      <enzymes>
+        <b0000 amount="0">
+          <address cid="c" esn="bulk"/>
+          <reactions>
+            <reaction id="A_to_2A_in_cytoplasm"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="1000">
+          <address cid="p" esn="inner"/>
+          <reactions>
+            <reaction id="A_to_2A_in_periplasm_inner"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="0">
+          <address cid="p" esn="trans"/>
+          <reactions>
+            <reaction id="A_to_2A_in_trans_membrane"/>
+          </reactions>
+        </b0000>
+      </enzymes>
+    </c>
+    <e>
+      <volume>7.2e-20</volume>
+      <intervalTime>0:0:0:1</intervalTime>
+      <metabolites>
+        <metabolite id="A_e" amount="0"/>
+        <metabolite id="B_e" amount="0"/>
+      </metabolites>
+      <routingTable>
+        <entry cid="e" esn="bulk" port="0"/>
+        <entry cid="p" esn="outer" port="1"/>
+        <entry cid="p" esn="trans" port="2"/>
+      </routingTable>
+      <enzymes>
+        <b0000 amount="0">
+          <address cid="e" esn="bulk"/>
+          <reactions>
+            <reaction id="A_to_2A_in_extracellular_space"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="0">
+          <address cid="p" esn="trans"/>
+          <reactions>
+            <reaction id="A_to_2A_in_trans_membrane"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="0">
+          <address cid="p" esn="outer"/>
+          <reactions>
+            <reaction id="A_to_2A_in_periplasm_outer"/>
+            <reaction id="no_substrate_from_related_compartment_in_periplasm_outer"/>
+          </reactions>
+        </b0000>
+      </enzymes>
+    </e>
+    <p>
+      <volume>7.2e-20</volume>
+      <intervalTime>0:0:0:1</intervalTime>
+      <metabolites>
+        <metabolite id="A_p" amount="600000"/>
+        <metabolite id="B_p" amount="0"/>
+      </metabolites>
+      <routingTable>
+        <entry cid="p" esn="bulk" port="0"/>
+        <entry cid="p" esn="outer" port="1"/>
+        <entry cid="p" esn="inner" port="2"/>
+        <entry cid="p" esn="trans" port="3"/>
+      </routingTable>
+      <enzymes>
+        <b0000 amount="0">
+          <address cid="p" esn="trans"/>
+          <reactions>
+            <reaction id="A_to_2A_in_trans_membrane"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="1000">
+          <address cid="p" esn="inner"/>
+          <reactions>
+            <reaction id="A_to_2A_in_periplasm_inner"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="0">
+          <address cid="p" esn="bulk"/>
+          <reactions>
+            <reaction id="A_to_2A_in_periplasm"/>
+            <reaction id="no_product_in_periplasm"/>
+          </reactions>
+        </b0000>
+        <b0000 amount="0">
+          <address cid="p" esn="outer"/>
+          <reactions>
+            <reaction id="A_to_2A_in_periplasm_outer"/>
+            <reaction id="no_substrate_from_related_compartment_in_periplasm_outer"/>
+          </reactions>
+        </b0000>
+      </enzymes>
+    </p>
+  </spaces>
+  <routers>
+    <c_bulk_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </c_bulk_0>
+    <c_bulk>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </c_bulk>
+    <e_bulk_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </e_bulk_0>
+    <e_bulk>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </e_bulk>
+    <p_outer_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_outer_0>
+    <p_outer>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_outer>
+    <p_bulk_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_bulk_0>
+    <p_bulk>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_bulk>
+    <p_trans_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_trans_0>
+    <p_trans>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_trans>
+    <p_inner_0>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_inner_0>
+    <p_inner>
+      <routingTable>
+        <entry enzymeID="b0000" port="0"/>
+      </routingTable>
+    </p_inner>
+  </routers>
+  <reactions>
+    <A_to_2A_in_cytoplasm>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_c" port="0"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="c">
+          <substrate>
+            <specie id="A_c" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_c" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_cytoplasm>
+    <A_to_2A_in_periplasm_inner>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_p" port="0"/>
+        <entry metaboliteId="A_c" port="1"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="c">
+          <substrate>
+            <specie id="A_c" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_c" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+        <compartmentStoichiometry cid="p">
+          <substrate>
+            <specie id="A_p" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_p" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_periplasm_inner>
+    <A_to_2A_in_periplasm_outer>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_e" port="2"/>
+        <entry metaboliteId="A_p" port="0"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="e">
+          <substrate>
+            <specie id="A_e" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_e" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+        <compartmentStoichiometry cid="p">
+          <substrate>
+            <specie id="A_p" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_p" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_periplasm_outer>
+    <A_to_2A_in_extracellular_space>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_e" port="0"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="e">
+          <substrate>
+            <specie id="A_e" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_e" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_extracellular_space>
+    <A_to_2A_in_periplasm>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_p" port="0"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="p">
+          <substrate>
+            <specie id="A_p" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_p" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_periplasm>
+    <A_to_2A_in_trans_membrane>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="A_p" port="0"/>
+        <entry metaboliteId="A_c" port="1"/>
+        <entry metaboliteId="A_e" port="2"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="c">
+          <substrate>
+            <specie id="A_c" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_c" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+        <compartmentStoichiometry cid="e">
+          <substrate>
+            <specie id="A_e" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_e" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+        <compartmentStoichiometry cid="p">
+          <substrate>
+            <specie id="A_p" amount="1.0"/>
+          </substrate>
+          <product>
+            <specie id="A_p" amount="2.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </A_to_2A_in_trans_membrane>
+    <no_product_in_periplasm>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="B_p" port="0"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="p">
+          <substrate>
+            <specie id="B_p" amount="1.0"/>
+          </substrate>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </no_product_in_periplasm>
+    <no_substrate_from_related_compartment_in_periplasm_outer>
+      <rate>0:0:0:1</rate>
+      <rejectRate>0:0:0:1</rejectRate>
+      <koffSTP>0.8</koffSTP>
+      <koffPTS>0.8</koffPTS>
+      <konSTP>0.8</konSTP>
+      <konPTS>0.8</konPTS>
+      <reversible>False</reversible>
+      <routingTable>
+        <entry metaboliteId="B_p" port="0"/>
+        <entry metaboliteId="B_e" port="2"/>
+      </routingTable>
+      <stoichiometryByCompartments>
+        <compartmentStoichiometry cid="e">
+          <substrate>
+            <specie id="B_e" amount="1.0"/>
+          </substrate>
+        </compartmentStoichiometry>
+        <compartmentStoichiometry  cid="p">
+          <product>
+            <specie id="B_p" amount="1.0"/>
+          </product>
+        </compartmentStoichiometry>
+      </stoichiometryByCompartments>
+    </no_substrate_from_related_compartment_in_periplasm_outer>
+  </reactions>
+</parameters>
