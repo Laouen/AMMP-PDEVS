@@ -97,7 +97,12 @@ class ModelGenerator:
                  cytoplasm_id,
                  model_dir='..',
                  json_model=None,
-                 groups_size=150):
+                 groups_size=150,
+                 kon=0.8,
+                 koff=0.8,
+                 rates='0:0:0:1',
+                 enzymes=1000,
+                 metabolites=600000):
         """
         Generates the whole model structure and generates a .cpp file with a cadmium model from the
         generated structure
@@ -121,7 +126,16 @@ class ModelGenerator:
                                  extra_cellular_id,
                                  periplasm_id,
                                  cytoplasm_id,
-                                 json_model=json_model)
+                                 json_model=json_model,
+                                 default_konSTP=kon,
+                                 default_konPTS=kon,
+                                 default_koffSTP=koff,
+                                 default_koffPTS=koff,
+                                 default_metabolite_amount=metabolites,
+                                 default_enzyme_amount=enzymes,
+                                 default_rate=rates,
+                                 default_reject_rate=rates,
+                                 default_interval_time=rates)
 
         special_compartment_ids = [extra_cellular_id, periplasm_id, cytoplasm_id]
 

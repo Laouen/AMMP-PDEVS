@@ -54,7 +54,7 @@ check_dirs:
 clean_all: clean_model clean
 
 clean_model:
-	rm top.hpp top_ports.hpp parameters.xml
+	rm top.hpp top_model_definitions.hpp parameters.xml
 
 clean:
 	rm -rf bin/* build/* *.o *~

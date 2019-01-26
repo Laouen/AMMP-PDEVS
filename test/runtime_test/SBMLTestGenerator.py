@@ -6,13 +6,13 @@ from random import randint, choice
 
 class SBMLTestGenerator():
 
-    def __init__(self, output, model_id, compartments, reaction_amounts, species_amounts, max_stoichimetry_elements):
+    def __init__(self, output, model_id, compartments, reaction_amounts, stoichimetry_elements):
         self.output_file = open(output, 'w+')
         self.compartments = compartments
         self.reaction_amounts = reaction_amounts
-        self.species_amounts = species_amounts
-        self.max_stoichimetry_elements = max_stoichimetry_elements
+        self.stoichimetry_elements = stoichimetry_elements
         self.current_enzyme_id = 0
+        self.species_amounts = {c: 0 for c in compartments}
 
         self.sbml = etree.Element('sbml')
         self.sbml.set('xmlns', 'http://www.sbml.org/sbml/level2')
@@ -23,29 +23,30 @@ class SBMLTestGenerator():
         self.model.set('id', model_id)
         self.sbml.append(self.model)
 
+        self.create_listOfCompartments()
+        self.create_listOfReactions()
+        self.create_listOfSpecies()
+
     def create_listOfCompartments(self):
         self.listOfCompartments = etree.Element('listOfCompartments')
-        self.model.append(self.listOfCompartments)
 
         for cid in self.compartments:
             self.listOfCompartments.append(self.create_compartment(cid, cid + '_name'))
 
     def create_listOfSpecies(self):
         self.listOfSpecies = etree.Element('listOfSpecies')
-        self.model.append(self.listOfSpecies)
 
-        for cid, amount in self.species_amounts.iteritems():
+        for cid, amount in self.species_amounts.items():
             for sid in (str(i) for i in range(amount)):
                 self.listOfSpecies.append(self.create_specie(sid, cid))
 
     def create_listOfReactions(self):
         self.listOfReactions = etree.Element('listOfReactions')
-        self.model.append(self.listOfReactions)
 
-        for (cid, rsn), amount in self.reaction_amounts.iteritems():
+        for (cid, esn), amount in self.reaction_amounts.items():
             for i in range(amount):
-                rid = '_'.join(['R', str(i), cid, rsn])
-                self.listOfReactions.append(self.create_reaction(rid, choice(['true', 'false']), cid, rsn))
+                rid = '_'.join(['R', str(i), cid, esn])
+                self.listOfReactions.append(self.create_reaction(rid, 'false', cid, esn))
 
     def create_compartment(self, cid, name):
         compartment = etree.Element('compartment')
@@ -60,7 +61,7 @@ class SBMLTestGenerator():
         species.set('compartment', compartment)
         return species
 
-    def create_reaction(self, rid, reversible, cid, rsn):
+    def create_reaction(self, rid, reversible, cid, esn):
         reaction = etree.Element('reaction')
         reaction.set('id', rid)
         reaction.set('name', rid + '_name')
@@ -68,15 +69,19 @@ class SBMLTestGenerator():
 
         reaction.append(self.create_note(rid))
 
+        # the reaction has the same reactant and product
+        stoichiometry = self.random_stoichiometry(cid, esn)
+
         listOfReactants = etree.Element('listOfReactants')
-        for reactant in self.random_stoichiometry(cid, rsn):
+        for reactant in stoichiometry:
             listOfReactants.append(reactant)
         reaction.append(listOfReactants)
 
         listOfProducts = etree.Element('listOfProducts')
-        for reactant in self.random_stoichiometry(cid, rsn, len(listOfReactants.getchildren()) > 0):
+        for product in stoichiometry:
             listOfProducts.append(reactant)
         reaction.append(listOfProducts)
+
         return reaction
 
     def create_note(self, rid):
@@ -94,33 +99,32 @@ class SBMLTestGenerator():
         self.current_enzyme_id += 1
         return eid
 
-    def random_stoichiometry(self, cid, rsn, can_be_zero=True):
+    def random_stoichiometry(self, cid, esn, can_be_zero=True):
 
         related_compartments = [cid]
-        if rsn == 'outer':
+        if esn == 'outer':
             related_compartments.append('e')
-        elif rsn == 'inner':
+        elif esn == 'inner':
             related_compartments.append('c')
-        elif rsn == 'trans':
+        elif esn == 'trans':
             related_compartments.append('c')
             related_compartments.append('e')
 
         related_compartments = list(set(related_compartments))  # remove duplicated values
 
         for compartment in related_compartments:
-            specie_ids = [str(i) + '_' + compartment for i in range(self.species_amounts[compartment])]
-
-            minimum_species = 0 if can_be_zero else 1
-            for i in range(randint(minimum_species, self.max_stoichimetry_elements)):
-                if len(specie_ids) == 0:
-                    break
-                s = choice(specie_ids)
-                specie_ids = list(set(specie_ids) - set([s]))
+            for i in range(self.stoichimetry_elements):
+                s = str(self.species_amounts[compartment]) + '_' + compartment
+                self.species_amounts[compartment] += 1
                 specie = etree.Element('speciesReference')
                 specie.set('species', s)
-                specie.set('stoichiometry', str(choice(range(3))))
+                specie.set('stoichiometry', '1')
                 yield specie
 
     def save_xml(self):
-        self.output_file.write(etree.tostring(self.sbml, xml_declaration=True, encoding='UTF-8', pretty_print=True))
+        self.model.append(self.listOfCompartments)
+        self.model.append(self.listOfSpecies)
+        self.model.append(self.listOfReactions)
+
+        self.output_file.write(etree.tostring(self.sbml, xml_declaration=True, encoding='UTF-8', pretty_print=True).decode('utf-8'))
         self.output_file.flush()

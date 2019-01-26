@@ -87,7 +87,16 @@ class SBMLParser:
                  extra_cellular_id='e',
                  periplasm_id='p',
                  cytoplasm_id='c',
-                 json_model=None):
+                 json_model=None,
+                 default_konSTP=0.8,
+                 default_konPTS=0.8,
+                 default_koffSTP=0.8,
+                 default_koffPTS=0.8,
+                 default_metabolite_amount=600000,
+                 default_enzyme_amount=1000,
+                 default_rate='0:0:0:1',
+                 default_reject_rate='0:0:0:1',
+                 default_interval_time='0:0:0:1'):
         """
         class SBMLParser:
         SBMLParser constructor
@@ -116,15 +125,15 @@ class SBMLParser:
 
         # Parameters not included in the SBML model parameters
         # TODO: refactor default dict values to be set in the class init method parameters
-        self.enzyme_amounts = defaultdict(lambda: 100)
-        self.konSTPs = defaultdict(lambda: 0.8)
-        self.konPTSs = defaultdict(lambda: 0.8)
-        self.koffSTPs = defaultdict(lambda: 0.8)
-        self.koffPTSs = defaultdict(lambda: 0.8)
-        self.metabolite_amounts = defaultdict(lambda: 100)
-        self.rates = defaultdict(lambda: '0:0:0:1')
-        self.reject_rates = defaultdict(lambda: '0:0:0:1')
-        self.interval_times = defaultdict(lambda: '0:0:0:1')
+        self.enzyme_amounts = defaultdict(lambda: default_enzyme_amount)
+        self.konSTPs = defaultdict(lambda: default_konSTP)
+        self.konPTSs = defaultdict(lambda: default_konPTS)
+        self.koffSTPs = defaultdict(lambda: default_koffSTP)
+        self.koffPTSs = defaultdict(lambda: default_koffPTS)
+        self.metabolite_amounts = defaultdict(lambda: default_metabolite_amount)
+        self.rates = defaultdict(lambda: default_rate)
+        self.reject_rates = defaultdict(lambda: default_reject_rate)
+        self.interval_times = defaultdict(lambda: default_interval_time)
         self.volumes = {
             self.cytoplasm_id: 5.28e-19,
             self.periplasm_id: 7.2e-20,

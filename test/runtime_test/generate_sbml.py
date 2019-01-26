@@ -23,43 +23,33 @@ def main(FLAGS):
         }
 
         compartments = ['c', 'e', 'p']
-        species_amounts = {cid: FLAGS.species_amount for cid in compartments}
 
         model_id = '_'.join([
             FLAGS.model_name,
             "%03d" % reaction_amount,  # format number with three digits, 1 -> 001, 10 -> 010
-            "%03d" % FLAGS.species_amount,
-            "%03d" % FLAGS.max_stoichimetry_elements
+            "%03d" % FLAGS.stoichimetry_elements
         ])
 
         generator = SBMLTestGenerator(model_id + '.xml',
                                       model_id,
                                       compartments,
                                       reaction_amounts,
-                                      species_amounts,
-                                      FLAGS.max_stoichimetry_elements)
-        generator.create_listOfCompartments()
-        generator.create_listOfSpecies()
-        generator.create_listOfReactions()
+                                      FLAGS.stoichimetry_elements)
         generator.save_xml()
 
 
 if __name__ == '__main__':
 
-    gflags.DEFINE_list('reaction_amount', [10], 'A list with the amounts of reactions in each compartment',
-                       short_name='r')
-    gflags.DEFINE_integer('species_amount', 100, 'The amounts of species in each compartment', short_name='s')
-    gflags.DEFINE_integer('max_stoichimetry_elements', 10, 'The maximum amount of Product and '
-                          'Reactant metabolites a reaction can have', short_name='m')
-    gflags.DEFINE_string('model_name', None, 'The SBML model name', short_name='n')
+    gflags.DEFINE_list('reaction_amount', [1], 'A list with the amounts of reactions in each compartment', short_name='r')
+    gflags.DEFINE_integer('stoichimetry_elements', 1, 'The number of Product and Reactant metabolites a reaction can have', short_name='m')
+    gflags.DEFINE_string('model_name', 'process_time_test_', 'The SBML model name', short_name='n')
 
-    gflags.MarkFlagAsRequired('model_name')
     FLAGS = gflags.FLAGS
 
     try:
         argv = FLAGS(sys.argv)  # parse flags
-    except gflags.FlagsError, e:
-        print '%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS)
+    except gflags.FlagsError as e:
+        print('%s\nUsage: %s ARGS\n%s' % (e, sys.argv[0], FLAGS))
         sys.exit(1)
 
     main(FLAGS)
