@@ -15,7 +15,7 @@ parameters.xml
 
 # Output files
 **_diagram.json
-test/utilities/*.xml
+test/runtime_test/*.xml
 model_generator/*.json
 
 # Python modules
