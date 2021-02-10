@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2" level="2" version="1">
+  <model id="Thesis theoretical model">
+    <listOfUnitDefinitions>
+      <unitDefinition id="mmol_per_gDW_per_hr">
+        <listOfUnits>
+          <unit kind="mole" scale="-3"/>
+          <unit kind="gram" exponent="-1"/>
+          <unit kind="second" exponent="-1" multiplier="0.000277777777777778"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="c" name="Cytoplasm"/>
+      <compartment id="e" name="Extracellular"/>
+      <compartment id="p" name="Periplasm"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="A_c" name="A_c" compartment="c">
+      </species>
+      <species id="B_e" name="B_e" compartment="e">
+      </species>
+      <species id="C_c" name="C_c" compartment="c">
+      </species>
+      <species id="C_p" name="C_p" compartment="p">
+      </species>
+      <species id="D_e" name="D_e" compartment="e">
+      </species>
+      <species id="D_p" name="D_p" compartment="p">
+      </species>
+      <species id="E_e" name="E_e" compartment="e">
+      </species>
+      <species id="E_c" name="E_c" compartment="c">
+      </species>
+      <species id="E_p" name="E_p" compartment="p">
+      </species>
+      <species id="F_p" name="F_p" compartment="p">
+      </species>
+      <species id="G_e" name="G_e" compartment="e">
+      </species>
+      <species id="G_p" name="G_p" compartment="p">
+      </species>
+    </listOfSpecies>
+    <listOfReactions>
+
+      <reaction id="A_to_2A_in_cytoplasm" name="Increase A by one unit in cytoplasm" reversible="false">
+        <listOfReactants>
+          <speciesReference species="A_c"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="A_c" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+
+
+      <reaction id="B_to_2B_in_extracellular_space" name="Increase B by one unit in Extracellular space" reversible="false">
+        <listOfReactants>
+          <speciesReference species="B_e"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="B_3" stoichiometry="2"/>
+        </listOfProducts>
+      </reaction>
+
+
+      <reaction id="C_C_to_2C_3C_in_periplasm_inner" name="Increases by one the number of metabolites C_c in the Cytoplasm and it increases by two units the number of metabolites C_p in the Periplasm." reversible="false">
+        <listOfReactants>
+          <speciesReference species="C_c"/>
+          <speciesReference species="C_p"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="C_c" stoichiometry="2"/>
+          <speciesReference species="C_p" stoichiometry="3"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="D_D_to_2D_3D_in_periplasm_outer" name="Increases by one the number of metabolites D_e in the Extracellular space and it increases by two units the number of metabolites D_p in the Periplasm." reversible="false">
+        <listOfReactants>
+          <speciesReference species="D_e"/>
+          <speciesReference species="D_p"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="D_e" stoichiometry="2"/>
+          <speciesReference species="D_p" stoichiometry="3"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="E_E_E_to_2E_3E_4E_in_periplasm_trans" name="Increases by one the number of metabolites E_e in the Extracellular space, it increases by two the number of metabolites E_c in the Cytoplasm and it increases by three the number of metabolites E_p in the Periplasm" reversible="false">
+        <listOfReactants>
+          <speciesReference species="E_e"/>
+          <speciesReference species="E_c"/>
+          <speciesReference species="E_p"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="E_e" stoichiometry="2"/>
+          <speciesReference species="E_c" stoichiometry="3"/>
+          <speciesReference species="E_p" stoichiometry="4"/>
+        </listOfProducts>
+      </reaction>
+
+      <reaction id="No_product_in_periplasm" name="Decreases the number of metabolite F_p in the periplasm by one" reversible="false">
+        <listOfReactants>
+          <speciesReference species="F_p"/>
+        </listOfReactants>
+      </reaction>
+
+      <reaction id="No_substrate_from_related_compartment_in_periplasm_outer" name="transports a metabolite G_e from the Extracellular space to the Periplasm (G_p)" reversible="false">
+        <listOfReactants>
+          <speciesReference species="G_e"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="G_p"/>
+        </listOfProducts>
+      </reaction>
+
+    </listOfReactions>
+  </model>
+</sbml>
