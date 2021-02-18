@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from .SBMLParser import SBMLParser
-from .ModelCodeGenerator import ModelCodeGenerator
-from .XMLParametersGenerator import XMLParametersGenerator
+from .ModelCodeWriter import ModelCodeWriter
+from .XMLParametersWriter import XMLParametersWriter
 from .constants import *
 from itertools import islice
 
@@ -120,8 +120,8 @@ class ModelGenerator:
         """
 
         self.groups_size = groups_size
-        self.parameter_writer = XMLParametersGenerator(model_dir=model_dir)
-        self.coder = ModelCodeGenerator(model_dir=model_dir)
+        self.parameter_writer = XMLParametersWriter(model_dir=model_dir)
+        self.coder = ModelCodeWriter(model_dir=model_dir)
         self.parser = SBMLParser(sbml_file,
                                  extra_cellular_id,
                                  periplasm_id,

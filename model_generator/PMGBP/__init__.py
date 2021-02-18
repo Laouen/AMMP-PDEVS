@@ -1,5 +1,5 @@
 from .ModelGenerator import *
-from .ModelCodeGenerator import *
+from .ModelCodeWriter import *
 from .SBMLParser import *
-from .XMLParametersGenerator import *
+from .XMLParametersWriter import *
 from .constants import *

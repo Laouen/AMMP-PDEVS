@@ -5,7 +5,7 @@ from lxml import etree
 import os
 
 
-class XMLParametersGenerator:
+class XMLParametersWriter:
 
     def __init__(self, model_dir='..', xml_file='parameters'):
 
@@ -126,7 +126,6 @@ class XMLParametersGenerator:
                                                 'port')
         xml_space.append(xml_routing_table)
 
-        cid = parameters['cid']
         xml_enzymes_parameters = etree.Element('enzymes')
 
         for eid, enzyme_parameters in parameters['enzymes'].items():
