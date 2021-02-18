@@ -1,15 +1,15 @@
 [submodule "vendor/tinyxml2"]
 	path = vendor/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
-[submodule "vendor/DEVSDiagramer"]
-	path = vendor/DEVSDiagrammer
-	url = git@github.com:Laouen/DEVSDiagramer.git
 [submodule "vendor/cadmium"]
 	path = vendor/cadmium
 	url = https://github.com/SimulationEverywhere/cadmium.git
 [submodule "vendor/DESTimes"]
 	path = vendor/DESTimes
-	url = git@github.com:Laouen/DESTimes.git
+	url = git@github.com:SimulationEverywhere/DESTimes.git
 [submodule "vendor/MeMoRe"]
 	path = vendor/MeMoRe
-	url = git@github.com:Laouen/MeMoRe.git
+	url = git@github.com:SimulationEverywhere/MeMoRe.git
+[submodule "vendor/CadmiumModelJSONExporter"]
+	path = vendor/CadmiumModelJSONExporter
+	url = git@github.com:SimulationEverywhere/CadmiumModelJSONExporter.git

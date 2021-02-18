@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-std=c++17
 INCLUDE_CADMIUM=-I vendor/cadmium/include
 INCLUDE_DESTIME=-I vendor/DESTimes/include
-INCLUDE_EXPORTER=-I vendor/DEVSDiagrammer/model_json_exporter/include
+INCLUDE_EXPORTER=-I vendor/CadmiumModelJSONExporter/include
 INCLUDE_MEMORE=-I vendor/MeMoRe/include
 INCLUDE_TINY=-I vendor/tinyxml2
 INCLUDE_MONGOCXX = $(shell pkg-config --cflags --libs libmongocxx)
