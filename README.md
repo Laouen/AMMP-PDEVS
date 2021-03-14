@@ -33,3 +33,46 @@ Some variables and concepts have standarized names that are used across the proj
 ## Notes:
 *The directory structure format:* The structure used in this project for the directory structure was taken from
 https://hiltmon.com/blog/2013/07/03/a-simple-c-plus-plus-project-structure/ 
+
+
+## INSTALL MongoDB C++ drivers
+
+Source: http://mongocxx.org/mongocxx-v3/installation/
+
+Step 1:
+
+$sudo apt install cmake libssl-dev libsasl2-dev
+
+Step 2 (install mongo-c-driver):
+
+source: http://mongoc.org/libmongoc/current/installing.html
+
+$ wget https://github.com/mongodb/mongo-c-driver/releases/download/1.17.4/mongo-c-driver-1.17.4.tar.gz
+$ tar xzf mongo-c-driver-1.17.4.tar.gz
+$ cd mongo-c-driver-1.17.4
+$ mkdir cmake-build
+$ cd cmake-build
+$ cmake -DENABLE_AUTOMATIC_INIT_AND_CLEANUP=OFF ..
+$ make
+$ sudo make install
+
+step 3 (install mongo-cxx drivers in /usr/local)
+
+source: http://mongocxx.org/mongocxx-v3/installation/linux/
+
+$curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.2/mongo-cxx-driver-r3.6.2.tar.gz
+$tar -xzf mongo-cxx-driver-r3.6.2.tar.gz
+$cd mongo-cxx-driver-r3.6.2/build
+
+$ cmake ..                                \
+$     -DCMAKE_BUILD_TYPE=Release          \
+$     -DCMAKE_INSTALL_PREFIX=/usr/local
+
+$ sudo cmake --build . --target EP_mnmlstc_core
+$ cmake --build .
+$ sudo cmake --build . --target install
+
+Note: If when running the model with memore, there is an error like this one 
+(error while loading shared libraries: libmongocxx.so.\_noabi: cannot open shared object library file: No such file or directory)
+try to upgrade the system:
+$ sudo apt upgrade (this updates g++ and c++ and that is the problem)
